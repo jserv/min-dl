@@ -13,3 +13,8 @@ startup and save considerable time overall.
 `min-dl` introduces a straightforward way to load the specified shared
 objects and then perform the necessary relocations, including the shared
 objects that the target shared object uses.
+
+# Licensing
+`min-dl` is freely redistributable under the two-clause BSD License.
+Use of this source code is governed by a BSD-style license that can be found
+in the `LICENSE` file.
