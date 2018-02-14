@@ -1,0 +1,1 @@
+gcc -g3 loader.c test_loader.c -o loader -ldl ; gcc -g3 -DPROG_HEADER=prog_header -fvisibility=hidden -shared -fPIC test_lib.c -o test_lib.so -Wl,--entry=prog_header -nostdlib -export-dynamic ; ./loader

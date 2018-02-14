@@ -26,3 +26,5 @@ void *func_table[] = {
 };
 
 MDL_DEFINE_HEADER(func_table);
+
+int __attribute__((visibility("default"))) test() { return 5; }

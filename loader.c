@@ -291,23 +291,28 @@ dloader_p api_load(const char *filename)
     }
     assert(dynamic != NULL);
 
-    ElfW_Reloc *relocs =
-        (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
+    ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
+        printf("ELFW_R_TYPE(reloc->r_info) = %d\n", ELFW_R_TYPE(reloc->r_info));
         switch (reloc_type) {
 #if defined(__x86_64__)
-        case R_X86_64_RELATIVE:
-#endif
+        case R_X86_64_RELATIVE: /* Adjust by program base */
         {
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             *addr += load_bias;
             break;
         }
+        case R_X86_64_64:	/* Direct 64 bit  */
+        {
+            ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
+            break;   
+        }
+#endif
         default:
-            assert(0);
+            assert(0 && "unknown relocation type");
         }
     }
 
