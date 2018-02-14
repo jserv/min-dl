@@ -160,8 +160,10 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 {
     for (; dynamic->d_tag != DT_NULL; dynamic++) {
         if (dynamic->d_tag == field)
+            printf("returning %p\n", dynamic->d_un.d_val);
             return dynamic->d_un.d_val;
     }
+    printf("returning 0\n");
     return 0;
 }
 
@@ -320,15 +322,20 @@ dloader_p api_load(const char *filename)
     assert(o != NULL);
 
     o->load_bias = load_bias;
+    printf("o->load_bias = %p\n", o->load_bias);
     o->entry = (void *)(ehdr.e_entry + load_bias);
+    printf("o->entry = %p\n", o->entry);
     o->pt_dynamic = dynamic;
+    printf("o->pt_dynamic = %p\n", o->pt_dynamic);
     o->dt_pltgot = NULL;
     o->plt_entries = 0;
+    printf("attepting to aquire pltgot\n calling get_dynamic_entry\n");
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
     if (pltgot != 0) {
         o->dt_pltgot = (void **) (pltgot + load_bias);
-        o->dt_jmprel = (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) +
-                                       load_bias);
+        printf("o->dt_pltgot = %p\n", o->dt_pltgot);
+        o->dt_jmprel = (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) + load_bias);
+        printf("o->dt_jmprel = %p\n", o->dt_jmprel);
     }
 
     close(fd);
