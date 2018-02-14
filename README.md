@@ -1,5 +1,12 @@
 # min-dl: minimal dynamic linker implementation
 
+##### TODO
+      1. Add Support For GLOBAL Symbol Relocation And Loading
+
+      2. Impliment As A Fully Functional Dynamic Loader
+ 
+ 
+#### UNCHANGED from original README.MD
 To support dynamic linking, each ELF shared libary and each executable that
 uses shared libraries has a Procedure Linkage Table (PLT), which adds a level
 of indirection for function calls analogous to that provided by the GOT for
