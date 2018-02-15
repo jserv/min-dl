@@ -215,12 +215,6 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
             case DT_RELASZ:
                 printf ("DT_RELASZ	8		/* Total size of Rela relocs */\n");
                 break;
-            case DT_REL:
-                printf ("DT_REL		17		/* Address of Rel relocs */\n");
-                break;
-            case DT_RELSZ:
-                printf ("DT_RELSZ	18		/* Total size of Rel relocs */\n");
-                break;
             default:
                 printf("%d\n", field);
                 break;
@@ -362,8 +356,8 @@ dloader_p api_load(const char *filename)
         }
     }
     assert(dynamic != NULL);
-    ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, DT_RELA));
-    size_t relocs_size = get_dynamic_entry(dynamic, DT_RELASZ);
+    ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
+    size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
@@ -386,36 +380,21 @@ dloader_p api_load(const char *filename)
         }
         case R_X86_64_64:	/* Direct 64 bit  */
         {
-            printf("FOR USE IN GLOBAL\n");
-            break;
-        }
-#endif
-        default:
-            assert(0 && "unknown relocation type");
-        }
-    }
-    ElfW_Reloc *relocsb = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, DT_REL));
-    size_t relocs_sizeb = get_dynamic_entry(dynamic, DT_RELSZ);
-    for (i = 0; i < relocs_sizeb / sizeof(ElfW_Reloc); i++) {
-        ElfW_Reloc *relocb = &relocsb[i];
-        int reloc_typeb = ELFW_R_TYPE(relocb->r_info);
-        printf("ELFW_R_TYPE(reloc->r_info) = %d\n", ELFW_R_TYPE(relocb->r_info));
-        switch (reloc_typeb) {
-#if defined(__x86_64__)
-        case R_X86_64_RELATIVE: /* Adjust by program base */
-        {
-            printf("FOR USE IN LOCAL\n");
-            break;
-        }
-        case R_X86_64_64:	/* Direct 64 bit  */
-        {
             printf("R_X86_64 64 attempting to set *addr\n");
             printf("load_bias = %p\n", load_bias);
-            printf("relocb->r_offset = %p\n", relocb->r_offset);
-            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + relocb->r_offset);
+            printf("reloc->r_offset = %p\n", reloc->r_offset);
+            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             printf("*addr = %p\n", *addr);
-            assert(!*addr==NULL);
+            if (*addr == NULL) {
+                printf("*addr == NULL, pausing execution\n");
+                pause();
+                assert(!*addr==NULL);
+            }
             break;
+//             printf("attempting to set *addr\n");
+//             ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
+//             printf("addr = %p\n", addr);
+//             break;   
         }
 #endif
         default:
