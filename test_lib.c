@@ -15,7 +15,7 @@ const char *test_import0()
     return import_func0();
 }
 
-const char *test_import1()
+const char  __attribute__((visibility("default"))) *test_import1()
 {
     return import_func1();
 }
