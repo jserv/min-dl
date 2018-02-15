@@ -311,6 +311,7 @@ dloader_p api_load(const char *filename)
                          span, prot_from_phdr(first_load), MAP_PRIVATE, fd,
                          round_down(first_load->p_offset, pagesize));
 
+//     load_bias may be needed cus of this "But because the symbol is defined in the shared library, all references to that symbol are relocated, i.e. adjusted by the shared library load address (that is done by the dynamic loader). It makes no sense whatsoever for the dynamic loader to do otherwise." https://stackoverflow.com/a/8369262
     const ElfW(Addr) load_bias =
         mapping - round_down(first_load->p_vaddr, pagesize);
 
@@ -361,7 +362,7 @@ dloader_p api_load(const char *filename)
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
-        printf("ELFW_R_TYPE(reloc->r_info) = %d\n", ELFW_R_TYPE(reloc->r_info));
+        printf("i = %d, ELFW_R_TYPE(reloc->r_info) = %d\n", i, ELFW_R_TYPE(reloc->r_info));
         switch (reloc_type) {
 #if defined(__x86_64__)
         case R_X86_64_RELATIVE: /* Adjust by program base */
@@ -383,7 +384,8 @@ dloader_p api_load(const char *filename)
             printf("R_X86_64 64 attempting to set *addr\n");
             printf("load_bias = %p\n", load_bias);
             printf("reloc->r_offset = %p\n", reloc->r_offset);
-            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
+            ElfW(Addr) *addr;
+            *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             printf("*addr = %p\n", *addr);
             if (*addr == NULL) {
                 printf("*addr == NULL, pausing execution\n");
@@ -391,10 +393,6 @@ dloader_p api_load(const char *filename)
                 assert(!*addr==NULL);
             }
             break;
-//             printf("attempting to set *addr\n");
-//             ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
-//             printf("addr = %p\n", addr);
-//             break;   
         }
 #endif
         default:
