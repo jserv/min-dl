@@ -46,6 +46,7 @@ struct __DLoader_Internal {
 static inline
 void my_bzero(void *buf, size_t n)
 {
+    printf("called my_bzero\n");
     char *p = buf;
     while (n-- > 0)
         *p++ = 0;
@@ -54,6 +55,7 @@ void my_bzero(void *buf, size_t n)
 static inline
 size_t my_strlen(const char *s)
 {
+    printf("called my_strlen\n");
     size_t n = 0;
     while (*s++ != '\0')
         ++n;
@@ -68,6 +70,7 @@ size_t my_strlen(const char *s)
 static void iov_int_string(int value, struct iovec *iov,
                            char *buf, size_t bufsz)
 {
+    printf("called iov_int_string\n");
     char *p = &buf[bufsz];
     int negative = value < 0;
     if (negative)
@@ -90,6 +93,7 @@ __attribute__((noreturn))
 static void fail(const char *filename, const char *message,
                  const char *item, int value)
 {
+    printf("called fail\n");
     char valbuf[32];
     struct iovec iov[] = {
         STRING_IOV("[loader] ", 1),
@@ -111,6 +115,7 @@ static void fail(const char *filename, const char *message,
 
 static int prot_from_phdr(const ElfW(Phdr) *phdr)
 {
+    printf("called prot_from_phdr\n");
     int prot = 0;
     if (phdr->p_flags & PF_R)
         prot |= PROT_READ;
@@ -124,12 +129,14 @@ static int prot_from_phdr(const ElfW(Phdr) *phdr)
 static inline
 uintptr_t round_up(uintptr_t value, uintptr_t size)
 {
+    printf("called round_up\n");
     return (value + size - 1) & -size;
 }
 
 static inline
 uintptr_t round_down(uintptr_t value, uintptr_t size)
 {
+    printf("called round_down\n");
     return value & -size;
 }
 
@@ -142,6 +149,7 @@ uintptr_t round_down(uintptr_t value, uintptr_t size)
 static void handle_bss(const ElfW(Phdr) *ph, ElfW(Addr) load_bias,
                        size_t pagesize)
 {
+    printf("called handle_bss\n");
     if (ph->p_memsz > ph->p_filesz) {
         ElfW(Addr) file_end = ph->p_vaddr + load_bias + ph->p_filesz;
         ElfW(Addr) file_page_end = round_up(file_end, pagesize);
@@ -158,6 +166,7 @@ static void handle_bss(const ElfW(Phdr) *ph, ElfW(Addr) load_bias,
 
 ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 {
+    printf("called get_dynamic_entry\n");
     for (; dynamic->d_tag != DT_NULL; dynamic++) {
         printf("testing if ");
         switch (dynamic->d_tag) {
@@ -234,11 +243,13 @@ asm(".pushsection \".text\",\"ax\",@progbits\n"
 
 void *system_plt_resolver(dloader_p o, int import_id)
 {
+    printf("called system_plt_resolver\n");
     return o->user_plt_resolver(o->user_plt_resolver_handle, import_id);
 }
 
 dloader_p api_load(const char *filename)
 {
+    printf("called api_load\n");
     size_t pagesize = 0x1000;
     int fd = open(filename, O_RDONLY);
     ElfW(Ehdr) ehdr;
@@ -345,9 +356,7 @@ dloader_p api_load(const char *filename)
         }
     }
     assert(dynamic != NULL);
-    printf("calling get_dynamic_entry\n");
     ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
-    printf("calling get_dynamic_entry\n");
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
@@ -386,7 +395,7 @@ dloader_p api_load(const char *filename)
     printf("o->pt_dynamic = %p\n", o->pt_dynamic);
     o->dt_pltgot = NULL;
     o->plt_entries = 0;
-    printf("attepting to aquire pltgot\n calling get_dynamic_entry\n");
+    printf("attepting to aquire pltgot\n");
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
     if (pltgot != 0) {
         o->dt_pltgot = (void **) (pltgot + load_bias);
@@ -396,16 +405,19 @@ dloader_p api_load(const char *filename)
     }
 
     close(fd);
+    printf("returning %p\n", o);
     return o;
 }
 
 void *api_get_user_info(dloader_p o)
 {
+    printf("returning %p\n", ((struct program_header *) (o->entry))->user_info);
     return ((struct program_header *) (o->entry))->user_info;
 }
 
 void api_set_plt_resolver(dloader_p o, plt_resolver_t resolver, void *handle)
 {
+    printf("called api_set_plt_resolver\n");
     struct program_header *PROG_HEADER = o->entry;
     *PROG_HEADER->plt_trampoline = (void *) plt_trampoline;
     *PROG_HEADER->plt_handle = o;
@@ -415,6 +427,7 @@ void api_set_plt_resolver(dloader_p o, plt_resolver_t resolver, void *handle)
 
 void api_set_plt_entry(dloader_p o, int import_id, void *func)
 {
+    printf("called api_set_plt_entry\n");
     ((struct program_header *) (o->entry))->pltgot[import_id] = func;
 }
 
