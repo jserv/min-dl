@@ -68,13 +68,12 @@ size_t my_strlen(const char *s)
 static void iov_int_string(int value, struct iovec *iov,
                            char *buf, size_t bufsz)
 {
+    static const char * const digit_lookup = "9876543210123456789" + 9;
     char *p = &buf[bufsz];
     int negative = value < 0;
-    if (negative)
-        value = -value;
     do {
         --p;
-        *p = "0123456789"[value % 10];
+        *p = lookup[value % 10];
         value /= 10;
     } while (value != 0);
     if (negative)
