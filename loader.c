@@ -366,16 +366,19 @@ dloader_p api_load(const char *filename)
 #if defined(__x86_64__)
         case R_X86_64_RELATIVE: /* Adjust by program base */
         {
+            printf("attempting to set *addr\n");
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
-            printf("address = %p\n", *addr);
+            printf("*addr = %p\n", *addr);
+            printf("attempting to set *addr\n");
             *addr += load_bias;
-            printf("address now = %p\n", *addr);            
+            printf("*addr now = %p\n", *addr);            
             break;
         }
         case R_X86_64_64:	/* Direct 64 bit  */
         {
+            printf("attempting to set *addr\n");
             ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
-            printf("address = %p\n", *addr);
+            printf("addr = %p\n", addr);
             break;   
         }
 #endif
@@ -428,6 +431,7 @@ void api_set_plt_resolver(dloader_p o, plt_resolver_t resolver, void *handle)
 void api_set_plt_entry(dloader_p o, int import_id, void *func)
 {
     printf("called api_set_plt_entry\n");
+    printf("returning %p\n", ((struct program_header *) (o->entry))->pltgot[import_id]);
     ((struct program_header *) (o->entry))->pltgot[import_id] = func;
 }
 

@@ -15,6 +15,7 @@ static int resolver_last_id = -1;
 
 static void *plt_resolver(void *handle, int import_id)
 {
+    printf("called plt_resolver\n");
     dloader_p o = handle;
     printf("resolver called for func #%i\n", import_id);
     resolver_call_count++;
@@ -23,8 +24,11 @@ static void *plt_resolver(void *handle, int import_id)
     void *funcs[] = {
         (void *) test_import0, (void *) test_import1,
     };
+    printf("func = %p (funcs[%d])\n", funcs[import_id], import_id);
     void *func = funcs[import_id];
+    printf("calling set_plt_entry with args %p, %d, %p\n", o, import_id, func);
     DLoader.set_plt_entry(o, import_id, func);
+    printf("returning %p\n", func);
     return func;
 }
 
@@ -54,7 +58,9 @@ int main()
     DLoader.set_plt_resolver(o, plt_resolver,
                              /* user_plt_resolver_handle */ o);
 
+    printf("aquiring address of test_import0\n");
     func = (func_t) func_table[2];
+    printf("aquired address of test_import0 %p\n", func);
     result = func();
     assert(!strcmp(result, "test_import0"));
     assert(resolver_call_count == 1);
@@ -64,8 +70,12 @@ int main()
     assert(!strcmp(result, "test_import0"));
     assert(resolver_call_count == 0);
 
+    printf("aquiring address of test_import1\n");
     func = (func_t) func_table[3];
+    printf("aquired address of test_import1 %p\n", func);
+    printf("aquiring address of test_import1\n");
     char * (*funcb)() = (func_t) func_table[3];
+    printf("aquired address of test_import1 %p\n", funcb);
     result = func();
     assert(!strcmp(result, "test_import1"));
     printf("funcb = %p\n", (func_t) func_table[3]);
