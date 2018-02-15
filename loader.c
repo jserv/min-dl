@@ -159,9 +159,61 @@ static void handle_bss(const ElfW(Phdr) *ph, ElfW(Addr) load_bias,
 ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 {
     for (; dynamic->d_tag != DT_NULL; dynamic++) {
-        if (dynamic->d_tag == field)
+        printf("testing if ");
+        switch (dynamic->d_tag) {
+            case DT_RELAENT:
+                printf("DT_RELAENT");
+                break;
+            case DT_STRTAB:
+                printf("DT_STRTAB");
+                break;
+            case DT_SYMTAB:
+                printf("DT_STRTAB");
+                break;
+            case DT_STRSZ:
+                printf("DT_STRSZ");
+                break;
+            case DT_SYMENT:
+                printf("DT_SYMTAB");
+                break;
+            case DT_RELACOUNT:
+                printf("DT_RELACOUNT");
+                break;
+            case DT_GNU_HASH:
+                printf("DT_GNU_HASH");
+                break;
+            case DT_PLTGOT:
+                printf("DT_PLTGOT");
+                break;
+            case DT_RELA:
+                printf ("DT_RELA");
+                break;
+            case DT_RELASZ:
+                printf ("DT_RELASZ");
+                break;
+            default:
+                printf("%d", dynamic->d_tag);
+                break;
+        }
+        printf(" == ");
+        switch (field) {
+            case DT_PLTGOT:
+                printf("DT_PLTGOT	3		/* Processor defined value */\n");
+                break;
+            case DT_RELA:
+                printf ("DT_RELA		7		/* Address of Rela relocs */\n");
+                break;
+            case DT_RELASZ:
+                printf ("DT_RELASZ	8		/* Total size of Rela relocs */\n");
+                break;
+            default:
+                printf("%d\n", field);
+                break;
+        }
+        if (dynamic->d_tag == field) {
             printf("returning %p\n", dynamic->d_un.d_val);
             return dynamic->d_un.d_val;
+        }
     }
     printf("returning 0\n");
     return 0;
@@ -289,11 +341,13 @@ dloader_p api_load(const char *filename)
         if (phdr[i].p_type == PT_DYNAMIC) {
             assert(dynamic == NULL);
             dynamic = (ElfW(Dyn) *) (load_bias + phdr[i].p_vaddr);
+            printf("dynamic = %p\n", dynamic);
         }
     }
     assert(dynamic != NULL);
-
+    printf("calling get_dynamic_entry\n");
     ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
+    printf("calling get_dynamic_entry\n");
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
@@ -304,12 +358,15 @@ dloader_p api_load(const char *filename)
         case R_X86_64_RELATIVE: /* Adjust by program base */
         {
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
+            printf("address = %p\n", *addr);
             *addr += load_bias;
+            printf("address now = %p\n", *addr);            
             break;
         }
         case R_X86_64_64:	/* Direct 64 bit  */
         {
             ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
+            printf("address = %p\n", *addr);
             break;   
         }
 #endif
@@ -322,9 +379,9 @@ dloader_p api_load(const char *filename)
     assert(o != NULL);
 
     o->load_bias = load_bias;
-    printf("o->load_bias = %p\n", o->load_bias);
+    printf("o->load_bias =  %p\n", o->load_bias);
     o->entry = (void *)(ehdr.e_entry + load_bias);
-    printf("o->entry = %p\n", o->entry);
+    printf("o->entry =      %p\n", o->entry);
     o->pt_dynamic = dynamic;
     printf("o->pt_dynamic = %p\n", o->pt_dynamic);
     o->dt_pltgot = NULL;
@@ -333,9 +390,9 @@ dloader_p api_load(const char *filename)
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
     if (pltgot != 0) {
         o->dt_pltgot = (void **) (pltgot + load_bias);
-        printf("o->dt_pltgot = %p\n", o->dt_pltgot);
+        printf("o->dt_pltgot =  %p\n", o->dt_pltgot);
         o->dt_jmprel = (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) + load_bias);
-        printf("o->dt_jmprel = %p\n", o->dt_jmprel);
+        printf("o->dt_jmprel =  %p\n", o->dt_jmprel);
     }
 
     close(fd);
