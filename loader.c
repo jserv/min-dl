@@ -366,20 +366,31 @@ dloader_p api_load(const char *filename)
 #if defined(__x86_64__)
         case R_X86_64_RELATIVE: /* Adjust by program base */
         {
-            printf("attempting to set *addr\n");
+            printf("R_X86_64 RELATIVE attempting to set *addr\n");
+            printf("load_bias = %p\n", load_bias);
+            printf("reloc->r_offset = %p\n", reloc->r_offset);
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             printf("*addr = %p\n", *addr);
+            assert(!*addr==NULL);
             printf("attempting to set *addr\n");
             *addr += load_bias;
-            printf("*addr now = %p\n", *addr);            
+            printf("*addr now = %p\n", *addr);
+            assert(!*addr==NULL);
             break;
         }
         case R_X86_64_64:	/* Direct 64 bit  */
         {
-            printf("attempting to set *addr\n");
-            ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
-            printf("addr = %p\n", addr);
-            break;   
+            printf("R_X86_64 64 attempting to set *addr\n");
+            printf("load_bias = %p\n", load_bias);
+            printf("reloc->r_offset = %p\n", reloc->r_offset);
+            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
+            printf("*addr = %p\n", *addr);
+            assert(!*addr==NULL);
+            break;
+//             printf("attempting to set *addr\n");
+//             ElfW(Addr) *addr = (ElfW(Addr) *)(reloc->r_offset);
+//             printf("addr = %p\n", addr);
+//             break;   
         }
 #endif
         default:
