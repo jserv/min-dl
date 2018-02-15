@@ -15,9 +15,9 @@ static int resolver_last_id = -1;
 
 static void *plt_resolver(void *handle, int import_id)
 {
-    printf("called plt_resolver\n");
+    printf("executed plt_resolver\n");
     dloader_p o = handle;
-    printf("resolver called for func #%i\n", import_id);
+    printf("resolver executed for func #%i\n", import_id);
     resolver_call_count++;
     resolver_last_id = import_id;
 
@@ -61,14 +61,16 @@ int main()
     printf("aquiring address of test_import0\n");
     func = (func_t) func_table[2];
     printf("aquired address of test_import0 %p\n", func);
+    printf("executing func %p\n", func);
     result = func();
-    printf("called func %p\n", func);
+    printf("executed func %p\n", func);
     assert(!strcmp(result, "test_import0"));
     assert(resolver_call_count == 1);
     assert(resolver_last_id == 0);
     resolver_call_count = 0;
+    printf("executing func %p\n", func);
     result = func();
-    printf("called func %p\n", func);
+    printf("executed func %p\n", func);
     assert(!strcmp(result, "test_import0"));
     assert(resolver_call_count == 0);
 
@@ -78,15 +80,17 @@ int main()
     printf("aquiring address of test_import1\n");
     char * (*funcb)() = (func_t) func_table[3];
     printf("aquired address of test_import1 %p\n", funcb);
+    printf("executing func %p\n", func);
     result = func();
-    printf("called func %p\n", func);
+    printf("executed func %p\n", func);
     assert(!strcmp(result, "test_import1"));
     printf("funcb = %p\n", (func_t) func_table[3]);
     assert(resolver_call_count == 1);
     assert(resolver_last_id == 1);
     resolver_call_count = 0;
+    printf("executing func %p\n", func);
     result = func();
-    printf("called func %p\n", func);
+    printf("executed func %p\n", func);
     assert(!strcmp(result, "test_import1"));
     printf("funcb = %s\n", funcb());
     assert(resolver_call_count == 0);
