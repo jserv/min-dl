@@ -9,19 +9,26 @@
 #if defined(__x86_64__)
 #define _PUSH_S(x) pushq x
 #define _PUSH(x,y) pushq x(y)
+#define _POP_S(x)  pop x
+#define _POP(x,y)  pop x
 #define _JMP_S(x)  jmp x
 #define _JMP(x,y)  jmp *x(y)
+#define _CALL(x)   call x
 #define REG_IP     %rip
 
 #elif defined(__arm__)
 #define _PUSH_S(x) push x
 #define _PUSH(x,y) ldr y, [x]
+#define _POP_S(x)  pop x
+#define _POP(x,y)  str x, [y]
 #define _JMP_S(x)  b x
 #define _JMP(x,y)  b x
+#define _CALL(x)   bl x
 #define REG_IP     ip
 
 #elif defined(__aarch64__)
 #define _PUSH(x,y) stp x ,y ,[sp, #-16]!
+#define _CALL(x)   bl x
 #else
 #error "Unsupported architecture"
 #endif
@@ -30,6 +37,9 @@
 #define PUSH(x,y) XSTR(_PUSH(x,y))
 #define JMP_S(x)  XSTR(_JMP_S(x))
 #define JMP(x,y)  XSTR(_JMP(x,y))
+#define POP_S(x)  XSTR(_POP_S(x))
+#define POP(x,y)  XSTR(_POP(x,y))
+#define CALL(x)   XSTR(_CALL(x))
 
 typedef void *(*plt_resolver_t)(void *handle, int import_id);
 

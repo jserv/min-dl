@@ -165,17 +165,13 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 }
 
 void plt_trampoline();
-#if defined(__x86_64__)
-asm(".pushsection \".text\",\"ax\",@progbits\n"
-    "plt_trampoline:\n"
-    "pop %rdi\n" /* Argument 1 */
-    "pop %rsi\n" /* Argument 2 */
-    "call system_plt_resolver\n"
-    "jmp *%rax\n"
-    ".popsection\n");
-#else
-#error "Unsupported architecture"
-#endif
+asm(".pushsection \".text\",\"ax\",@progbits" "\n"
+    "plt_trampoline:"                         "\n"
+    POP_S(%rdi) /* Argument 1 */              "\n"
+    POP_S(%rsi) /* Argument 2 */              "\n"
+    CALL(system_plt_resolver)                 "\n"
+    JMP_S(*%rax)                              "\n"
+    ".popsection"                             "\n");
 
 void *system_plt_resolver(dloader_p o, int import_id)
 {
