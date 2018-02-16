@@ -47,7 +47,7 @@ int main()
 
     printf("OK!\n");
 
-    printf("Tes imported functions >\n");
+    printf("Test imported functions >\n");
     DLoader.set_plt_resolver(o, plt_resolver,
                              /* user_plt_resolver_handle */ o);
 
