@@ -3,43 +3,67 @@
 
 #include <stdint.h>
 
-#define STR(x)  #x
-#define XSTR(x) STR(x)
+#define STR(...)  #__VA_ARGS__
+#define XSTR(...) STR(__VA_ARGS__)
+#define _ES_HASH  #
+#define ES_HASH() _ES_HASH
 
 #if defined(__x86_64__)
-#define _PUSH_S(x) pushq x
-#define _PUSH(x,y) pushq x(y)
+#define _PUSH_S(x)   pushq x
+#define _PUSH(x,y)   pushq x(y)
+#define _PUSH_IMM(x) _PUSH_S(x)
 #define _POP_S(x)  pop x
 #define _POP(x,y)  pop x
 #define _JMP_S(x)  jmp x
+#define _JMP_REG(x) _JMP_S(x)
 #define _JMP(x,y)  jmp *x(y)
 #define _CALL(x)   call x
 #define REG_IP     %rip
+#define REG_ARG_1  %rdi
+#define REG_ARG_2  %rsi
+#define REG_RET    *%rax
+#define LABEL_PREFIX
 
 #elif defined(__arm__)
 #define _PUSH_S(x) push x
-#define _PUSH(x,y) ldr y, [x]
-#define _POP_S(x)  pop x
-#define _POP(x,y)  str x, [y]
-#define _JMP_S(x)  b x
-#define _JMP(x,y)  b x
-#define _CALL(x)   bl x
-#define REG_IP     ip
+#define _PUSH(x,y)                \
+  ldr r3 , =x                \n   \
+  add r3, r3, y              \n   \
+  ldr r2, [r3]               \n   \
+  push {r2}                  \n   \
+  ldr r2, [r3, ES_HASH()4]   \n   \
+  push {r2}
+#define _PUSH_IMM(x) \
+  sub r0, r0, r0    \n  \
+  push {r0}
+#define _POP_S(x)   pop x
+#define _POP(x,y)   ldr x, [y]
+#define _JMP_S(x)   b x
+#define _JMP_REG(x) bx x
+#define _JMP(x,y)   b x
+#define _CALL(x)    bl x
+#define REG_IP      ip
+#define REG_ARG_1   {r0}
+#define REG_ARG_2   {r1}
+#define REG_RET  r0
+#define LABEL_PREFIX "="
 
 #elif defined(__aarch64__)
-#define _PUSH(x,y) stp x ,y ,[sp, #-16]!
+#define _PUSH(x,y) stp x, y, [sp, #-16]!
 #define _CALL(x)   bl x
 #else
 #error "Unsupported architecture"
 #endif
 
-#define PUSH_S(x) XSTR(_PUSH_S(x))
-#define PUSH(x,y) XSTR(_PUSH(x,y))
-#define JMP_S(x)  XSTR(_JMP_S(x))
-#define JMP(x,y)  XSTR(_JMP(x,y))
-#define POP_S(x)  XSTR(_POP_S(x))
-#define POP(x,y)  XSTR(_POP(x,y))
-#define CALL(x)   XSTR(_CALL(x))
+#define PUSH_S(x)   XSTR(_PUSH_S(x))
+#define PUSH(x,y)   XSTR(_PUSH(x,y))
+#define PUSH_IMM(x) XSTR(_PUSH_IMM(x))
+#define JMP_S(x)    XSTR(_JMP_S(x))
+#define JMP_REG(x)  XSTR(_JMP_REG(x))
+#define JMP(x,y)    XSTR(_JMP(x,y))
+#define POP_S(x)    XSTR(_POP_S(x))
+#define POP(x,y)    XSTR(_POP(x,y))
+#define CALL(x)     XSTR(_CALL(x))
 
 typedef void *(*plt_resolver_t)(void *handle, int import_id);
 
