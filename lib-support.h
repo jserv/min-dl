@@ -7,11 +7,16 @@
 #define XSTR(...) STR(__VA_ARGS__)
 #define _ES_HASH  #
 #define ES_HASH() _ES_HASH
+#ifndef ELFW
+#define ELFW(type) _ELFW(__ELF_NATIVE_CLASS, type)
+#define _ELFW(bits, type) __ELFW(bits, type)
+#define __ELFW(bits, type) ELF##bits##_##type
+#endif
 
 #if defined(__x86_64__)
 #define _PUSH_S(x)   pushq x
 #define _PUSH(x,y)   pushq x(y)
-#define _PUSH_IMM(x) _PUSH_S(x)
+#define _PUSH_IMM(x) pushq $##x
 #define _POP_S(x)  pop x
 #define _POP(x,y)  pop x
 #define _JMP_S(x)  jmp x
@@ -22,48 +27,60 @@
 #define REG_ARG_1  %rdi
 #define REG_ARG_2  %rsi
 #define REG_RET    *%rax
+#define SYS_ADDR_ATTR "quad"
 #define LABEL_PREFIX
+
+#define PUSH_STACK_STATE
+#define POP_STACK_STATE
 
 #elif defined(__arm__)
 #define _PUSH_S(x) push x
-#define _PUSH(x,y)                \
-  ldr r3 , =x                \n   \
-  add r3, r3, y              \n   \
-  ldr r2, [r3]               \n   \
-  push {r2}                  \n   \
-  ldr r2, [r3, ES_HASH()4]   \n   \
+#define _PUSH(x,y) \
+  ldr r3, =x   \n  \
+  ldr r2, [r3] \n  \
   push {r2}
 #define _PUSH_IMM(x) \
-  sub r0, r0, r0    \n  \
+  mov r0, ES_HASH()x  \n  \
   push {r0}
 #define _POP_S(x)   pop x
 #define _POP(x,y)   ldr x, [y]
 #define _JMP_S(x)   b x
 #define _JMP_REG(x) bx x
-#define _JMP(x,y)   b x
+#define _JMP(x,y) \
+  ldr r3, =x        \n   \
+  ldr r2, [r3]      \n   \
+  bx r2
 #define _CALL(x)    bl x
 #define REG_IP      ip
 #define REG_ARG_1   {r0}
 #define REG_ARG_2   {r1}
 #define REG_RET  r0
-#define LABEL_PREFIX "="
+#define LABEL_PREFIX  "="
+#define SYS_ADDR_ATTR "word"
 
-#elif defined(__aarch64__)
-#define _PUSH(x,y) stp x, y, [sp, #-16]!
-#define _CALL(x)   bl x
+#define PUSH_STACK_STATE "push {r11, lr}"
+#define POP_STACK_STATE  "pop {r11, lr}"
+
 #else
 #error "Unsupported architecture"
 #endif
 
-#define PUSH_S(x)   XSTR(_PUSH_S(x))
-#define PUSH(x,y)   XSTR(_PUSH(x,y))
-#define PUSH_IMM(x) XSTR(_PUSH_IMM(x))
-#define JMP_S(x)    XSTR(_JMP_S(x))
-#define JMP_REG(x)  XSTR(_JMP_REG(x))
-#define JMP(x,y)    XSTR(_JMP(x,y))
-#define POP_S(x)    XSTR(_POP_S(x))
-#define POP(x,y)    XSTR(_POP(x,y))
-#define CALL(x)     XSTR(_CALL(x))
+/*
+ * Every architecture needs to define its own assembly macro with
+ * prefix '_' in arch/, and matches all asm() blocks where the macro 
+ * will be expanded.
+ */
+#define PUSH_S(x)        XSTR(_PUSH_S(x))
+#define PUSH(x,y)        XSTR(_PUSH(x,y))
+#define PUSH_IMM(x)      XSTR(_PUSH_IMM(x))
+#define PUSH_STACK_STATE XSTR(_PUSH_STACK_STATE)
+#define JMP_S(x)         XSTR(_JMP_S(x))
+#define JMP_REG(x)       XSTR(_JMP_REG(x))
+#define JMP(x,y)         XSTR(_JMP(x,y))
+#define POP_S(x)         XSTR(_POP_S(x))
+#define POP(x,y)         XSTR(_POP(x,y))
+#define POP_STACK_STATE  XSTR(_POP_STACK_STATE)
+#define CALL(x)          XSTR(_CALL(x))
 
 typedef void *(*plt_resolver_t)(void *handle, int import_id);
 
@@ -91,12 +108,12 @@ extern void *pltgot_imports[];
         #name ":"                                       "\n" \
         JMP(pltgot_ ##name, REG_IP)                     "\n" \
         "slowpath_" #name ":"                           "\n" \
-        PUSH_IMM($ ##number)                            "\n" \
+        PUSH_IMM(number)                                "\n" \
         JMP_S(slowpath_common)                          "\n" \
         ".popsection" /* entry in PLTGOT table */       "\n" \
         ".pushsection .my_pltgot,\"aw\",\"progbits\""   "\n" \
         "pltgot_" #name ":"                             "\n" \
-        ".quad " LABEL_PREFIX "slowpath_" #name         "\n" \
+        "." SYS_ADDR_ATTR " slowpath_" #name            "\n" \
         ".popsection"                                   "\n");
 
 #define MDL_DEFINE_HEADER(user_info_value)                \

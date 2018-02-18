@@ -10,23 +10,20 @@
 #include <sys/mman.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include <inttypes.h>
 
 #include "lib-support.h"
 
 #define MAX_PHNUM 12
 
+#if defined(__x86_64__)
 typedef ElfW(Rela) ElfW_Reloc;
-#define ELFW_R_TYPE(x) ELF64_R_TYPE(x)
-#define ELFW_R_SYM(x) ELF64_R_SYM(x)
+#else
+typedef ElfW(Rel) ElfW_Reloc;
+#endif
+#define ELFW_R_TYPE(x) ELFW(R_TYPE)(x)
+#define ELFW_R_SYM(x) ELFW(R_SYM)(x)
 #define ELFW_DT_RELW DT_RELA
 #define ELFW_DT_RELWSZ DT_RELASZ
-
-#ifdef DEBUG
-#define _debug(...) printf(__VA_ARGS__)
-#else
-#define _debug(...)
-#endif
 
 struct __DLoader_Internal {
     uintptr_t load_bias;
@@ -120,7 +117,17 @@ static int prot_from_phdr(const ElfW(Phdr) *phdr)
         prot |= PROT_WRITE;
     if (phdr->p_flags & PF_X)
         prot |= PROT_EXEC;
+    /*
+     * FIXME
+     * In ARM, some global variables in .text will appear in .rel.dyn,
+     * and we need to give it WRITE permission to relocate it.
+     * It must be fixed due to security issue !!!
+     */
+#if defined(__X86_64__)
     return prot;
+#else
+    return prot |= PROT_WRITE;
+#endif
 }
 
 static inline
@@ -167,12 +174,18 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
     return 0;
 }
 
+/*
+ * Use pre-defined macro in arch/ to support different
+ * system-specific assembly, see lib-support.h.
+ */
 void plt_trampoline();
 asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
     "plt_trampoline:"                         "\n"
     POP_S(REG_ARG_1) /* Argument 1 */         "\n"
     POP_S(REG_ARG_2) /* Argument 2 */         "\n"
+    PUSH_STACK_STATE                          "\n"
     CALL(system_plt_resolver)                 "\n"
+    POP_STACK_STATE                           "\n"
     JMP_REG(REG_RET)                          "\n"
     ".popsection"                             "\n");
 
@@ -199,7 +212,6 @@ dloader_p api_load(const char *filename)
     switch (ehdr.e_machine) {
     case EM_X86_64:
     case EM_ARM:
-    case EM_AARCH64:
         break;
     default:
         fail(filename, "ELF file has wrong architecture!  ",
@@ -232,12 +244,9 @@ dloader_p api_load(const char *filename)
         --last_load;
 
     /*
-     * Total memory size of phdr with PT_LOAD: Assume phdrs are continuous/
+     * Total memory size of phdr between first and last PT_LOAD.
      */
     size_t span = last_load->p_vaddr + last_load->p_memsz - first_load->p_vaddr;
-    _debug("first_load: \t0x%" PRIxPTR "\n", (uintptr_t)first_load);
-    _debug("last_load: \t0x%" PRIxPTR "\n", (uintptr_t)last_load);
-    _debug("span: \t\t0x%zx\n", span);
 
     /*
      * Map the first segment and reserve the space used for the rest and
@@ -248,14 +257,11 @@ dloader_p api_load(const char *filename)
                          span, prot_from_phdr(first_load), MAP_PRIVATE, fd,
                          round_down(first_load->p_offset, pagesize));
 
-    _debug("mapping: \t0x%" PRIxPTR "\n", mapping);
     /*
      * Mapping will not always equal to round_down(first_load->p_vaddr, pagesize).
      */
     const ElfW(Addr) load_bias =
         mapping - round_down(first_load->p_vaddr, pagesize);
-
-    _debug("load_bias: \t0x%" PRIxPTR "\n", load_bias);
 
     if (first_load->p_offset > ehdr.e_phoff ||
         first_load->p_filesz <
@@ -303,29 +309,24 @@ dloader_p api_load(const char *filename)
         (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
 
-    _debug("relocs_size: \t0x%zx\n", relocs_size);
+    /*
+     * FIXME
+     * There is no RELA in ARM instead of REL,
+     * someone should make the condition code better.
+     */
+    if (relocs_size == 0) {
+      relocs =
+        (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, DT_REL));
+      relocs_size = get_dynamic_entry(dynamic, DT_RELSZ);
+    }
 
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
         switch (reloc_type) {
         case R_X86_64_RELATIVE:
-        {
-            _debug("R_X86_64_RELATIVE\n");
-            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
-            *addr += load_bias;
-            break;
-        }
         case R_ARM_RELATIVE:
         {
-            _debug("R_ARM_RELATIVE\n");
-            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
-            *addr += load_bias;
-            break;
-        }
-        case R_AARCH64_RELATIVE:
-        {
-            _debug("R_AARCH64_RELATIVE\n");
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             *addr += load_bias;
             break;
