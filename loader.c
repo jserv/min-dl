@@ -165,12 +165,12 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 }
 
 void plt_trampoline();
-asm(".pushsection \".text\",\"ax\",@progbits" "\n"
+asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
     "plt_trampoline:"                         "\n"
-    POP_S(%rdi) /* Argument 1 */              "\n"
-    POP_S(%rsi) /* Argument 2 */              "\n"
+    POP_S(REG_ARG_1) /* Argument 1 */         "\n"
+    POP_S(REG_ARG_2) /* Argument 2 */         "\n"
     CALL(system_plt_resolver)                 "\n"
-    JMP_S(*%rax)                              "\n"
+    JMP_REG(REG_RET)                          "\n"
     ".popsection"                             "\n");
 
 void *system_plt_resolver(dloader_p o, int import_id)

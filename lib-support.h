@@ -77,26 +77,26 @@ struct program_header {
 extern void *pltgot_imports[];
 
 #define MDL_PLT_BEGIN                                        \
-    asm(".pushsection \".text\",\"ax\",@progbits"       "\n" \
+    asm(".pushsection .text,\"ax\", \"progbits\""       "\n" \
         "slowpath_common:"                              "\n" \
         PUSH(plt_handle, REG_IP)                        "\n" \
         JMP(plt_trampoline, REG_IP)                     "\n" \
         ".popsection" /* start of PLTGOT table. */      "\n" \
-        ".pushsection \".my_pltgot\",\"aw\",@progbits"  "\n" \
+        ".pushsection .my_pltgot,\"aw\",\"progbits\""   "\n" \
         "pltgot_imports:"                               "\n" \
         ".popsection"                                   "\n");
 
 #define MDL_PLT_ENTRY(number, name)                          \
-    asm(".pushsection \".text\",\"ax\",@progbits"       "\n" \
+    asm(".pushsection .text,\"ax\", \"progbits\""       "\n" \
         #name ":"                                       "\n" \
         JMP(pltgot_ ##name, REG_IP)                     "\n" \
         "slowpath_" #name ":"                           "\n" \
-        PUSH_S($ ##number)                              "\n" \
+        PUSH_IMM($ ##number)                            "\n" \
         JMP_S(slowpath_common)                          "\n" \
         ".popsection" /* entry in PLTGOT table */       "\n" \
-        ".pushsection \".my_pltgot\",\"aw\",@progbits"  "\n" \
+        ".pushsection .my_pltgot,\"aw\",\"progbits\""   "\n" \
         "pltgot_" #name ":"                             "\n" \
-        ".quad slowpath_" #name                         "\n" \
+        ".quad " LABEL_PREFIX "slowpath_" #name         "\n" \
         ".popsection"                                   "\n");
 
 #define MDL_DEFINE_HEADER(user_info_value)                \
