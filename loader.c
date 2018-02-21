@@ -15,15 +15,8 @@
 
 #define MAX_PHNUM 12
 
-#if defined(__x86_64__)
-typedef ElfW(Rela) ElfW_Reloc;
-#else
-typedef ElfW(Rel) ElfW_Reloc;
-#endif
 #define ELFW_R_TYPE(x) ELFW(R_TYPE)(x)
 #define ELFW_R_SYM(x) ELFW(R_SYM)(x)
-#define ELFW_DT_RELW DT_RELA
-#define ELFW_DT_RELWSZ DT_RELASZ
 
 struct __DLoader_Internal {
     uintptr_t load_bias;
@@ -308,18 +301,6 @@ dloader_p api_load(const char *filename)
     ElfW_Reloc *relocs =
         (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
-
-    /*
-     * FIXME
-     * There is no RELA in ARM instead of REL,
-     * someone should make the condition code better.
-     */
-    if (relocs_size == 0) {
-      relocs =
-        (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, DT_REL));
-      relocs_size = get_dynamic_entry(dynamic, DT_RELSZ);
-    }
-
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);

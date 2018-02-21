@@ -14,53 +14,9 @@
 #endif
 
 #if defined(__x86_64__)
-#define _PUSH_S(x)   pushq x
-#define _PUSH(x,y)   pushq x(y)
-#define _PUSH_IMM(x) pushq $##x
-#define _POP_S(x)  pop x
-#define _POP(x,y)  pop x
-#define _JMP_S(x)  jmp x
-#define _JMP_REG(x) _JMP_S(x)
-#define _JMP(x,y)  jmp *x(y)
-#define _CALL(x)   call x
-#define REG_IP     %rip
-#define REG_ARG_1  %rdi
-#define REG_ARG_2  %rsi
-#define REG_RET    *%rax
-#define SYS_ADDR_ATTR "quad"
-#define LABEL_PREFIX
-
-#define PUSH_STACK_STATE
-#define POP_STACK_STATE
-
+#include "arch/x86_64.h"
 #elif defined(__arm__)
-#define _PUSH_S(x) push x
-#define _PUSH(x,y) \
-  ldr r3, =x   \n  \
-  ldr r2, [r3] \n  \
-  push {r2}
-#define _PUSH_IMM(x) \
-  mov r0, ES_HASH()x  \n  \
-  push {r0}
-#define _POP_S(x)   pop x
-#define _POP(x,y)   ldr x, [y]
-#define _JMP_S(x)   b x
-#define _JMP_REG(x) bx x
-#define _JMP(x,y) \
-  ldr r3, =x        \n   \
-  ldr r2, [r3]      \n   \
-  bx r2
-#define _CALL(x)    bl x
-#define REG_IP      ip
-#define REG_ARG_1   {r0}
-#define REG_ARG_2   {r1}
-#define REG_RET  r0
-#define LABEL_PREFIX  "="
-#define SYS_ADDR_ATTR "word"
-
-#define PUSH_STACK_STATE "push {r11, lr}"
-#define POP_STACK_STATE  "pop {r11, lr}"
-
+#include "arch/arm.h"
 #else
 #error "Unsupported architecture"
 #endif
