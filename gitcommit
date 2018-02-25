@@ -2,5 +2,5 @@
 git config --global user.email "smallville7123@gmail.com"
 git config --global user.name "mgood7123"
 git add --all
-git commit -m -a
+git commit -m "$1"
 git push --force origin master
