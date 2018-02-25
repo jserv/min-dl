@@ -1927,13 +1927,12 @@ int read_fast(const char *src, char *dest, int len) {
     return len;
 }
 
-// reads a string instead of a file descriptor, varifies length
+// reads a string instead of a file descriptor, verifies length
 int read_fast_verify(const char *src, int len_of_source, char **dest, int requested_len) {
-        // either has to be ** and inputted with & or needs to be malloced outside of the function
-        *dest = malloc(requested_len);
-    if (len_of_source < requested_len) {
-        memcpy(*dest, src, len_of_source);
-    } else memcpy(*dest, src, requested_len);
+    // either has to be ** and inputted with & or needs to be malloced outside of the function
+    *dest = malloc(requested_len);
+    if (len_of_source < requested_len) memcpy(*dest, src, len_of_source);
+    else memcpy(*dest, src, requested_len);
     return requested_len;
 }
 
