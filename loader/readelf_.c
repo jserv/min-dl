@@ -2206,11 +2206,6 @@ readelf_(const char * filename) {
             size_t span = elf_program_header[Last_Load_Header_index].p_vaddr + elf_program_header[Last_Load_Header_index].p_memsz - elf_program_header[First_Load_Header_index].p_vaddr;
 
             size_t pagesize = 0x1000;
-            
-            void * where = (void *) round_down(elf_program_header[First_Load_Header_index].p_vaddr, pagesize);
-
-            int offset = round_down(elf_program_header[First_Load_Header_index].p_offset, pagesize);
-
             uintptr_t mapping;
 
             printf("reading                %d\n", span);
