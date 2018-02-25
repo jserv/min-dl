@@ -1169,7 +1169,7 @@ void print_elf_symbol_table(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[
                 break;
         }
 }
-
+// delete this line so it is even
 
 void print_symbols(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[])
 {
