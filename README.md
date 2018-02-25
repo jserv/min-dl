@@ -13,8 +13,11 @@ revamped loader is in loader_
 original min-dl is in min-dl
 
 #### compilation:
+
 git clone https://github.com/mgood7123/min-dl-dynamic-loader.git
+
 cd min-dl-dynamic-loader/loader
+
 ./make_loader ./files/test_lib.so
 
 
