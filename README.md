@@ -4,8 +4,10 @@
       1. add support for address and variable retreival, at the moment it is only a info gathering tool
       
       2. find a way to initialize global variables required in functions for correct execution
+      
+      3. correct address bugs
 
-      3. Impliment As A Fully Functional Dynamic Loader
+      4. Impliment As A Fully Functional Dynamic Loader
  
 
 revamped loader is in loader_
