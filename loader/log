@@ -1021,5 +1021,141 @@ The program no longer exists.
 The program being debugged exited while in a function called from GDB.
 Evaluation of the expression containing the function
 (_gdb_expr) will be abandoned.
+pwndbg> shell objdump -d files/test_lib.so
+
+files/test_lib.so:     file format elf64-x86-64
+
+
+Disassembly of section .init:
+
+00000000000005a0 <_init>:
+ 5a0:   48 83 ec 08             sub    $0x8,%rsp
+ 5a4:   48 8b 05 35 0a 20 00    mov    0x200a35(%rip),%rax        # 200fe0 <__gmon_start__>
+ 5ab:   48 85 c0                test   %rax,%rax
+ 5ae:   74 02                   je     5b2 <_init+0x12>
+ 5b0:   ff d0                   callq  *%rax
+ 5b2:   48 83 c4 08             add    $0x8,%rsp
+ 5b6:   c3                      retq   
+
+Disassembly of section .plt:
+
+00000000000005c0 <.plt>:
+ 5c0:   ff 35 42 0a 20 00       pushq  0x200a42(%rip)        # 201008 <_GLOBAL_OFFSET_TABLE_+0x8>
+ 5c6:   ff 25 44 0a 20 00       jmpq   *0x200a44(%rip)        # 201010 <_GLOBAL_OFFSET_TABLE_+0x10>
+ 5cc:   0f 1f 40 00             nopl   0x0(%rax)
+
+00000000000005d0 <printf@plt>:
+ 5d0:   ff 25 42 0a 20 00       jmpq   *0x200a42(%rip)        # 201018 <printf@GLIBC_2.2.5>
+ 5d6:   68 00 00 00 00          pushq  $0x0
+ 5db:   e9 e0 ff ff ff          jmpq   5c0 <.plt>
+
+Disassembly of section .plt.got:
+
+00000000000005e0 <.plt.got>:
+ 5e0:   ff 25 12 0a 20 00       jmpq   *0x200a12(%rip)        # 200ff8 <__cxa_finalize@GLIBC_2.2.5>
+ 5e6:   66 90                   xchg   %ax,%ax
+
+Disassembly of section .text:
+
+00000000000005f0 <deregister_tm_clones>:
+ 5f0:   48 8d 3d 39 0a 20 00    lea    0x200a39(%rip),%rdi        # 201030 <_edata>
+ 5f7:   48 8d 05 39 0a 20 00    lea    0x200a39(%rip),%rax        # 201037 <_edata+0x7>
+ 5fe:   55                      push   %rbp
+ 5ff:   48 29 f8                sub    %rdi,%rax
+ 602:   48 89 e5                mov    %rsp,%rbp
+ 605:   48 83 f8 0e             cmp    $0xe,%rax
+ 609:   76 15                   jbe    620 <deregister_tm_clones+0x30>
+ 60b:   48 8b 05 be 09 20 00    mov    0x2009be(%rip),%rax        # 200fd0 <_ITM_deregisterTMCloneTable>
+ 612:   48 85 c0                test   %rax,%rax
+ 615:   74 09                   je     620 <deregister_tm_clones+0x30>
+ 617:   5d                      pop    %rbp
+ 618:   ff e0                   jmpq   *%rax
+ 61a:   66 0f 1f 44 00 00       nopw   0x0(%rax,%rax,1)
+ 620:   5d                      pop    %rbp
+ 621:   c3                      retq   
+ 622:   0f 1f 40 00             nopl   0x0(%rax)
+ 626:   66 2e 0f 1f 84 00 00    nopw   %cs:0x0(%rax,%rax,1)
+ 62d:   00 00 00 
+
+0000000000000630 <register_tm_clones>:
+ 630:   48 8d 3d f9 09 20 00    lea    0x2009f9(%rip),%rdi        # 201030 <_edata>
+ 637:   48 8d 35 f2 09 20 00    lea    0x2009f2(%rip),%rsi        # 201030 <_edata>
+ 63e:   55                      push   %rbp
+ 63f:   48 29 fe                sub    %rdi,%rsi
+ 642:   48 89 e5                mov    %rsp,%rbp
+ 645:   48 c1 fe 03             sar    $0x3,%rsi
+ 649:   48 89 f0                mov    %rsi,%rax
+ 64c:   48 c1 e8 3f             shr    $0x3f,%rax
+ 650:   48 01 c6                add    %rax,%rsi
+ 653:   48 d1 fe                sar    %rsi
+ 656:   74 18                   je     670 <register_tm_clones+0x40>
+ 658:   48 8b 05 91 09 20 00    mov    0x200991(%rip),%rax        # 200ff0 <_ITM_registerTMCloneTable>
+ 65f:   48 85 c0                test   %rax,%rax
+ 662:   74 0c                   je     670 <register_tm_clones+0x40>
+ 664:   5d                      pop    %rbp
+ 665:   ff e0                   jmpq   *%rax
+ 667:   66 0f 1f 84 00 00 00    nopw   0x0(%rax,%rax,1)
+ 66e:   00 00 
+ 670:   5d                      pop    %rbp
+ 671:   c3                      retq   
+ 672:   0f 1f 40 00             nopl   0x0(%rax)
+ 676:   66 2e 0f 1f 84 00 00    nopw   %cs:0x0(%rax,%rax,1)
+ 67d:   00 00 00 
+
+0000000000000680 <__do_global_dtors_aux>:
+ 680:   80 3d a9 09 20 00 00    cmpb   $0x0,0x2009a9(%rip)        # 201030 <_edata>
+ 687:   75 27                   jne    6b0 <__do_global_dtors_aux+0x30>
+ 689:   48 83 3d 67 09 20 00    cmpq   $0x0,0x200967(%rip)        # 200ff8 <__cxa_finalize@GLIBC_2.2.5>
+ 690:   00 
+ 691:   55                      push   %rbp
+ 692:   48 89 e5                mov    %rsp,%rbp
+ 695:   74 0c                   je     6a3 <__do_global_dtors_aux+0x23>
+ 697:   48 8b 3d 82 09 20 00    mov    0x200982(%rip),%rdi        # 201020 <__dso_handle>
+ 69e:   e8 3d ff ff ff          callq  5e0 <.plt.got>
+ 6a3:   e8 48 ff ff ff          callq  5f0 <deregister_tm_clones>
+ 6a8:   5d                      pop    %rbp
+ 6a9:   c6 05 80 09 20 00 01    movb   $0x1,0x200980(%rip)        # 201030 <_edata>
+ 6b0:   f3 c3                   repz retq 
+ 6b2:   0f 1f 40 00             nopl   0x0(%rax)
+ 6b6:   66 2e 0f 1f 84 00 00    nopw   %cs:0x0(%rax,%rax,1)
+ 6bd:   00 00 00 
+
+00000000000006c0 <frame_dummy>:
+ 6c0:   48 8d 3d 41 07 20 00    lea    0x200741(%rip),%rdi        # 200e08 <__JCR_END__>
+ 6c7:   48 83 3f 00             cmpq   $0x0,(%rdi)
+ 6cb:   75 0b                   jne    6d8 <frame_dummy+0x18>
+ 6cd:   e9 5e ff ff ff          jmpq   630 <register_tm_clones>
+ 6d2:   66 0f 1f 44 00 00       nopw   0x0(%rax,%rax,1)
+ 6d8:   48 8b 05 09 09 20 00    mov    0x200909(%rip),%rax        # 200fe8 <_Jv_RegisterClasses>
+ 6df:   48 85 c0                test   %rax,%rax
+ 6e2:   74 e9                   je     6cd <frame_dummy+0xd>
+ 6e4:   55                      push   %rbp
+ 6e5:   48 89 e5                mov    %rsp,%rbp
+ 6e8:   ff d0                   callq  *%rax
+ 6ea:   5d                      pop    %rbp
+ 6eb:   e9 40 ff ff ff          jmpq   630 <register_tm_clones>
+
+00000000000006f0 <ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh>:
+ 6f0:   55                      push   %rbp
+ 6f1:   48 89 e5                mov    %rsp,%rbp
+ 6f4:   48 83 ec 10             sub    $0x10,%rsp
+ 6f8:   c7 45 fc d7 04 00 00    movl   $0x4d7,-0x4(%rbp)
+ 6ff:   48 8b 05 d2 08 20 00    mov    0x2008d2(%rip),%rax        # 200fd8 <TESTTTTTTTTTTTTTT@@Base-0x50>
+ 706:   8b 00                   mov    (%rax),%eax
+ 708:   8b 55 fc                mov    -0x4(%rbp),%edx
+ 70b:   89 c6                   mov    %eax,%esi
+ 70d:   48 8d 3d 1c 00 00 00    lea    0x1c(%rip),%rdi        # 730 <_fini+0xc>
+ 714:   b8 00 00 00 00          mov    $0x0,%eax
+ 719:   e8 b2 fe ff ff          callq  5d0 <printf@plt>
+ 71e:   90                      nop
+ 71f:   c9                      leaveq 
+ 720:   c3                      retq   
+
+Disassembly of section .fini:
+
+0000000000000724 <_fini>:
+ 724:   48 83 ec 08             sub    $0x8,%rsp
+ 728:   48 83 c4 08             add    $0x8,%rsp
+ 72c:   c3                      retq   
 pwndbg> q
 [exec@exec-pc min-dl]$
