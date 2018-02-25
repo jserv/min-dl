@@ -10,7 +10,7 @@
       4. Impliment As A Fully Functional Dynamic Loader
  
 
-revamped loader is in loader_
+re-written loader is in loader (https://github.com/mgood7123/min-dl-dynamic-loader/blob/master/loader/)
 
 original min-dl is in min-dl
 
