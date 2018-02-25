@@ -1,368 +1,35 @@
-[exec@exec-pc loader]$ ./make_loader ./files/test_lib.so
-removed 'files/readelf_.a'
-removed 'files/readelf_.o'
-removed 'files/libstring.a'
-removed 'files/loader'
-removed 'files/readelf_.so'
-removed 'files/libstring.so'
-removed 'files/test_lib.o'
-removed 'files/test_lib.a'
-removed 'files/libstring.o'
-removed 'files/test_lib.so'
-removed directory 'files'
-libstring.c: In function ‘abort_’:
-libstring.c:73:207: warning: passing argument 1 of ‘getaux’ makes pointer from integer without a cast [-Wint-conversion]
-     printf("%s: cannot continue, pausing execution to allow for debugging\nif you do now know how to debug this process as paused execute the following in a new terminal:\n\n    sudo gdb -p %d\n\n", getaux(AT_EXECFN), getpid());
-                                                                                                                                                                                                               ^~~~~~~~~
-libstring.c:68:8: note: expected ‘void *’ but argument is of type ‘int’
- void * getaux(void * type);
-        ^~~~~~
-libstring.c: At top level:
-libstring.c:99:1: warning: constructor priorities from 0 to 100 are reserved for the implementation
- init_aux() {
- ^~~~~~~~
-libstring.c: In function ‘getaux’:
-libstring.c:117:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c:332:17: warning: comparison between pointer and integer
-         if (num == type) {
-                 ^~
-libstring.c: In function ‘setaux’:
-libstring.c:357:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c:358:22: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-         size_t tmp = (size_t *)(argv+i+1+ii)[0];
-                      ^
-libstring.c:572:17: warning: comparison between pointer and integer
-         if (num == type) {
-                 ^~
-libstring.c:593:10: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-     type = -1;
-          ^
-libstring.c: At top level:
-libstring.c:597:1: warning: constructor priorities from 0 to 100 are reserved for the implementation
- currentaux() {
- ^~~~~~~~~~
-libstring.c: In function ‘currentaux’:
-libstring.c:609:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c: In function ‘print_quoted_string_catraw’:
-libstring.c:1159:16: warning: return makes integer from pointer without a cast [-Wint-conversion]
-         return outstr;
-                ^~~~~~
-libstring.c: In function ‘testtype’:
-libstring.c:1625:24: warning: return makes pointer from integer without a cast [-Wint-conversion]
-                 return 1;
-                        ^
-libstring.c:1669:24: warning: return makes pointer from integer without a cast [-Wint-conversion]
-                 return 1;
-                        ^
-libstring.c: In function ‘sizeof_’:
-libstring.c:1948:18: warning: ‘sizeof’ on array function parameter ‘str’ will return size of ‘const char *’ [-Wsizeof-array-argument]
-     return sizeof(str);
-                  ^
-libstring.c:1947:27: note: declared here
- size_t sizeof_(const char str[]) {
-                           ^~~
-libstring.c: In function ‘fread_’:
-libstring.c:1976:19: warning: passing argument 1 of ‘lseek_stringc’ from incompatible pointer type [-Wincompatible-pointer-types]
-     lseek_stringc(&src, 1, 0, 1);
-                   ^
-libstring.c:1951:6: note: expected ‘char **’ but argument is of type ‘const char **’
- void lseek_stringc(char **src, int len, int offset, int offsetT) {
-      ^~~~~~~~~~~~~
-libstring.c: In function ‘resolve_and_re_execute_debug’:
-libstring.c:2255:16: warning: return makes pointer from integer without a cast [-Wint-conversion]
-         return -1;
-                ^
-libstring.c:2499:12: warning: return from incompatible pointer type [-Wincompatible-pointer-types]
-     return testtype(path);
-            ^~~~~~~~~~~~~~
-libstring.c: In function ‘abort_’:
-libstring.c:73:207: warning: passing argument 1 of ‘getaux’ makes pointer from integer without a cast [-Wint-conversion]
-     printf("%s: cannot continue, pausing execution to allow for debugging\nif you do now know how to debug this process as paused execute the following in a new terminal:\n\n    sudo gdb -p %d\n\n", getaux(AT_EXECFN), getpid());
-                                                                                                                                                                                                               ^~~~~~~~~
-libstring.c:68:8: note: expected ‘void *’ but argument is of type ‘int’
- void * getaux(void * type);
-        ^~~~~~
-libstring.c: At top level:
-libstring.c:99:1: warning: constructor priorities from 0 to 100 are reserved for the implementation
- init_aux() {
- ^~~~~~~~
-libstring.c: In function ‘getaux’:
-libstring.c:117:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c:332:17: warning: comparison between pointer and integer
-         if (num == type) {
-                 ^~
-libstring.c: In function ‘setaux’:
-libstring.c:357:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c:358:22: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-         size_t tmp = (size_t *)(argv+i+1+ii)[0];
-                      ^
-libstring.c:572:17: warning: comparison between pointer and integer
-         if (num == type) {
-                 ^~
-libstring.c:593:10: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-     type = -1;
-          ^
-libstring.c: At top level:
-libstring.c:597:1: warning: constructor priorities from 0 to 100 are reserved for the implementation
- currentaux() {
- ^~~~~~~~~~
-libstring.c: In function ‘currentaux’:
-libstring.c:609:22: warning: comparison between pointer and integer
-     for (int ii=0; ii<=(argv+i+1)[0]+(2*20); ii+=2) { // 20 extra incase auxv does not have the same vectors for every machine (could have more than +4)
-                      ^~
-libstring.c: In function ‘print_quoted_string_catraw’:
-libstring.c:1159:16: warning: return makes integer from pointer without a cast [-Wint-conversion]
-         return outstr;
-                ^~~~~~
-libstring.c: In function ‘testtype’:
-libstring.c:1625:24: warning: return makes pointer from integer without a cast [-Wint-conversion]
-                 return 1;
-                        ^
-libstring.c:1669:24: warning: return makes pointer from integer without a cast [-Wint-conversion]
-                 return 1;
-                        ^
-libstring.c: In function ‘sizeof_’:
-libstring.c:1948:18: warning: ‘sizeof’ on array function parameter ‘str’ will return size of ‘const char *’ [-Wsizeof-array-argument]
-     return sizeof(str);
-                  ^
-libstring.c:1947:27: note: declared here
- size_t sizeof_(const char str[]) {
-                           ^~~
-libstring.c: In function ‘fread_’:
-libstring.c:1976:19: warning: passing argument 1 of ‘lseek_stringc’ from incompatible pointer type [-Wincompatible-pointer-types]
-     lseek_stringc(&src, 1, 0, 1);
-                   ^
-libstring.c:1951:6: note: expected ‘char **’ but argument is of type ‘const char **’
- void lseek_stringc(char **src, int len, int offset, int offsetT) {
-      ^~~~~~~~~~~~~
-libstring.c: In function ‘resolve_and_re_execute_debug’:
-libstring.c:2255:16: warning: return makes pointer from integer without a cast [-Wint-conversion]
-         return -1;
-                ^
-libstring.c:2499:12: warning: return from incompatible pointer type [-Wincompatible-pointer-types]
-     return testtype(path);
-            ^~~~~~~~~~~~~~
-ar: `u' modifier ignored since `D' is the default (see `U')
-readelf_.c: In function ‘demangle_it’:
-readelf_.c:45:43: warning: implicit declaration of function ‘strjoin_’ [-Wimplicit-function-declaration]
-   else if (mangled_name[0] == '.') return strjoin_(".", result); else return result;
-                                           ^~~~~~~~
-readelf_.c:45:43: warning: return makes pointer from integer without a cast [-Wint-conversion]
-   else if (mangled_name[0] == '.') return strjoin_(".", result); else return result;
-                                           ^~~~~~~~~~~~~~~~~~~~~
-readelf_.c: In function ‘init_handlerb’:
-readelf_.c:97:22: warning: assignment from incompatible pointer type [-Wincompatible-pointer-types]
-     sab.sa_sigaction = Handlerb;
-                      ^
-readelf_.c:100:9: warning: implicit declaration of function ‘pause’ [-Wimplicit-function-declaration]
-         pause();
-         ^~~~~
-readelf_.c: In function ‘init_handler’:
-readelf_.c:180:21: warning: assignment from incompatible pointer type [-Wincompatible-pointer-types]
-     sa.sa_sigaction = Handler;
-                     ^
-readelf_.c: In function ‘callback’:
-readelf_.c:298:13: warning: implicit declaration of function ‘bytecmp’ [-Wimplicit-function-declaration]
-         if (bytecmp(info->dlpi_name, argv[1]) == 0) for (j = 0; j < info->dlpi_phnum; j++) {
-             ^~~~~~~
-readelf_.c:365:16: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-         *tmp98 = info->dlpi_phdr[j].p_offset;
-                ^
-readelf_.c:373:33: warning: passing argument 1 of ‘__print_quoted_string__’ from incompatible pointer type [-Wincompatible-pointer-types]
-         __print_quoted_string__(tmp98, info->dlpi_phdr[j].p_memsz, 0, "print");
-                                 ^~~~~
-readelf_.c:48:8: note: expected ‘const char *’ but argument is of type ‘char **’
- char * __print_quoted_string__(const char *str, unsigned int size, const unsigned int style, const char * return_type);
-        ^~~~~~~~~~~~~~~~~~~~~~~
-readelf_.c: In function ‘symbol’:
-readelf_.c:883:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address+align;
-                     ^
-readelf_.c:888:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address;
-                     ^
-readelf_.c:891:22: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                      ^
-readelf_.c:891:48: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                                                ^
-readelf_.c: In function ‘relocation’:
-readelf_.c:1024:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address+align;
-                     ^
-readelf_.c:1029:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address;
-                     ^
-readelf_.c:1032:22: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                      ^
-readelf_.c:1032:48: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                                                ^
-readelf_.c: In function ‘lookup_symbol_by_index’:
-readelf_.c:1350:25: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
-         char * symbol = &_elf_symbol_table[symbol_index];
-                         ^
-readelf_.c:1352:16: warning: return makes pointer from integer without a cast [-Wint-conversion]
-         return *symbol;
-                ^~~~~~~
-readelf_.c: In function ‘readelf_’:
-readelf_.c:2156:31: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int PT_DYNAMIC_ = NULL;
-                               ^~~~
-readelf_.c:2188:43: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int First_Load_Header_index = NULL;
-                                           ^~~~
-readelf_.c:2189:42: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int Last_Load_Header_index = NULL;
-                                          ^~~~
-readelf_.c:2219:13: warning: implicit declaration of function ‘read_fast_verify’ [-Wimplicit-function-declaration]
-             read_fast_verify(array, len, &mapping, span);
-             ^~~~~~~~~~~~~~~~
-readelf_.c:2231:45: warning: implicit declaration of function ‘abort_’ [-Wimplicit-function-declaration]
-             if (base_address == 0x00000000) abort_();
-                                             ^~~~~~
-readelf_.c:2257:56: warning: passing argument 1 of ‘mmap’ makes pointer from integer without a cast [-Wint-conversion]
-                         char *check_map_success = mmap(round_up(base_address+elf_program_header[i].p_vaddr, elf_program_header[i].p_align), elf_program_header[i].p_memsz, elf_program_header[i].p_flags, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-                                                        ^~~~~~~~
-In file included from readelf_.c:397:0:
-/usr/include/sys/mman.h:57:14: note: expected ‘void *’ but argument is of type ‘uintptr_t {aka long unsigned int}’
- extern void *mmap (void *__addr, size_t __len, int __prot,
-              ^~~~
-readelf_.c:2267:25: warning: implicit declaration of function ‘print_maps’ [-Wimplicit-function-declaration]
-                         print_maps();
-                         ^~~~~~~~~~
-readelf_.c:2371:17: warning: implicit declaration of function ‘nl’ [-Wimplicit-function-declaration]
-                 nl();
-                 ^~
-readelf_.c:2398:39: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
-                 ElfW(Dyn) * dynamic = tmp99D;
-                                       ^~~~~~
-readelf_.c: In function ‘demangle_it’:
-readelf_.c:45:43: warning: implicit declaration of function ‘strjoin_’ [-Wimplicit-function-declaration]
-   else if (mangled_name[0] == '.') return strjoin_(".", result); else return result;
-                                           ^~~~~~~~
-readelf_.c:45:43: warning: return makes pointer from integer without a cast [-Wint-conversion]
-   else if (mangled_name[0] == '.') return strjoin_(".", result); else return result;
-                                           ^~~~~~~~~~~~~~~~~~~~~
-readelf_.c: In function ‘init_handlerb’:
-readelf_.c:97:22: warning: assignment from incompatible pointer type [-Wincompatible-pointer-types]
-     sab.sa_sigaction = Handlerb;
-                      ^
-readelf_.c:100:9: warning: implicit declaration of function ‘pause’ [-Wimplicit-function-declaration]
-         pause();
-         ^~~~~
-readelf_.c: In function ‘init_handler’:
-readelf_.c:180:21: warning: assignment from incompatible pointer type [-Wincompatible-pointer-types]
-     sa.sa_sigaction = Handler;
-                     ^
-readelf_.c: In function ‘callback’:
-readelf_.c:298:13: warning: implicit declaration of function ‘bytecmp’ [-Wimplicit-function-declaration]
-         if (bytecmp(info->dlpi_name, argv[1]) == 0) for (j = 0; j < info->dlpi_phnum; j++) {
-             ^~~~~~~
-readelf_.c:365:16: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-         *tmp98 = info->dlpi_phdr[j].p_offset;
-                ^
-readelf_.c:373:33: warning: passing argument 1 of ‘__print_quoted_string__’ from incompatible pointer type [-Wincompatible-pointer-types]
-         __print_quoted_string__(tmp98, info->dlpi_phdr[j].p_memsz, 0, "print");
-                                 ^~~~~
-readelf_.c:48:8: note: expected ‘const char *’ but argument is of type ‘char **’
- char * __print_quoted_string__(const char *str, unsigned int size, const unsigned int style, const char * return_type);
-        ^~~~~~~~~~~~~~~~~~~~~~~
-readelf_.c: In function ‘symbol’:
-readelf_.c:883:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address+align;
-                     ^
-readelf_.c:888:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address;
-                     ^
-readelf_.c:891:22: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                      ^
-readelf_.c:891:48: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                                                ^
-readelf_.c: In function ‘relocation’:
-readelf_.c:1024:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address+align;
-                     ^
-readelf_.c:1029:21: warning: assignment makes pointer from integer without a cast [-Wint-conversion]
-             address = sym_tbl[i].st_value+base_address;
-                     ^
-readelf_.c:1032:22: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                      ^
-readelf_.c:1032:48: warning: comparison between pointer and integer
-         if ( address > base_address && address < base_address_end ) test(address);
-                                                ^
-readelf_.c: In function ‘lookup_symbol_by_index’:
-readelf_.c:1350:25: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
-         char * symbol = &_elf_symbol_table[symbol_index];
-                         ^
-readelf_.c:1352:16: warning: return makes pointer from integer without a cast [-Wint-conversion]
-         return *symbol;
-                ^~~~~~~
-readelf_.c: In function ‘readelf_’:
-readelf_.c:2156:31: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int PT_DYNAMIC_ = NULL;
-                               ^~~~
-readelf_.c:2188:43: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int First_Load_Header_index = NULL;
-                                           ^~~~
-readelf_.c:2189:42: warning: initialization makes integer from pointer without a cast [-Wint-conversion]
-             int Last_Load_Header_index = NULL;
-                                          ^~~~
-readelf_.c:2219:13: warning: implicit declaration of function ‘read_fast_verify’ [-Wimplicit-function-declaration]
-             read_fast_verify(array, len, &mapping, span);
-             ^~~~~~~~~~~~~~~~
-readelf_.c:2231:45: warning: implicit declaration of function ‘abort_’ [-Wimplicit-function-declaration]
-             if (base_address == 0x00000000) abort_();
-                                             ^~~~~~
-readelf_.c:2257:56: warning: passing argument 1 of ‘mmap’ makes pointer from integer without a cast [-Wint-conversion]
-                         char *check_map_success = mmap(round_up(base_address+elf_program_header[i].p_vaddr, elf_program_header[i].p_align), elf_program_header[i].p_memsz, elf_program_header[i].p_flags, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-                                                        ^~~~~~~~
-In file included from readelf_.c:397:0:
-/usr/include/sys/mman.h:57:14: note: expected ‘void *’ but argument is of type ‘uintptr_t {aka long unsigned int}’
- extern void *mmap (void *__addr, size_t __len, int __prot,
-              ^~~~
-readelf_.c:2267:25: warning: implicit declaration of function ‘print_maps’ [-Wimplicit-function-declaration]
-                         print_maps();
-                         ^~~~~~~~~~
-readelf_.c:2371:17: warning: implicit declaration of function ‘nl’ [-Wimplicit-function-declaration]
-                 nl();
-                 ^~
-readelf_.c:2398:39: warning: initialization from incompatible pointer type [-Wincompatible-pointer-types]
-                 ElfW(Dyn) * dynamic = tmp99D;
-                                       ^~~~~~
-ar: `u' modifier ignored since `D' is the default (see `U')
-ar: `u' modifier ignored since `D' is the default (see `U')
-test_loader.c: In function ‘main’:
-test_loader.c:18:5: warning: implicit declaration of function ‘readelf_’ [-Wimplicit-function-declaration]
-     readelf_(argv[1]);
-     ^~~~~~~~
+GNU gdb (GDB) 8.0.1
+Copyright (C) 2017 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type "show copying"
+and "show warranty" for details.
+This GDB was configured as "x86_64-pc-linux-gnu".
+Type "show configuration" for configuration details.
+For bug reporting instructions, please see:
+<http://www.gnu.org/software/gdb/bugs/>.
+Find the GDB manual and other documentation resources online at:
+<http://www.gnu.org/software/gdb/documentation/>.
+For help, type "help".
+Type "apropos word" to search for commands related to "word"...
+Loaded 106 commands. Type pwndbg [filter] for a list.
+Reading symbols from ./files/loader...done.
+Breakpoint 1 at 0x4009fd: file test_loader.c, line 41.
+Signal        Stop      Print   Pass to program Description
+SIGSEGV       No        No      Yes             Segmentation fault
+Starting program: /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader ./files/test_lib.so
 ----------------------------------------------------------------------->called init_aux() at line 100 from libstring.c
 ----------------------------------------------------------------------->called init_env() at line 80 from libstring.c
 ----------------------------------------------------------------------->called init_argX() at line 88 from libstring.c
 ----------------------------------------------------------------------->called currentaux() at line 598 from libstring.c
-AT_SYSINFO_EHDR = 0x7ffe24c87000
+AT_SYSINFO_EHDR = 0x7fef12634000
 AT_HWCAP = 0x178bfbff
 AT_PAGESZ = 4096
 AT_CLKTCK = 100
 AT_PHDR = 0x400040
 AT_PHENT = 56
 AT_PHNUM = 9
-AT_BASE = 0x7fcf42ded000
+AT_BASE = 0x7fef12414000
 AT_FLAGS = (nil)
 AT_ENTRY = 0x400740
 AT_UID = 1000
@@ -371,9 +38,9 @@ AT_GID = 1001
 AT_EGID = 1001
 AT_SECURE = 0
 AT_HWCAP2 = (nil)
-AT_EXECFN = ./files/loader
+AT_EXECFN = /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
 AT_PLATFORM = x86_64
-map succeded with address: 0x7fcf43005000
+map succeded with address: 0x7fef12627000
 Name:        ./files/test_lib.so
 ELF Identifier   ELF (\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00 )
 Architecture  64-bit
@@ -395,149 +62,149 @@ called round_down
 called round_down
 reading                2101304
 called round_down
-base address range = 0x7fcf4200b010 - 0x7fcf4220c048
-mapping = 0x7fcf4220b010
+base address range = 0x7fef11632010 - 0x7fef11833048
+mapping = 0x7fef11832010
 
 
 
-find 0x7fcf4220b010, 0x7fcf4220c048, (int) 1239
+find 0x7fef11832010, 0x7fef11833048, (int) 1239
 
 
 
 mapping PT_LOAD number 1
             p_flags:  0x000000000005
             p_offset:          (nil)
-            p_vaddr:  0x7fcf4200b010
+            p_vaddr:  0x7fef11632010
             p_paddr:           (nil)
-            p_filesz: 0x0000000007dc
-            p_memsz:  0x0000000007dc
+            p_filesz: 0x0000000007f4
+            p_memsz:  0x0000000007f4
             p_align:  0x000000200000
 
-        p_flags: 0x000000000005 p_offset:          (nil) p_vaddr: 0x7fcf4200b010 p_paddr:          (nil) p_filesz: 0x0000000007dc p_memsz: 0x0000000007dc p_align: 0x000000200000
+        p_flags: 0x000000000005 p_offset:          (nil) p_vaddr: 0x7fef11632010 p_paddr:          (nil) p_filesz: 0x0000000007f4 p_memsz: 0x0000000007f4 p_align: 0x000000200000
 
 
 called round_up
-round_up(0x7fcf4200b010+         (nil), 0x000000200000) = 0x7fcf42200000
+round_up(0x7fef11632010+         (nil), 0x000000200000) = 0x7fef11800000
 called round_up
-map succeded with address: 0x7fcf42200000 and size: 2012 (0x0000000007dc)
-00400000-00401000 r-xp 00000000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-00600000-00601000 r-xp 00000000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-00601000-00602000 rwxp 00001000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-01b28000-01b49000 rwxp 00000000 00:00 0                                  [heap]
-7fcf42200000-7fcf42201000 r-xp 00000000 00:00 0 
-7fcf4220b000-7fcf4240d000 rwxp 00000000 00:00 0 
-7fcf4240d000-7fcf425a8000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf425a8000-7fcf427a7000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427a7000-7fcf427ab000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427ab000-7fcf427ad000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427ad000-7fcf427b1000 rwxp 00000000 00:00 0 
-7fcf427b1000-7fcf427b4000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf427b4000-7fcf429b3000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b3000-7fcf429b4000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b4000-7fcf429b5000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b5000-7fcf429db000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf429db000-7fcf42bdb000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bdb000-7fcf42bdd000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bdd000-7fcf42bde000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bde000-7fcf42be9000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42be9000-7fcf42de8000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42de8000-7fcf42de9000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42de9000-7fcf42dea000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42dea000-7fcf42ded000 rwxp 00000000 00:00 0 
-7fcf42ded000-7fcf42e10000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf42e40000-7fcf42fd9000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
-7fcf42fd9000-7fcf42fdc000 rwxp 00000000 00:00 0 
-7fcf43005000-7fcf4300d000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
-7fcf4300d000-7fcf4300f000 rwxp 00000000 00:00 0 
-7fcf4300f000-7fcf43010000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf43010000-7fcf43011000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf43011000-7fcf43012000 rwxp 00000000 00:00 0 
-7ffe24be8000-7ffe24c09000 rwxp 00000000 00:00 0                          [stack]
-7ffe24c84000-7ffe24c87000 r--p 00000000 00:00 0                          [vvar]
-7ffe24c87000-7ffe24c89000 r-xp 00000000 00:00 0                          [vdso]
+map succeded with address: 0x7fef11800000 and size: 2036 (0x0000000007f4)
+00400000-00401000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00600000-00601000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00601000-00602000 rwxp 00001000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00602000-00623000 rwxp 00000000 00:00 0                                  [heap]
+7fef11800000-7fef11801000 r-xp 00000000 00:00 0 
+7fef11832000-7fef11a34000 rwxp 00000000 00:00 0 
+7fef11a34000-7fef11bcf000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11bcf000-7fef11dce000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dce000-7fef11dd2000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd2000-7fef11dd4000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd4000-7fef11dd8000 rwxp 00000000 00:00 0 
+7fef11dd8000-7fef11ddb000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11ddb000-7fef11fda000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fda000-7fef11fdb000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdb000-7fef11fdc000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdc000-7fef12002000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12002000-7fef12202000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12202000-7fef12204000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12204000-7fef12205000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12205000-7fef12210000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12210000-7fef1240f000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef1240f000-7fef12410000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12410000-7fef12411000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12411000-7fef12414000 rwxp 00000000 00:00 0 
+7fef12414000-7fef12437000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12462000-7fef125fb000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
+7fef125fb000-7fef125fe000 rwxp 00000000 00:00 0 
+7fef12627000-7fef1262f000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
+7fef1262f000-7fef12631000 rwxp 00000000 00:00 0 
+7fef12631000-7fef12634000 r--p 00000000 00:00 0                          [vvar]
+7fef12634000-7fef12636000 r-xp 00000000 00:00 0                          [vdso]
+7fef12636000-7fef12637000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12637000-7fef12638000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12638000-7fef12639000 rwxp 00000000 00:00 0 
+7ffffffde000-7ffffffff000 rwxp 00000000 00:00 0                          [stack]
 ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
 mapping PT_LOAD number 2
             p_flags:  0x000000000006
             p_offset: 0x000000000df8
-            p_vaddr:  0x7fcf4220be08
+            p_vaddr:  0x7fef11832e08
             p_paddr:  0x000000200df8
             p_filesz: 0x000000000238
             p_memsz:  0x000000000240
             p_align:  0x000000200000
 
-        p_flags: 0x000000000006 p_offset: 0x000000000df8 p_vaddr: 0x7fcf4220be08 p_paddr: 0x000000200df8 p_filesz: 0x000000000238 p_memsz: 0x000000000240 p_align: 0x000000200000
+        p_flags: 0x000000000006 p_offset: 0x000000000df8 p_vaddr: 0x7fef11832e08 p_paddr: 0x000000200df8 p_filesz: 0x000000000238 p_memsz: 0x000000000240 p_align: 0x000000200000
 
 
 called round_up
-round_up(0x7fcf4200b010+0x000000200df8, 0x000000200000) = 0x7fcf42400000
+round_up(0x7fef11632010+0x000000200df8, 0x000000200000) = 0x7fef11a00000
 called round_up
-map succeded with address: 0x7fcf42400000 and size: 576 (0x000000000240)
-00400000-00401000 r-xp 00000000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-00600000-00601000 r-xp 00000000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-00601000-00602000 rwxp 00001000 fe:00 1888083                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
-01b28000-01b49000 rwxp 00000000 00:00 0                                  [heap]
-7fcf42200000-7fcf42201000 r-xp 00000000 00:00 0 
-7fcf4220b000-7fcf42400000 rwxp 00000000 00:00 0 
-7fcf42400000-7fcf42401000 -wxp 00000000 00:00 0 
-7fcf42401000-7fcf4240d000 rwxp 00000000 00:00 0 
-7fcf4240d000-7fcf425a8000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf425a8000-7fcf427a7000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427a7000-7fcf427ab000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427ab000-7fcf427ad000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
-7fcf427ad000-7fcf427b1000 rwxp 00000000 00:00 0 
-7fcf427b1000-7fcf427b4000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf427b4000-7fcf429b3000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b3000-7fcf429b4000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b4000-7fcf429b5000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
-7fcf429b5000-7fcf429db000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf429db000-7fcf42bdb000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bdb000-7fcf42bdd000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bdd000-7fcf42bde000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
-7fcf42bde000-7fcf42be9000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42be9000-7fcf42de8000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42de8000-7fcf42de9000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42de9000-7fcf42dea000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
-7fcf42dea000-7fcf42ded000 rwxp 00000000 00:00 0 
-7fcf42ded000-7fcf42e10000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf42e40000-7fcf42fd9000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
-7fcf42fd9000-7fcf42fdc000 rwxp 00000000 00:00 0 
-7fcf43005000-7fcf4300d000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
-7fcf4300d000-7fcf4300f000 rwxp 00000000 00:00 0 
-7fcf4300f000-7fcf43010000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf43010000-7fcf43011000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
-7fcf43011000-7fcf43012000 rwxp 00000000 00:00 0 
-7ffe24be8000-7ffe24c09000 rwxp 00000000 00:00 0                          [stack]
-7ffe24c84000-7ffe24c87000 r--p 00000000 00:00 0                          [vvar]
-7ffe24c87000-7ffe24c89000 r-xp 00000000 00:00 0                          [vdso]
+map succeded with address: 0x7fef11a00000 and size: 576 (0x000000000240)
+00400000-00401000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00600000-00601000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00601000-00602000 rwxp 00001000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00602000-00623000 rwxp 00000000 00:00 0                                  [heap]
+7fef11800000-7fef11801000 r-xp 00000000 00:00 0 
+7fef11832000-7fef11a00000 rwxp 00000000 00:00 0 
+7fef11a00000-7fef11a01000 -wxp 00000000 00:00 0 
+7fef11a01000-7fef11a34000 rwxp 00000000 00:00 0 
+7fef11a34000-7fef11bcf000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11bcf000-7fef11dce000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dce000-7fef11dd2000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd2000-7fef11dd4000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd4000-7fef11dd8000 rwxp 00000000 00:00 0 
+7fef11dd8000-7fef11ddb000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11ddb000-7fef11fda000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fda000-7fef11fdb000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdb000-7fef11fdc000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdc000-7fef12002000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12002000-7fef12202000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12202000-7fef12204000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12204000-7fef12205000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12205000-7fef12210000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12210000-7fef1240f000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef1240f000-7fef12410000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12410000-7fef12411000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12411000-7fef12414000 rwxp 00000000 00:00 0 
+7fef12414000-7fef12437000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12462000-7fef125fb000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
+7fef125fb000-7fef125fe000 rwxp 00000000 00:00 0 
+7fef12627000-7fef1262f000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
+7fef1262f000-7fef12631000 rwxp 00000000 00:00 0 
+7fef12631000-7fef12634000 r--p 00000000 00:00 0                          [vvar]
+7fef12634000-7fef12636000 r-xp 00000000 00:00 0                          [vdso]
+7fef12636000-7fef12637000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12637000-7fef12638000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12638000-7fef12639000 rwxp 00000000 00:00 0 
+7ffffffde000-7ffffffff000 rwxp 00000000 00:00 0                          [stack]
 ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
 p_type:      /* Segment type */         = PT_LOAD               /* Loadable program segment */
 ATTEMPING TO READ
-reading                0x0000000007dc
+reading                0x0000000007f4
 correcting position by          (nil)
-reading                2012
-"\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360\5\0\0\0\0\0\0@\0\0\0\0\0\0\0\250q\0\0\0\0\0\0\0\0\0\0@\0008\0\7\0@\0#\0"\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\334\7\0\0\0\0\0\0\334\7\0\0\0\0\0\0\0\0 \0\0\0\0\0\1\0\0\0\6\0\0\0\370\r\0\0\0\0\0\0\370\r \0\0\0\0\0\370\r \0\0\0\0\0008\2\0\0\0\0\0\0@\2\0\0\0\0\0\0\0\0 \0\0\0\0\0\2\0\0\0\6\0\0\0\20\16\0\0\0\0\0\0\20\16 \0\0\0\0\0\20\16 \0\0\0\0\0\300\1\0\0\0\0\0\0\300\1\0\0\0\0\0\0\10\0\0\0\0\0\0\0\4\0\0\0\4\0\0\0\310\1\0\0\0\0\0\0\310\1\0\0\0\0\0\0\310\1\0\0\0\0\0\0$\0\0\0\0\0\0\0$\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0P\345td\4\0\0\0008\7\0\0\0\0\0\0008\7\0\0\0\0\0\0008\7\0\0\0\0\0\0$\0\0\0\0\0\0\0$\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0Q\345td\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\20\0\0\0\0\0\0\0R\345td\4\0\0\0\370\r\0\0\0\0\0\0\370\r \0\0\0\0\0\370\r \0\0\0\0\0\10\2\0\0\0\0\0\0\10\2\0\0\0\0\0\0\1\0\0\0\0\0\0\0\4\0\0\0\24\0\0\0\3\0\0\0GNU\0004c\227\245"{\246\343\231\373\217\301V\24[\327\261a[\310\0\0\0\0\3\0\0\0\7\0\0\0\1\0\0\0\6\0\0\0\210\342 \1 \4@\31\7\0\0\0\n\0\0\0\f\0\0\0BE\325\354$\277\323\305\273\343\222|\330qX\34\271\215\361\16H\323\320M\353\323\357\16\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\34\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\272\0\0\0\22\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0a\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0008\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0R\0\0\0"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\313\0\0\0\20\0\27\0000\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\207\0\0\0\22\0\f\0\360\6\0\0\0\0\0\0#\0\0\0\0\0\0\0\336\0\0\0\20\0\30\0008\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\322\0\0\0\20\0\30\0000\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\20\0\0\0\22\0\t\0\240\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0u\0\0\0\21\0\27\0(\20 \0\0\0\0\0\4\0\0\0\0\0\0\0\26\0\0\0\22\0\r\0\24\7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0__gmon_start__\0_init\0_fini\0_ITM_deregisterTMCloneTable\0_ITM_registerTMCloneTable\0__cxa_finalize\0_Jv_RegisterClasses\0TESTTTTTTTTTTTTTT\0ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh\0printf\0libc.so.6\0_edata\0__bss_start\0_end\0GLIBC_2.2.5\0\0\0\0\0\0\2\0\0\0\0\0\0\0\2\0\1\0\1\0\1\0\1\0\1\0\1\0\1\0\0\0\0\0\1\0\1\0\301\0\0\0\20\0\0\0\0\0\0\0u\32i\t\0\0\2\0\343\0\0\0\0\0\0\0\370\r \0\0\0\0\0\10\0\0\0\0\0\0\0\300\6\0\0\0\0\0\0\0\16 \0\0\0\0\0\10\0\0\0\0\0\0\0\200\6\0\0\0\0\0\0 \20 \0\0\0\0\0\10\0\0\0\0\0\0\0 \20 \0\0\0\0\0\320\17 \0\0\0\0\0\6\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\330\17 \0\0\0\0\0\6\0\0\0\f\0\0\0\0\0\0\0\0\0\0\0\340\17 \0\0\0\0\0\6\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\350\17 \0\0\0\0\0\6\0\0\0\4\0\0\0\0\0\0\0\0\0\0\0\360\17 \0\0\0\0\0\6\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\370\17 \0\0\0\0\0\6\0\0\0\6\0\0\0\0\0\0\0\0\0\0\0\30\20 \0\0\0\0\0\7\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0H\203\354\10H\213\0055\n \0H\205\300t\2\377\320H\203\304\10\303\0\0\0\0\0\0\0\0\0\3775B\n \0\377%D\n \0\17\37@\0\377%B\n \0h\0\0\0\0\351\340\377\377\377\377%\22\n \0f\220\0\0\0\0\0\0\0\0H\215=9\n \0H\215\0059\n \0UH)\370H\211\345H\203\370\16v\25H\213\5\276\t \0H\205\300t\t]\377\340f\17\37D\0\0]\303\17\37@\0f.\17\37\204\0\0\0\0\0H\215=\371\t \0H\2155\362\t \0UH)\376H\211\345H\301\376\3H\211\360H\301\350?H\1\306H\321\376t\30H\213\5\221\t \0H\205\300t\f]\377\340f\17\37\204\0\0\0\0\0]\303\17\37@\0f.\17\37\204\0\0\0\0\0\200=\251\t \0\0u'H\203=g\t \0\0UH\211\345t\fH\213=\202\t \0\350=\377\377\377\350H\377\377\377]\306\5\200\t \0\1\363\303\17\37@\0f.\17\37\204\0\0\0\0\0H\215=A\7 \0H\203?\0u\v\351^\377\377\377f\17\37D\0\0H\213\5\t\t \0H\205\300t\351UH\211\345\377\320]\351@\377\377\377UH\211\345H\213\5\335\10 \0\213\0\211\306H\215=\27\0\0\0\270\0\0\0\0\350\300\376\377\377\220]\303\0H\203\354\10H\203\304\10\303TESTTTTTTTTTTTTTT = %d\n\0\0\0\0\1\33\3;$\0\0\0\3\0\0\0\210\376\377\377@\0\0\0\250\376\377\377h\0\0\0\270\377\377\377\200\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\1zR\0\1x\20\1\33\f\7\10\220\1\0\0$\0\0\0\34\0\0\0@\376\377\377 \0\0\0\0\16\20F\16\30J\17\vw\10\200\0?\32;*3$"\0\0\0\0\24\0\0\0D\0\0\0008\376\377\377\10\0\0\0\0\0\0\0\0\0\0\0\34\0\0\0\\0\0\0000\377\377\377#\0\0\0\0A\16\20\206\2C\r\6^\f\7\10\0\0\0\0\0\0\0"
+reading                2036
+"\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360\5\0\0\0\0\0\0@\0\0\0\0\0\0\0\300q\0\0\0\0\0\0\0\0\0\0@\0008\0\7\0@\0#\0"\0\1\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\364\7\0\0\0\0\0\0\364\7\0\0\0\0\0\0\0\0 \0\0\0\0\0\1\0\0\0\6\0\0\0\370\r\0\0\0\0\0\0\370\r \0\0\0\0\0\370\r \0\0\0\0\0008\2\0\0\0\0\0\0@\2\0\0\0\0\0\0\0\0 \0\0\0\0\0\2\0\0\0\6\0\0\0\20\16\0\0\0\0\0\0\20\16 \0\0\0\0\0\20\16 \0\0\0\0\0\300\1\0\0\0\0\0\0\300\1\0\0\0\0\0\0\10\0\0\0\0\0\0\0\4\0\0\0\4\0\0\0\310\1\0\0\0\0\0\0\310\1\0\0\0\0\0\0\310\1\0\0\0\0\0\0$\0\0\0\0\0\0\0$\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0P\345td\4\0\0\0P\7\0\0\0\0\0\0P\7\0\0\0\0\0\0P\7\0\0\0\0\0\0$\0\0\0\0\0\0\0$\0\0\0\0\0\0\0\4\0\0\0\0\0\0\0Q\345td\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\20\0\0\0\0\0\0\0R\345td\4\0\0\0\370\r\0\0\0\0\0\0\370\r \0\0\0\0\0\370\r \0\0\0\0\0\10\2\0\0\0\0\0\0\10\2\0\0\0\0\0\0\1\0\0\0\0\0\0\0\4\0\0\0\24\0\0\0\3\0\0\0GNU\0\323!\251Q\236\237\304\321Q\250\317\355\340\204Z\221,-#u\0\0\0\0\3\0\0\0\7\0\0\0\1\0\0\0\6\0\0\0\210\342 \1 \4@\31\7\0\0\0\n\0\0\0\f\0\0\0BE\325\354$\277\323\305\273\343\222|\330qX\34\271\215\361\16H\323\320M\353\323\357\16\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\34\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\272\0\0\0\22\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0a\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0008\0\0\0 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0R\0\0\0"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\313\0\0\0\20\0\27\0000\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\207\0\0\0\22\0\f\0\360\6\0\0\0\0\0\0001\0\0\0\0\0\0\0\336\0\0\0\20\0\30\0008\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\322\0\0\0\20\0\30\0000\20 \0\0\0\0\0\0\0\0\0\0\0\0\0\20\0\0\0\22\0\t\0\240\5\0\0\0\0\0\0\0\0\0\0\0\0\0\0u\0\0\0\21\0\27\0(\20 \0\0\0\0\0\4\0\0\0\0\0\0\0\26\0\0\0\22\0\r\0$\7\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0__gmon_start__\0_init\0_fini\0_ITM_deregisterTMCloneTable\0_ITM_registerTMCloneTable\0__cxa_finalize\0_Jv_RegisterClasses\0TESTTTTTTTTTTTTTT\0ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh\0printf\0libc.so.6\0_edata\0__bss_start\0_end\0GLIBC_2.2.5\0\0\0\0\0\0\2\0\0\0\0\0\0\0\2\0\1\0\1\0\1\0\1\0\1\0\1\0\1\0\0\0\0\0\1\0\1\0\301\0\0\0\20\0\0\0\0\0\0\0u\32i\t\0\0\2\0\343\0\0\0\0\0\0\0\370\r \0\0\0\0\0\10\0\0\0\0\0\0\0\300\6\0\0\0\0\0\0\0\16 \0\0\0\0\0\10\0\0\0\0\0\0\0\200\6\0\0\0\0\0\0 \20 \0\0\0\0\0\10\0\0\0\0\0\0\0 \20 \0\0\0\0\0\320\17 \0\0\0\0\0\6\0\0\0\1\0\0\0\0\0\0\0\0\0\0\0\330\17 \0\0\0\0\0\6\0\0\0\f\0\0\0\0\0\0\0\0\0\0\0\340\17 \0\0\0\0\0\6\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\350\17 \0\0\0\0\0\6\0\0\0\4\0\0\0\0\0\0\0\0\0\0\0\360\17 \0\0\0\0\0\6\0\0\0\5\0\0\0\0\0\0\0\0\0\0\0\370\17 \0\0\0\0\0\6\0\0\0\6\0\0\0\0\0\0\0\0\0\0\0\30\20 \0\0\0\0\0\7\0\0\0\2\0\0\0\0\0\0\0\0\0\0\0H\203\354\10H\213\0055\n \0H\205\300t\2\377\320H\203\304\10\303\0\0\0\0\0\0\0\0\0\3775B\n \0\377%D\n \0\17\37@\0\377%B\n \0h\0\0\0\0\351\340\377\377\377\377%\22\n \0f\220\0\0\0\0\0\0\0\0H\215=9\n \0H\215\0059\n \0UH)\370H\211\345H\203\370\16v\25H\213\5\276\t \0H\205\300t\t]\377\340f\17\37D\0\0]\303\17\37@\0f.\17\37\204\0\0\0\0\0H\215=\371\t \0H\2155\362\t \0UH)\376H\211\345H\301\376\3H\211\360H\301\350?H\1\306H\321\376t\30H\213\5\221\t \0H\205\300t\f]\377\340f\17\37\204\0\0\0\0\0]\303\17\37@\0f.\17\37\204\0\0\0\0\0\200=\251\t \0\0u'H\203=g\t \0\0UH\211\345t\fH\213=\202\t \0\350=\377\377\377\350H\377\377\377]\306\5\200\t \0\1\363\303\17\37@\0f.\17\37\204\0\0\0\0\0H\215=A\7 \0H\203?\0u\v\351^\377\377\377f\17\37D\0\0H\213\5\t\t \0H\205\300t\351UH\211\345\377\320]\351@\377\377\377UH\211\345H\203\354\20\307E\374\327\4\0\0H\213\5\322\10 \0\213\0\213U\374\211\306H\215=\34\0\0\0\270\0\0\0\0\350\262\376\377\377\220\311\303\0\0\0H\203\354\10H\203\304\10\303\0\0\0TESTTTTTTTTTTTTTT = %d\nk = %d\n\0\0\1\33\3;$\0\0\0\3\0\0\0p\376\377\377@\0\0\0\220\376\377\377h\0\0\0\240\377\377\377\200\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\1zR\0\1x\20\1\33\f\7\10\220\1\0\0$\0\0\0\34\0\0\0(\376\377\377 \0\0\0\0\16\20F\16\30J\17\vw\10\200\0?\32;*3$"\0\0\0\0\24\0\0\0D\0\0\0 \376\377\377\10\0\0\0\0\0\0\0\0\0\0\0\34\0\0\0\\0\0\0\30\377\377\3771\0\0\0\0A\16\20\206\2C\r\6l\f\7\10\0\0\0\0\0\0\0"
 READ
 p_flags:     /* Segment flags */                = 0x000000000005
 p_offset:    /* Segment file offset */  =          (nil)
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4200b010
+p_vaddr:     /* Segment virtual address */      = 0x7fef11632010
 p_paddr:     /* Segment physical address */     =          (nil)
-p_filesz:    /* Segment size in file */ = 0x0000000007dc
-p_memsz:     /* Segment size in memory */       = 0x0000000007dc
+p_filesz:    /* Segment size in file */ = 0x0000000007f4
+p_memsz:     /* Segment size in memory */       = 0x0000000007f4
 p_align:     /* Segment alignment */            = 0x000000200000
 
 
 
-            p_flags: 0x000000000005 p_offset:          (nil) p_vaddr:  0x7fcf4200b010 p_paddr:          (nil) p_filesz: 0x0000000007dc p_memsz: 0x0000000007dc p_align: 0x000000200000
+            p_flags: 0x000000000005 p_offset:          (nil) p_vaddr:  0x7fef11632010 p_paddr:          (nil) p_filesz: 0x0000000007f4 p_memsz: 0x0000000007f4 p_align: 0x000000200000
 p_type:      /* Segment type */         = PT_LOAD               /* Loadable program segment */
 ATTEMPING TO READ
 reading                0x000000001038
 correcting position by 0x000000000df8
 reading                576
-"\300\6\0\0\0\0\0\0\200\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0\24\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\20\16 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\326\5\0\0\0\0\0\0 \20 \0\0\0\0\0\322\4\0\0\5\0\0\0GCC: (GN"
+"\300\6\0\0\0\0\0\0\200\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0$\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\20\16 \0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\326\5\0\0\0\0\0\0 \20 \0\0\0\0\0\322\4\0\0\5\0\0\0GCC: (GN"
 READ
 p_flags:     /* Segment flags */                = 0x000000000006
 p_offset:    /* Segment file offset */  = 0x000000000df8
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4220be08
+p_vaddr:     /* Segment virtual address */      = 0x7fef11832e08
 p_paddr:     /* Segment physical address */     = 0x000000200df8
 p_filesz:    /* Segment size in file */ = 0x000000000238
 p_memsz:     /* Segment size in memory */       = 0x000000000240
@@ -545,17 +212,17 @@ p_align:     /* Segment alignment */            = 0x000000200000
 
 
 
-            p_flags: 0x000000000006 p_offset: 0x000000000df8 p_vaddr:  0x7fcf4220be08 p_paddr: 0x000000200df8 p_filesz: 0x000000000238 p_memsz: 0x000000000240 p_align: 0x000000200000
+            p_flags: 0x000000000006 p_offset: 0x000000000df8 p_vaddr:  0x7fef11832e08 p_paddr: 0x000000200df8 p_filesz: 0x000000000238 p_memsz: 0x000000000240 p_align: 0x000000200000
 p_type:      /* Segment type */         = PT_DYNAMIC            /* Dynamic linking information */
 ATTEMPING TO READ
 reading                0x000000000fd0
 correcting position by 0x000000000e10
 reading                448
-"\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0\24\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+"\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0$\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 READ
 p_flags:     /* Segment flags */                = 0x000000000006
 p_offset:    /* Segment file offset */  = 0x000000000e10
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4220be20
+p_vaddr:     /* Segment virtual address */      = 0x7fef11832e20
 p_paddr:     /* Segment physical address */     = 0x000000200e10
 p_filesz:    /* Segment size in file */ = 0x0000000001c0
 p_memsz:     /* Segment size in memory */       = 0x0000000001c0
@@ -563,17 +230,17 @@ p_align:     /* Segment alignment */            = 0x000000000008
 
 
 
-            p_flags: 0x000000000006 p_offset: 0x000000000e10 p_vaddr:  0x7fcf4220be20 p_paddr: 0x000000200e10 p_filesz: 0x0000000001c0 p_memsz: 0x0000000001c0 p_align: 0x000000000008
+            p_flags: 0x000000000006 p_offset: 0x000000000e10 p_vaddr:  0x7fef11832e20 p_paddr: 0x000000200e10 p_filesz: 0x0000000001c0 p_memsz: 0x0000000001c0 p_align: 0x000000000008
 p_type:      /* Segment type */         = PT_NOTE               /* Auxiliary information */
 ATTEMPING TO READ
 reading                0x0000000001ec
 correcting position by 0x0000000001c8
 reading                36
-"\4\0\0\0\24\0\0\0\3\0\0\0GNU\0004c\227\245"{\246\343\231\373\217\301V\24[\327\261a[\310"
+"\4\0\0\0\24\0\0\0\3\0\0\0GNU\0\323!\251Q\236\237\304\321Q\250\317\355\340\204Z\221,-#u"
 READ
 p_flags:     /* Segment flags */                = 0x000000000004
 p_offset:    /* Segment file offset */  = 0x0000000001c8
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4200b1d8
+p_vaddr:     /* Segment virtual address */      = 0x7fef116321d8
 p_paddr:     /* Segment physical address */     = 0x0000000001c8
 p_filesz:    /* Segment size in file */ = 0x000000000024
 p_memsz:     /* Segment size in memory */       = 0x000000000024
@@ -581,25 +248,25 @@ p_align:     /* Segment alignment */            = 0x000000000004
 
 
 
-            p_flags: 0x000000000004 p_offset: 0x0000000001c8 p_vaddr:  0x7fcf4200b1d8 p_paddr: 0x0000000001c8 p_filesz: 0x000000000024 p_memsz: 0x000000000024 p_align: 0x000000000004
+            p_flags: 0x000000000004 p_offset: 0x0000000001c8 p_vaddr:  0x7fef116321d8 p_paddr: 0x0000000001c8 p_filesz: 0x000000000024 p_memsz: 0x000000000024 p_align: 0x000000000004
 p_type:      /* Segment type */         = PT_GNU_EH_FRAME       /* GCC .eh_frame_hdr segment */
 ATTEMPING TO READ
-reading                0x00000000075c
-correcting position by 0x000000000738
+reading                0x000000000774
+correcting position by 0x000000000750
 reading                36
-"\1\33\3;$\0\0\0\3\0\0\0\210\376\377\377@\0\0\0\250\376\377\377h\0\0\0\270\377\377\377\200\0\0\0"
+"\1\33\3;$\0\0\0\3\0\0\0p\376\377\377@\0\0\0\220\376\377\377h\0\0\0\240\377\377\377\200\0\0\0"
 READ
 p_flags:     /* Segment flags */                = 0x000000000004
-p_offset:    /* Segment file offset */  = 0x000000000738
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4200b748
-p_paddr:     /* Segment physical address */     = 0x000000000738
+p_offset:    /* Segment file offset */  = 0x000000000750
+p_vaddr:     /* Segment virtual address */      = 0x7fef11632760
+p_paddr:     /* Segment physical address */     = 0x000000000750
 p_filesz:    /* Segment size in file */ = 0x000000000024
 p_memsz:     /* Segment size in memory */       = 0x000000000024
 p_align:     /* Segment alignment */            = 0x000000000004
 
 
 
-            p_flags: 0x000000000004 p_offset: 0x000000000738 p_vaddr:  0x7fcf4200b748 p_paddr: 0x000000000738 p_filesz: 0x000000000024 p_memsz: 0x000000000024 p_align: 0x000000000004
+            p_flags: 0x000000000004 p_offset: 0x000000000750 p_vaddr:  0x7fef11632760 p_paddr: 0x000000000750 p_filesz: 0x000000000024 p_memsz: 0x000000000024 p_align: 0x000000000004
 p_type:      /* Segment type */         = PT_GNU_STACK          /* Indicates stack executability */
 ATTEMPING TO READ
 reading                         (nil)
@@ -609,7 +276,7 @@ reading                0
 READ
 p_flags:     /* Segment flags */                = 0x000000000006
 p_offset:    /* Segment file offset */  =          (nil)
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4200b010
+p_vaddr:     /* Segment virtual address */      = 0x7fef11632010
 p_paddr:     /* Segment physical address */     =          (nil)
 p_filesz:    /* Segment size in file */ =          (nil)
 p_memsz:     /* Segment size in memory */       =          (nil)
@@ -617,17 +284,17 @@ p_align:     /* Segment alignment */            = 0x000000000010
 
 
 
-            p_flags: 0x000000000006 p_offset:          (nil) p_vaddr:  0x7fcf4200b010 p_paddr:          (nil) p_filesz:          (nil) p_memsz:          (nil) p_align: 0x000000000010
+            p_flags: 0x000000000006 p_offset:          (nil) p_vaddr:  0x7fef11632010 p_paddr:          (nil) p_filesz:          (nil) p_memsz:          (nil) p_align: 0x000000000010
 p_type:      /* Segment type */         = PT_GNU_RELRO          /* Read-only after relocation */
 ATTEMPING TO READ
 reading                0x000000001000
 correcting position by 0x000000000df8
 reading                520
-"\300\6\0\0\0\0\0\0\200\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0\24\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+"\300\6\0\0\0\0\0\0\200\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\1\0\0\0\0\0\0\0\301\0\0\0\0\0\0\0\f\0\0\0\0\0\0\0\240\5\0\0\0\0\0\0\r\0\0\0\0\0\0\0$\7\0\0\0\0\0\0\31\0\0\0\0\0\0\0\370\r \0\0\0\0\0\33\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\32\0\0\0\0\0\0\0\0\16 \0\0\0\0\0\34\0\0\0\0\0\0\0\10\0\0\0\0\0\0\0\365\376\377o\0\0\0\0\360\1\0\0\0\0\0\0\5\0\0\0\0\0\0\0\200\3\0\0\0\0\0\0\6\0\0\0\0\0\0\0000\2\0\0\0\0\0\0\n\0\0\0\0\0\0\0\357\0\0\0\0\0\0\0\v\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\3\0\0\0\0\0\0\0\0\20 \0\0\0\0\0\2\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\24\0\0\0\0\0\0\0\7\0\0\0\0\0\0\0\27\0\0\0\0\0\0\0\210\5\0\0\0\0\0\0\7\0\0\0\0\0\0\0\260\4\0\0\0\0\0\0\10\0\0\0\0\0\0\0\330\0\0\0\0\0\0\0\t\0\0\0\0\0\0\0\30\0\0\0\0\0\0\0\376\377\377o\0\0\0\0\220\4\0\0\0\0\0\0\377\377\377o\0\0\0\0\1\0\0\0\0\0\0\0\360\377\377o\0\0\0\0p\4\0\0\0\0\0\0\371\377\377o\0\0\0\0\3\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 READ
 p_flags:     /* Segment flags */                = 0x000000000004
 p_offset:    /* Segment file offset */  = 0x000000000df8
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4220be08
+p_vaddr:     /* Segment virtual address */      = 0x7fef11832e08
 p_paddr:     /* Segment physical address */     = 0x000000200df8
 p_filesz:    /* Segment size in file */ = 0x000000000208
 p_memsz:     /* Segment size in memory */       = 0x000000000208
@@ -635,21 +302,21 @@ p_align:     /* Segment alignment */            = 0x000000000001
 
 
 
-            p_flags: 0x000000000004 p_offset: 0x000000000df8 p_vaddr:  0x7fcf4220be08 p_paddr: 0x000000200df8 p_filesz: 0x000000000208 p_memsz: 0x000000000208 p_align: 0x000000000001
+            p_flags: 0x000000000004 p_offset: 0x000000000df8 p_vaddr:  0x7fef11832e08 p_paddr: 0x000000200df8 p_filesz: 0x000000000208 p_memsz: 0x000000000208 p_align: 0x000000000001
 PT_LOAD 1 = 
 p_flags:     /* Segment flags */                = 0x000000000005
 p_offset:    /* Segment file offset */  =          (nil)
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4200b010
+p_vaddr:     /* Segment virtual address */      = 0x7fef11632010
 p_paddr:     /* Segment physical address */     =          (nil)
-p_filesz:    /* Segment size in file */ = 0x0000000007dc
-p_memsz:     /* Segment size in memory */       = 0x0000000007dc
+p_filesz:    /* Segment size in file */ = 0x0000000007f4
+p_memsz:     /* Segment size in memory */       = 0x0000000007f4
 p_align:     /* Segment alignment */            = 0x000000200000
 
 
 PT_LOAD 2 = 
 p_flags:     /* Segment flags */                = 0x000000000006
 p_offset:    /* Segment file offset */  = 0x000000000df8
-p_vaddr:     /* Segment virtual address */      = 0x7fcf4220be08
+p_vaddr:     /* Segment virtual address */      = 0x7fef11832e08
 p_paddr:     /* Segment physical address */     = 0x000000200df8
 p_filesz:    /* Segment size in file */ = 0x000000000238
 p_memsz:     /* Segment size in memory */       = 0x000000000240
@@ -657,9 +324,9 @@ p_align:     /* Segment alignment */            = 0x000000200000
 
 
 first PT_LOAD elf_program_header[0]->p_paddr = 
-0x7fcf4200b010
+0x7fef11632010
 Second PT_LOAD elf_program_header[1]->p_paddr = 
-0x7fcf4220be08
+0x7fef11832e08
 examining current entries:
 called get_dynamic_entry
 testing if DT_NEEDED == -1 (unknown)
@@ -686,47 +353,47 @@ testing if DT_VERNEEDNUM == -1 (unknown)
 testing if DT_VERSYM == -1 (unknown)
 testing if DT_RELACOUNT == -1 (unknown)
 returning 0
-Section Header   _elf_header->e_shstrndx 0x000000000022 (_elf_header->e_shnum = 35 entries with a total of _elf_header->e_shentsize = 64 (should match 64) bytes, offset is _elf_header->e_shoff = 0x0000000071a8)
+Section Header   _elf_header->e_shstrndx 0x000000000022 (_elf_header->e_shnum = 35 entries with a total of _elf_header->e_shentsize = 64 (should match 64) bytes, offset is _elf_header->e_shoff = 0x0000000071c0)
 
-eh->e_shstrndx = 0x4200b032
+eh->e_shstrndx = 0x11632032
         ================================================================================
         idx offset     load-addr  size       algn type       flags      section
         ================================================================================
-        000          (nil) 0x7fcf4200b010          (nil)    0          (nil)          (nil) 
-        001 0x0000000001c8 0x7fcf4200b1d8 0x000000000024    4 0x000000000007 0x000000000002 .note.gnu.build-id
-        002 0x0000000001f0 0x7fcf4200b200 0x000000000040    8 0x00006ffffff6 0x000000000002 .gnu.hash
-        003 0x000000000230 0x7fcf4200b240 0x000000000150    8 0x00000000000b 0x000000000002 .dynsym
-        004 0x000000000380 0x7fcf4200b390 0x0000000000ef    1 0x000000000003 0x000000000002 .dynstr
-        005 0x000000000470 0x7fcf4200b480 0x00000000001c    2 0x00006fffffff 0x000000000002 .gnu.version
-        006 0x000000000490 0x7fcf4200b4a0 0x000000000020    8 0x00006ffffffe 0x000000000002 .gnu.version_r
-        007 0x0000000004b0 0x7fcf4200b4c0 0x0000000000d8    8 0x000000000004 0x000000000002 .rela.dyn
-        008 0x000000000588 0x7fcf4200b598 0x000000000018    8 0x000000000004 0x000000000042 .rela.plt
-        009 0x0000000005a0 0x7fcf4200b5b0 0x000000000017    4 0x000000000001 0x000000000006 .init
-        010 0x0000000005c0 0x7fcf4200b5d0 0x000000000020   16 0x000000000001 0x000000000006 .plt
-        011 0x0000000005e0 0x7fcf4200b5f0 0x000000000008    8 0x000000000001 0x000000000006 .plt.got
-        012 0x0000000005f0 0x7fcf4200b600 0x000000000123   16 0x000000000001 0x000000000006 .text
-        013 0x000000000714 0x7fcf4200b724 0x000000000009    4 0x000000000001 0x000000000006 .fini
-        014 0x00000000071d 0x7fcf4200b72d 0x000000000018    1 0x000000000001 0x000000000002 .rodata
-        015 0x000000000738 0x7fcf4200b748 0x000000000024    4 0x000000000001 0x000000000002 .eh_frame_hdr
-        016 0x000000000760 0x7fcf4200b770 0x00000000007c    8 0x000000000001 0x000000000002 .eh_frame
-        017 0x000000000df8 0x7fcf4220be08 0x000000000008    8 0x00000000000e 0x000000000003 .init_array
-        018 0x000000000e00 0x7fcf4220be10 0x000000000008    8 0x00000000000f 0x000000000003 .fini_array
-        019 0x000000000e08 0x7fcf4220be18 0x000000000008    8 0x000000000001 0x000000000003 .jcr
-        020 0x000000000e10 0x7fcf4220be20 0x0000000001c0    8 0x000000000006 0x000000000003 .dynamic
-        021 0x000000000fd0 0x7fcf4220bfe0 0x000000000030    8 0x000000000001 0x000000000003 .got
-        022 0x000000001000 0x7fcf4220c010 0x000000000020    8 0x000000000001 0x000000000003 .got.plt
-        023 0x000000001020 0x7fcf4220c030 0x000000000010    8 0x000000000001 0x000000000003 .data
-        024 0x000000001030 0x7fcf4220c040 0x000000000008    1 0x000000000008 0x000000000003 .bss
-        025 0x000000001030 0x7fcf4200b010 0x00000000001a    1 0x000000000001 0x000000000030 .comment
-        026 0x00000000104a 0x7fcf4200b010 0x000000000030    1 0x000000000001          (nil) .debug_aranges
-        027 0x00000000107a 0x7fcf4200b010 0x00000000034f    1 0x000000000001          (nil) .debug_info
-        028 0x0000000013c9 0x7fcf4200b010 0x0000000000f4    1 0x000000000001          (nil) .debug_abbrev
-        029 0x0000000014bd 0x7fcf4200b010 0x0000000001a8    1 0x000000000001          (nil) .debug_line
-        030 0x000000001665 0x7fcf4200b010 0x000000004177    1 0x000000000001 0x000000000030 .debug_str
-        031 0x0000000057dc 0x7fcf4200b010 0x000000001056    1 0x000000000001          (nil) .debug_macro
-        032 0x000000006838 0x7fcf4200b010 0x000000000618    8 0x000000000002          (nil) .symtab
-        033 0x000000006e50 0x7fcf4200b010 0x000000000214    1 0x000000000003          (nil) .strtab
-        034 0x000000007064 0x7fcf4200b010 0x000000000143    1 0x000000000003          (nil) .shstrtab
+        000          (nil) 0x7fef11632010          (nil)    0          (nil)          (nil) 
+        001 0x0000000001c8 0x7fef116321d8 0x000000000024    4 0x000000000007 0x000000000002 .note.gnu.build-id
+        002 0x0000000001f0 0x7fef11632200 0x000000000040    8 0x00006ffffff6 0x000000000002 .gnu.hash
+        003 0x000000000230 0x7fef11632240 0x000000000150    8 0x00000000000b 0x000000000002 .dynsym
+        004 0x000000000380 0x7fef11632390 0x0000000000ef    1 0x000000000003 0x000000000002 .dynstr
+        005 0x000000000470 0x7fef11632480 0x00000000001c    2 0x00006fffffff 0x000000000002 .gnu.version
+        006 0x000000000490 0x7fef116324a0 0x000000000020    8 0x00006ffffffe 0x000000000002 .gnu.version_r
+        007 0x0000000004b0 0x7fef116324c0 0x0000000000d8    8 0x000000000004 0x000000000002 .rela.dyn
+        008 0x000000000588 0x7fef11632598 0x000000000018    8 0x000000000004 0x000000000042 .rela.plt
+        009 0x0000000005a0 0x7fef116325b0 0x000000000017    4 0x000000000001 0x000000000006 .init
+        010 0x0000000005c0 0x7fef116325d0 0x000000000020   16 0x000000000001 0x000000000006 .plt
+        011 0x0000000005e0 0x7fef116325f0 0x000000000008    8 0x000000000001 0x000000000006 .plt.got
+        012 0x0000000005f0 0x7fef11632600 0x000000000131   16 0x000000000001 0x000000000006 .text
+        013 0x000000000724 0x7fef11632734 0x000000000009    4 0x000000000001 0x000000000006 .fini
+        014 0x000000000730 0x7fef11632740 0x00000000001f    8 0x000000000001 0x000000000002 .rodata
+        015 0x000000000750 0x7fef11632760 0x000000000024    4 0x000000000001 0x000000000002 .eh_frame_hdr
+        016 0x000000000778 0x7fef11632788 0x00000000007c    8 0x000000000001 0x000000000002 .eh_frame
+        017 0x000000000df8 0x7fef11832e08 0x000000000008    8 0x00000000000e 0x000000000003 .init_array
+        018 0x000000000e00 0x7fef11832e10 0x000000000008    8 0x00000000000f 0x000000000003 .fini_array
+        019 0x000000000e08 0x7fef11832e18 0x000000000008    8 0x000000000001 0x000000000003 .jcr
+        020 0x000000000e10 0x7fef11832e20 0x0000000001c0    8 0x000000000006 0x000000000003 .dynamic
+        021 0x000000000fd0 0x7fef11832fe0 0x000000000030    8 0x000000000001 0x000000000003 .got
+        022 0x000000001000 0x7fef11833010 0x000000000020    8 0x000000000001 0x000000000003 .got.plt
+        023 0x000000001020 0x7fef11833030 0x000000000010    8 0x000000000001 0x000000000003 .data
+        024 0x000000001030 0x7fef11833040 0x000000000008    1 0x000000000008 0x000000000003 .bss
+        025 0x000000001030 0x7fef11632010 0x00000000001a    1 0x000000000001 0x000000000030 .comment
+        026 0x00000000104a 0x7fef11632010 0x000000000030    1 0x000000000001          (nil) .debug_aranges
+        027 0x00000000107a 0x7fef11632010 0x00000000035c    1 0x000000000001          (nil) .debug_info
+        028 0x0000000013d6 0x7fef11632010 0x000000000103    1 0x000000000001          (nil) .debug_abbrev
+        029 0x0000000014d9 0x7fef11632010 0x0000000001a8    1 0x000000000001          (nil) .debug_line
+        030 0x000000001681 0x7fef11632010 0x000000004177    1 0x000000000001 0x000000000030 .debug_str
+        031 0x0000000057f8 0x7fef11632010 0x000000001056    1 0x000000000001          (nil) .debug_macro
+        032 0x000000006850 0x7fef11632010 0x000000000618    8 0x000000000002          (nil) .symtab
+        033 0x000000006e68 0x7fef11632010 0x000000000214    1 0x000000000003          (nil) .strtab
+        034 0x00000000707c 0x7fef11632010 0x000000000143    1 0x000000000003          (nil) .shstrtab
         ================================================================================
 
 
@@ -740,20 +407,103 @@ eh->e_shstrndx = 0x4200b032
 string/symbol table index = 4
 links: 0
 14 symbols
-index: 0    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: 
-index: 1    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_deregisterTMCloneTable
-index: 2    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: printf
-index: 3    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: __gmon_start__
-index: 4    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _Jv_RegisterClasses
-index: 5    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_registerTMCloneTable
-index: 6    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: __cxa_finalize
-index: 7    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: _edata
-index: 8    size:         35    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b700        value:      -443987883  type: FUNCTION (Symbol is a code object)                name: ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh
-index: 9    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c048        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _end
-index: 10   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: __bss_start
-index: 11   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b5b0        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _init
-index: 12   size:          4    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c038        value:            1234  type: OBJECT   (Symbol is a data object)                name: TESTTTTTTTTTTTTTT
-index: 13   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b724        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _fini
+index: 0    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 1    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_deregisterTMCloneTable
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 2    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: printf
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 3    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: __gmon_start__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 4    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _Jv_RegisterClasses
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 5    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_registerTMCloneTable
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 6    size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: __cxa_finalize
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 7    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: _edata
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 8    size:         49    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832700        value:      -443987883  type: FUNCTION (Symbol is a code object)                name: ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh found
+int (*testb)() = 0x7fef11832700
+test();
+value:      is not int
+00400000-00401000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00600000-00601000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00601000-00602000 rwxp 00001000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00602000-00623000 rwxp 00000000 00:00 0                                  [heap]
+7fef11800000-7fef11801000 r-xp 00000000 00:00 0 
+7fef11832000-7fef11a00000 rwxp 00000000 00:00 0 
+7fef11a00000-7fef11a01000 -wxp 00000000 00:00 0 
+7fef11a01000-7fef11a34000 rwxp 00000000 00:00 0 
+7fef11a34000-7fef11bcf000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11bcf000-7fef11dce000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dce000-7fef11dd2000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd2000-7fef11dd4000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd4000-7fef11dd8000 rwxp 00000000 00:00 0 
+7fef11dd8000-7fef11ddb000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11ddb000-7fef11fda000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fda000-7fef11fdb000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdb000-7fef11fdc000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdc000-7fef12002000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12002000-7fef12202000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12202000-7fef12204000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12204000-7fef12205000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12205000-7fef12210000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12210000-7fef1240f000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef1240f000-7fef12410000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12410000-7fef12411000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12411000-7fef12414000 rwxp 00000000 00:00 0 
+7fef12414000-7fef12437000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12462000-7fef125fb000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
+7fef125fb000-7fef125fe000 rwxp 00000000 00:00 0 
+7fef12627000-7fef1262f000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
+7fef1262f000-7fef12631000 rwxp 00000000 00:00 0 
+7fef12631000-7fef12634000 r--p 00000000 00:00 0                          [vvar]
+7fef12634000-7fef12636000 r-xp 00000000 00:00 0                          [vdso]
+7fef12636000-7fef12637000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12637000-7fef12638000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12638000-7fef12639000 rwxp 00000000 00:00 0 
+7ffffffde000-7ffffffff000 rwxp 00000000 00:00 0                          [stack]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+index: 9    size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833048        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _end
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 10   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: __bss_start
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 11   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef118325b0        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _init
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 12   size:          4    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833038        value:            1234  type: OBJECT   (Symbol is a data object)                name: TESTTTTTTTTTTTTTT
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 13   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832734        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _fini
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
 
 [STRTAB                   (String table)                                        Section 4, Index 4]
 
@@ -815,71 +565,307 @@ index: 13   size:          0    binding: GLOBAL  ( Global symbol )  visibility: 
 string/symbol table index = 33
 links: 0
 65 symbols
-index: 0    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: 
-index: 1    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b1d8        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 2    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b200        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 3    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b240        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 4    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b390        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 5    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b480        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 6    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b4a0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 7    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b4c0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 8    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b598        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 9    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b5b0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 10   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b5d0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 11   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b5f0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 12   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b600        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 13   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b724        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 14   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b72d        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 15   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b748        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 16   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b770        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
-index: 17   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be08        value:            1728  type: SECTION  (Symbol associated with a section)       name: 
-index: 18   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be10        value:            1664  type: SECTION  (Symbol associated with a section)       name: 
-index: 19   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be18        value:               0  type: SECTION  (Symbol associated with a section)       name: 
-index: 20   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be20        value:               1  type: SECTION  (Symbol associated with a section)       name: 
-index: 21   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220bfe0        value:               0  type: SECTION  (Symbol associated with a section)       name: 
-index: 22   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c010        value:         2100752  type: SECTION  (Symbol associated with a section)       name: 
-index: 23   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c030        value:         2101280  type: SECTION  (Symbol associated with a section)       name: 
-index: 24   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: SECTION  (Symbol associated with a section)       name: 
-index: 25   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 26   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 27   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 28   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 29   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 30   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 31   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
-index: 32   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: crtstuff.c
-index: 33   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be18        value:               0  type: OBJECT   (Symbol is a data object)                name: __JCR_LIST__
-index: 34   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b600        value:       960335176  type: FUNCTION (Symbol is a code object)                name: deregister_tm_clones
-index: 35   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b640        value:      -113406648  type: FUNCTION (Symbol is a code object)                name: register_tm_clones
-index: 36   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b690        value:       162086272  type: FUNCTION (Symbol is a code object)                name: __do_global_dtors_aux
-index: 37   size:          1    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: OBJECT   (Symbol is a data object)                name: completed.6960
-index: 38   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be10        value:            1664  type: OBJECT   (Symbol is a data object)                name: __do_global_dtors_aux_fini_array_entry
-index: 39   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b6d0        value:      1094552904  type: FUNCTION (Symbol is a code object)                name: frame_dummy
-index: 40   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be08        value:            1728  type: OBJECT   (Symbol is a data object)                name: __frame_dummy_init_array_entry
-index: 41   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: test_lib.c
-index: 42   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: crtstuff.c
-index: 43   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b7e8        value:      is not int  type: OBJECT   (Symbol is a data object)                name: __FRAME_END__
-index: 44   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be18        value:               0  type: OBJECT   (Symbol is a data object)                name: __JCR_END__
-index: 45   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: 
-index: 46   size:          4    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c03c        value:               5  type: OBJECT   (Symbol is a data object)                name: test_GLOBALB
-index: 47   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c030        value:         2101280  type: OBJECT   (Symbol is a data object)                name: __dso_handle
-index: 48   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220be20        value:               1  type: OBJECT   (Symbol is a data object)                name: _DYNAMIC
-index: 49   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b748        value:      is not int  type: NOTYPE   (Symbol type is unspecified)             name: __GNU_EH_FRAME_HDR
-index: 50   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: OBJECT   (Symbol is a data object)                name: __TMC_END__
-index: 51   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c010        value:         2100752  type: OBJECT   (Symbol is a data object)                name: _GLOBAL_OFFSET_TABLE_
-index: 52   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_deregisterTMCloneTable
-index: 53   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: _edata
-index: 54   size:          4    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c038        value:            1234  type: OBJECT   (Symbol is a data object)                name: TESTTTTTTTTTTTTTT
-index: 55   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b724        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _fini
-index: 56   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: printf@@GLIBC_2.2.5
-index: 57   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: __gmon_start__
-index: 58   size:         35    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b700        value:      -443987883  type: FUNCTION (Symbol is a code object)                name: ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh
-index: 59   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c048        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _end
-index: 60   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220c040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: __bss_start
-index: 61   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _Jv_RegisterClasses
-index: 62   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4200b010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_registerTMCloneTable
-index: 63   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: __cxa_finalize@@GLIBC_2.2.5
-index: 64   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fcf4220b5b0        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _init
+index: 0    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 1    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116321d8        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 2    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632200        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 3    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632240        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 4    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632390        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 5    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632480        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 6    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116324a0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 7    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116324c0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 8    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632598        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 9    size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116325b0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 10   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116325d0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 11   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef116325f0        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 12   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632600        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 13   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632734        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 14   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632740        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 15   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632760        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 16   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632788        value:      is not int  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 17   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e08        value:            1728  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 18   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e10        value:            1664  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 19   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e18        value:               0  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 20   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e20        value:               1  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 21   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832fe0        value:               0  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 22   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833010        value:         2100752  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 23   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833030        value:         2101280  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 24   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 25   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 26   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 27   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 28   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 29   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 30   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 31   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: SECTION  (Symbol associated with a section)       name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 32   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: crtstuff.c
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 33   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e18        value:               0  type: OBJECT   (Symbol is a data object)                name: __JCR_LIST__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 34   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832600        value:       960335176  type: FUNCTION (Symbol is a code object)                name: deregister_tm_clones
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 35   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832640        value:      -113406648  type: FUNCTION (Symbol is a code object)                name: register_tm_clones
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 36   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832690        value:       162086272  type: FUNCTION (Symbol is a code object)                name: __do_global_dtors_aux
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 37   size:          1    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: OBJECT   (Symbol is a data object)                name: completed.6960
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 38   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e10        value:            1664  type: OBJECT   (Symbol is a data object)                name: __do_global_dtors_aux_fini_array_entry
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 39   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef118326d0        value:      1094552904  type: FUNCTION (Symbol is a code object)                name: frame_dummy
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 40   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e08        value:            1728  type: OBJECT   (Symbol is a data object)                name: __frame_dummy_init_array_entry
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 41   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: test_lib.c
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 42   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: crtstuff.c
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 43   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632800        value:      is not int  type: OBJECT   (Symbol is a data object)                name: __FRAME_END__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 44   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e18        value:               0  type: OBJECT   (Symbol is a data object)                name: __JCR_END__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 45   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: FILE     (Symbol's name is file name)             name: 
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 46   size:          4    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef1183303c        value:               5  type: OBJECT   (Symbol is a data object)                name: test_GLOBALB
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 47   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833030        value:         2101280  type: OBJECT   (Symbol is a data object)                name: __dso_handle
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 48   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832e20        value:               1  type: OBJECT   (Symbol is a data object)                name: _DYNAMIC
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 49   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632760        value:      is not int  type: NOTYPE   (Symbol type is unspecified)             name: __GNU_EH_FRAME_HDR
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 50   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: OBJECT   (Symbol is a data object)                name: __TMC_END__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 51   size:          0    binding: LOCAL   ( Local  symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833010        value:         2100752  type: OBJECT   (Symbol is a data object)                name: _GLOBAL_OFFSET_TABLE_
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 52   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_deregisterTMCloneTable
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 53   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: _edata
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 54   size:          4    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833038        value:            1234  type: OBJECT   (Symbol is a data object)                name: TESTTTTTTTTTTTTTT
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 55   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832734        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _fini
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 56   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: printf@@GLIBC_2.2.5
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 57   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: __gmon_start__
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 58   size:         49    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832700        value:      -443987883  type: FUNCTION (Symbol is a code object)                name: ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh found
+int (*testb)() = 0x7fef11832700
+test();
+value:      is not int
+00400000-00401000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00600000-00601000 r-xp 00000000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00601000-00602000 rwxp 00001000 fe:00 1888084                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+00602000-00623000 rwxp 00000000 00:00 0                                  [heap]
+7fef11800000-7fef11801000 r-xp 00000000 00:00 0 
+7fef11832000-7fef11a00000 rwxp 00000000 00:00 0 
+7fef11a00000-7fef11a01000 -wxp 00000000 00:00 0 
+7fef11a01000-7fef11a34000 rwxp 00000000 00:00 0 
+7fef11a34000-7fef11bcf000 r-xp 00000000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11bcf000-7fef11dce000 ---p 0019b000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dce000-7fef11dd2000 r-xp 0019a000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd2000-7fef11dd4000 rwxp 0019e000 08:03 1576117                    /usr/lib/libc-2.25.so
+7fef11dd4000-7fef11dd8000 rwxp 00000000 00:00 0 
+7fef11dd8000-7fef11ddb000 r-xp 00000000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11ddb000-7fef11fda000 ---p 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fda000-7fef11fdb000 r-xp 00002000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdb000-7fef11fdc000 rwxp 00003000 08:03 1576234                    /usr/lib/libdl-2.25.so
+7fef11fdc000-7fef12002000 r-xp 00000000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12002000-7fef12202000 ---p 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12202000-7fef12204000 r-xp 00026000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12204000-7fef12205000 rwxp 00028000 fe:00 1888077                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+7fef12205000-7fef12210000 r-xp 00000000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12210000-7fef1240f000 ---p 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef1240f000-7fef12410000 r-xp 0000a000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12410000-7fef12411000 rwxp 0000b000 fe:00 1888075                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+7fef12411000-7fef12414000 rwxp 00000000 00:00 0 
+7fef12414000-7fef12437000 r-xp 00000000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12462000-7fef125fb000 r-xp 00000000 08:03 2108224                    /usr/lib/locale/locale-archive
+7fef125fb000-7fef125fe000 rwxp 00000000 00:00 0 
+7fef12627000-7fef1262f000 r-xp 00000000 fe:00 1888080                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so
+7fef1262f000-7fef12631000 rwxp 00000000 00:00 0 
+7fef12631000-7fef12634000 r--p 00000000 00:00 0                          [vvar]
+7fef12634000-7fef12636000 r-xp 00000000 00:00 0                          [vdso]
+7fef12636000-7fef12637000 r-xp 00022000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12637000-7fef12638000 rwxp 00023000 08:03 1577054                    /usr/lib/ld-2.25.so
+7fef12638000-7fef12639000 rwxp 00000000 00:00 0 
+7ffffffde000-7ffffffff000 rwxp 00000000 00:00 0                          [stack]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+index: 59   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833048        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _end
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 60   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11833040        value:       977486663  type: NOTYPE   (Symbol type is unspecified)             name: __bss_start
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 61   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _Jv_RegisterClasses
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 62   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11632010        value:   invalid range  type: NOTYPE   (Symbol type is unspecified)             name: _ITM_registerTMCloneTable
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 63   size:          0    binding: WEAK    (  Weak symbol  )  visibility: default   (Default symbol visibility rules)      address: 0x7fef11832010        value:      1179403647  type: FUNCTION (Symbol is a code object)                name: __cxa_finalize@@GLIBC_2.2.5
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
+index: 64   size:          0    binding: GLOBAL  ( Global symbol )  visibility: default   (Default symbol visibility rules)      address: 0x7fef118325b0        value:       149717832  type: FUNCTION (Symbol is a code object)                name: _init
+
+----------------------------------------------------------------------->called bcmp_() at line 32 from libstring.c
+ERROR: different length string comparision, might want to use strcmp instead
 
 [STRTAB                   (String table)                                        Section 33, Index 33]
 
@@ -887,7 +873,7 @@ index: 64   size:          0    binding: GLOBAL  ( Global symbol )  visibility: 
 testing that printf still works
 main() = 0x00400850
  test_GLOBAL = 0x00400836
-test_LOCAL = 0x24c07280
+test_LOCAL = 0xffffe1a0
 attempting to load test_lib
 
 
@@ -913,9 +899,79 @@ dlerror returned with (null)
 aquired symbol test
 testing that test works
 TESTTTTTTTTTTTTTT = 1234
+k = 1239
 attempting to close test
 
 
 
 dlerror returned with (null)
-closed test
+
+Breakpoint 1, main () at test_loader.c:41
+41          printf("closed test\n");
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────REGISTERS─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+*RAX  0x20
+ RBX  0x0
+ RCX  0x0
+*RDX  0x7fef11dd4740 (_IO_stdfile_1_lock) ◂— 0
+ RDI  0x0
+ RSI  0x0
+*R8   0x7fef11b9c03c (null) ◂— sub    byte ptr [rsi + 0x75], ch /* '(null)' */
+*R9   0x20
+ R10  0x0
+*R11  0x246
+*R12  0x400740 (_start) ◂— xor    ebp, ebp
+*R13  0x7fffffffe2c0 ◂— 0x2
+ R14  0x0
+ R15  0x0
+*RBP  0x7fffffffe1e0 —▸ 0x400a10 (__libc_csu_init) ◂— push   r15
+*RSP  0x7fffffffe1a0 ◂— 0x400841bb49
+*RIP  0x4009fd (main+429) ◂— lea    rdi, qword ptr [rip + 0x22a]
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+ ► 0x4009fd <main+429>              lea    rdi, qword ptr [rip + 0x22a]
+   0x400a04 <main+436>              call   puts@plt                      <0x4006c0>
+ 
+   0x400a09 <main+441>              mov    eax, 0
+   0x400a0e <main+446>              leave  
+   0x400a0f <main+447>              ret    
+ 
+   0x400a10 <__libc_csu_init>       push   r15
+   0x400a12 <__libc_csu_init+2>     push   r14
+   0x400a14 <__libc_csu_init+4>     mov    r15d, edi
+   0x400a17 <__libc_csu_init+7>     push   r13
+   0x400a19 <__libc_csu_init+9>     push   r12
+   0x400a1b <__libc_csu_init+11>    lea    r12, qword ptr [rip + 0x2003b6] <0x600dd8>
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────SOURCE──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+36          test();
+37          printf("attempting to close test\n");
+38          dlclose(h);
+39          l = dlerror();
+40          printf("\n\n\ndlerror returned with %s\n", l);
+41          printf("closed test\n");
+42          return 0;
+43      }
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────STACK───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+00:0000│ rsp  0x7fffffffe1a0 ◂— 0x400841bb49
+01:0008│      0x7fffffffe1a8 ◂— 0xffffe1a0ba490000
+02:0010│      0x7fffffffe1b0 ◂— 0x90e3ff4900007fff
+03:0018│      0x7fffffffe1b8 —▸ 0x7fffffffe1f0 —▸ 0x7fffffffe2e0 —▸ 0x7fffffffe707 ◂— ...
+04:0020│      0x7fffffffe1c0 —▸ 0x400a10 (__libc_csu_init) ◂— push   r15
+05:0028│      0x7fffffffe1c8 ◂— 0x7fef115fe6f0
+06:0030│      0x7fffffffe1d0 ◂— 0x0
+07:0038│      0x7fffffffe1d8 —▸ 0x609580 —▸ 0x7fef11dd2b38 (main_arena+88) —▸ 0x609b50 ◂— ...
+[────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────BACKTRACE─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+ ► f 0           4009fd main+429
+   f 1     7fef11a54511 __libc_start_main+241
+Breakpoint test_loader.c:41
+pwndbg> find 0x7fef11832010, 0x7fef11833048, (int) 1239
+0x7fef1183270b
+1 pattern found.
+pwndbg> 0x7fef11832700
+Undefined command: "0x7fef11832700".  Try "help".
+pwndbg> 0x7fef1183270b
+Undefined command: "0x7fef1183270b".  Try "help".
+pwndbg> x 0x7fef11832700
+0x7fef11832700: 0xe5894855
+pwndbg> x 0x7fef1183270b
+0x7fef1183270b: 0x000004d7
+pwndbg> 

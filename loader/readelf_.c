@@ -540,18 +540,6 @@ int __streamb__(char *file, char **p, int *q, int LINES_TO_READ) {
     return bytes;
 }
 
-void
-__print_maps__(void)
-{
-	char rbuf[1024];
-	int fd, cc;
-
-	fd = open("/proc/self/maps", 0, 0);
-	while (0 < (cc = read(fd, rbuf, sizeof(rbuf))))
-		write(1, rbuf, cc);
-	close(fd);
-}
-
 // reads a entire file
 int __readb__(char *file, char **p, size_t *q) {
     int fd;
@@ -919,6 +907,16 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         }
         char * name = str_tbl + sym_tbl[i].st_name;
         printf("name: %s\n", demangle_it(name));
+        nl();
+        if (bytecmp(name,"ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh") == 0) {
+            printf("ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh found\n");
+            printf("int (*testb)() = %014p\n", address);
+            int (*testb)() = address;
+            printf("test();\n");
+            testb();
+            nl();
+            print_maps();
+        }
     }
 }
 

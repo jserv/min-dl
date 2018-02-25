@@ -36,7 +36,7 @@ int bcmp_(void const *vp, size_t n, void const *vp2, size_t n2)
         unsigned char const *p2 = vp2;
         for (size_t i=0; i<n; i++)
             if (p[i] == p2[i]) {
-                printf("p[%d] = %c\n", i, p[i]);
+//                 printf("p[%d] = %c\n", i, p[i]);
                 string_match = 1;
             } else { string_match = 0; break; }
         if (string_match == 0) {
