@@ -15,15 +15,8 @@
 
 #define MAX_PHNUM 12
 
-#if defined(__x86_64__)
-typedef ElfW(Rela) ElfW_Reloc;
-#define ELFW_R_TYPE(x) ELF64_R_TYPE(x)
-#define ELFW_R_SYM(x) ELF64_R_SYM(x)
-#define ELFW_DT_RELW DT_RELA
-#define ELFW_DT_RELWSZ DT_RELASZ
-#else
-#error Unsupported architecture
-#endif
+#define ELFW_R_TYPE(x) ELFW(R_TYPE)(x)
+#define ELFW_R_SYM(x) ELFW(R_SYM)(x)
 
 struct __DLoader_Internal {
     uintptr_t load_bias;
@@ -117,7 +110,17 @@ static int prot_from_phdr(const ElfW(Phdr) *phdr)
         prot |= PROT_WRITE;
     if (phdr->p_flags & PF_X)
         prot |= PROT_EXEC;
+    /*
+     * FIXME
+     * In ARM, some global variables in .text will appear in .rel.dyn,
+     * and we need to give it WRITE permission to relocate it.
+     * It must be fixed due to security issue !!!
+     */
+#if defined(__X86_64__)
     return prot;
+#else
+    return prot |= PROT_WRITE;
+#endif
 }
 
 static inline
@@ -164,18 +167,20 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
     return 0;
 }
 
+/*
+ * Use pre-defined macro in arch/ to support different
+ * system-specific assembly, see lib-support.h.
+ */
 void plt_trampoline();
-#if defined(__x86_64__)
-asm(".pushsection \".text\",\"ax\",@progbits\n"
-    "plt_trampoline:\n"
-    "pop %rdi\n" /* Argument 1 */
-    "pop %rsi\n" /* Argument 2 */
-    "call system_plt_resolver\n"
-    "jmp *%rax\n"
-    ".popsection\n");
-#else
-#error "Unsupported architecture"
-#endif
+asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
+    "plt_trampoline:"                         "\n"
+    POP_S(REG_ARG_1) /* Argument 1 */         "\n"
+    POP_S(REG_ARG_2) /* Argument 2 */         "\n"
+    PUSH_STACK_STATE                          "\n"
+    CALL(system_plt_resolver)                 "\n"
+    POP_STACK_STATE                           "\n"
+    JMP_REG(REG_RET)                          "\n"
+    ".popsection"                             "\n");
 
 void *system_plt_resolver(dloader_p o, int import_id)
 {
@@ -198,11 +203,8 @@ dloader_p api_load(const char *filename)
         fail(filename, "File has no valid ELF header!", NULL, 0);
 
     switch (ehdr.e_machine) {
-#if defined(__x86_64__)
     case EM_X86_64:
-#else
-#error "Don't know the e_machine value for this architecture!"
-#endif
+    case EM_ARM:
         break;
     default:
         fail(filename, "ELF file has wrong architecture!  ",
@@ -234,6 +236,9 @@ dloader_p api_load(const char *filename)
     while (last_load > first_load && last_load->p_type != PT_LOAD)
         --last_load;
 
+    /*
+     * Total memory size of phdr between first and last PT_LOAD.
+     */
     size_t span = last_load->p_vaddr + last_load->p_memsz - first_load->p_vaddr;
 
     /*
@@ -245,6 +250,9 @@ dloader_p api_load(const char *filename)
                          span, prot_from_phdr(first_load), MAP_PRIVATE, fd,
                          round_down(first_load->p_offset, pagesize));
 
+    /*
+     * Mapping will not always equal to round_down(first_load->p_vaddr, pagesize).
+     */
     const ElfW(Addr) load_bias =
         mapping - round_down(first_load->p_vaddr, pagesize);
 
@@ -297,9 +305,8 @@ dloader_p api_load(const char *filename)
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
         switch (reloc_type) {
-#if defined(__x86_64__)
         case R_X86_64_RELATIVE:
-#endif
+        case R_ARM_RELATIVE:
         {
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             *addr += load_bias;
