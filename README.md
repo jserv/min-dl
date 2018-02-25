@@ -3,7 +3,7 @@
 ##### TODO
       1. add support for address and variable retreival, at the moment it is only a info gathering tool
       
-      2. find a way to initialize global variables required in functions for correct execution
+      2. find a way to initialize global variables required in functions for correct execution (may need alot of help with this part)
       
       3. correct address bugs
 
