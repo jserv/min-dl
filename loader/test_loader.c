@@ -20,7 +20,7 @@ int main() {
     printf("main() = 0x%08x\n test_GLOBAL = 0x%08x\ntest_LOCAL = 0x%05x\n", main, test_GLOBAL, test_LOCAL);
     char * l;
     printf("attempting to load test_lib\n\n\n");
-    void * h = dlopen("./test_lib.so", RTLD_LAZY);
+    void * h = dlopen("./files/test_lib.so", RTLD_LAZY);
     l = dlerror();
     printf("\n\n\ndlerror returned with %s\n", l);
     dlerror();
