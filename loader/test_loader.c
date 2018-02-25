@@ -17,7 +17,7 @@ int main() {
     int test_LOCAL() { return 5; }
     readelf_(argv[1]);
     printf("testing that printf still works\n");
-    printf("main() = 0x%08x\n test_GLOBAL = 0x%08x\ntest_LOCAL = 0x%05x\n", main, test_GLOBAL, test_LOCAL);
+    printf("main() = 0x%08x\ntest_GLOBAL = 0x%08x\ntest_LOCAL = 0x%05x\n", main, test_GLOBAL, test_LOCAL);
     char * l;
     printf("attempting to load test_lib\n\n\n");
     void * h = dlopen("./files/test_lib.so", RTLD_LAZY);

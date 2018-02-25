@@ -910,7 +910,8 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         nl();
         if (bytecmp(name,"ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh") == 0) {
             printf("ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh found\n");
-            printf("int (*testb)() = %014p\n", address);
+            printf("int (*testb)()                               =%014p\n", address);
+            printf("(%014p+%014p+%014p=%014p)\n", base_address, sym_tbl[i].st_value, align, sym_tbl[i].st_value+base_address+align);
             int (*testb)() = address;
             printf("test();\n");
             testb();
