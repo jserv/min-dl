@@ -1,1 +1,0 @@
-gcc -ldl -g3 test_loader.c -o loader && gcc -g3 -shared -fPIC test_lib.c -o test_lib.so -nostdlib  && ./loader

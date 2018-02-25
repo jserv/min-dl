@@ -1,0 +1,1 @@
+./compile_ld_shared ; gcc -g3 -shared -fPIC test_lib.c -o test_lib.so -nostdlib ; strip -s test_lib.so ; gcc -g3 test_loader.c ./ld.so -o loaders ; ./loaders
