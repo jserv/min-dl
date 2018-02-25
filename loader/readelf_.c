@@ -1847,21 +1847,6 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
     return 0;
 }
 
-static inline
-uintptr_t round_down(uintptr_t value, uintptr_t size)
-{
-    printf("called round_down\n");
-    return size * (value / size);
-}
-
-static inline
-uintptr_t round_up(uintptr_t value, uintptr_t size)
-{
-    printf("called round_up\n");
-//     return size * ((value + (size - 1)) / size);
-    return value ? size * ((value + (size - 1)) / size) : size;
-}
-
 static int flags_to_prot(const int p_flags)
 {
     printf("called prot_from_phdr\n");
@@ -2232,7 +2217,7 @@ readelf_(const char * filename) {
                         printf ("mapping PT_LOAD number %d\n", PT_LOADS_CURRENT);
                         printf("\t\tp_flags:  %014p\n", elf_program_header[i].p_flags);
                         printf("\t\tp_offset: %014p\n", elf_program_header[i].p_offset);
-                        printf("\t\tp_vaddr:  %014p\n", elf_program_header[i].p_vaddr+base_address);
+                        printf("\t\tp_vaddr:  %014p\n", elf_program_header[i].p_vaddr+mapping);
                         printf("\t\tp_paddr:  %014p\n", elf_program_header[i].p_paddr);
                         printf("\t\tp_filesz: %014p\n", elf_program_header[i].p_filesz);
                         printf("\t\tp_memsz:  %014p\n", elf_program_header[i].p_memsz);
@@ -2240,25 +2225,26 @@ readelf_(const char * filename) {
 
                         printf("\tp_flags: %014p", elf_program_header[i].p_flags);
                         printf(" p_offset: %014p", elf_program_header[i].p_offset);
-                        printf(" p_vaddr: %014p", elf_program_header[i].p_vaddr+base_address);
+                        printf(" p_vaddr: %014p", elf_program_header[i].p_vaddr+mapping);
                         printf(" p_paddr: %014p", elf_program_header[i].p_paddr);
                         printf(" p_filesz: %014p", elf_program_header[i].p_filesz);
                         printf(" p_memsz: %014p", elf_program_header[i].p_memsz);
                         printf(" p_align: %014p\n\n\n", elf_program_header[i].p_align);
                         
-                        printf("round_up(%014p+%014p, %014p) = %014p\n", base_address, elf_program_header[i].p_vaddr, elf_program_header[i].p_align, round_up(base_address+elf_program_header[i].p_vaddr, elf_program_header[i].p_align));
-
-                        char *check_map_success = mmap(round_up(base_address+elf_program_header[i].p_vaddr, elf_program_header[i].p_align), elf_program_header[i].p_memsz, elf_program_header[i].p_flags, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0);
-                        if (errno == 0) if (check_map_success == MAP_FAILED)
+                        printf("mprotect(%014p+round_down(%014p, %014p), %014p, %014p);\n", mapping, elf_program_header[i].p_vaddr, elf_program_header[i].p_align, elf_program_header[i].p_memsz, elf_program_header[i].p_flags);
+                        
+                        int check_map_success = mprotect(mapping+round_down(elf_program_header[i].p_vaddr, elf_program_header[i].p_align), elf_program_header[i].p_memsz, PROT_READ|PROT_WRITE);
+                        if (errno == 0)
                         {
-                            printf ("map failed\n");
-                            abort_();
+                            printf ("mprotect succeded with size: %d (%014p)\n", elf_program_header[i].p_memsz, elf_program_header[i].p_memsz);
+                            print_maps();
                         }
                         else
                         {
-                            printf ("map succeded with address: %p and size: %d (%014p)\n", check_map_success, elf_program_header[i].p_memsz, elf_program_header[i].p_memsz);
+                            printf ("mprotect failed with: %s (errno: %d)\n", strerror(errno), errno);
+                            print_maps();
+                            abort_();
                         }
-                        print_maps();
                         break;
                 }
             }

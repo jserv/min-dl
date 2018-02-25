@@ -52,6 +52,19 @@ int bcmp_(void const *vp, size_t n, void const *vp2, size_t n2)
 
 int bytecmp(void const * p, void const * pp) { return bcmp_(p, strlen(p), pp, strlen(pp)); }
 
+uintptr_t round_down(uintptr_t value, uintptr_t size)
+{
+    printf("called round_down\nreturning %014p\n", value ? size * (value / size) : size);
+    return value ? size * (value / size) : size;
+}
+
+uintptr_t round_up(uintptr_t value, uintptr_t size)
+{
+    printf("called round_up\nreturning %014p\n", value ? size * ((value + (size - 1)) / size) : size);
+//     return size * ((value + (size - 1)) / size);
+    return value ? size * ((value + (size - 1)) / size) : size;
+}
+
 #define QUOTE_0_TERMINATED			0x01
 #define QUOTE_OMIT_LEADING_TRAILING_QUOTES	0x02
 #define QUOTE_OMIT_TRAILING_0			0x08
@@ -1930,9 +1943,11 @@ int read_fast(const char *src, char *dest, int len) {
 // reads a string instead of a file descriptor, verifies length
 int read_fast_verify(const char *src, int len_of_source, char **dest, int requested_len) {
     // either has to be ** and inputted with & or needs to be malloced outside of the function
-    *dest = malloc(requested_len);
+    *dest = malloc(requested_len+4096);
     if (len_of_source < requested_len) memcpy(*dest, src, len_of_source);
     else memcpy(*dest, src, requested_len);
+    printf("memmove round_up(%014p, %014p) = %014p\n", *dest, 4096, round_up(*dest, 4096));
+    *dest = memmove(round_up(*dest, 4096), *dest, requested_len);
     return requested_len;
 }
 
