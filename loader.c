@@ -359,7 +359,7 @@ dloader_p api_load(const char *filename)
     assert(dynamic != NULL);
     ElfW_Reloc *relocs = (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
-    for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
+    for (i = 0; i < relocs_size  / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
         printf("i = %d, ELFW_R_TYPE(reloc->r_info) = %d\n", i, ELFW_R_TYPE(reloc->r_info));
@@ -371,12 +371,25 @@ dloader_p api_load(const char *filename)
             printf("load_bias = %p\n", load_bias);
             printf("reloc->r_offset = %p\n", reloc->r_offset);
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
+            ElfW(Addr) *addr_tmp = (ElfW(Addr) *)(load_bias + reloc->r_offset)+0x8;
             printf("*addr = %p\n", *addr);
             assert(!*addr==NULL);
-            printf("attempting to set *addr\n");
-            *addr += load_bias;
-            printf("*addr now = %p\n", *addr);
-            assert(!*addr==NULL);
+            if (*addr == 0x3da) {
+                printf("attempting to set *addr\n");
+                *addr += load_bias;
+                printf("*addr now = %p\n", *addr);
+                assert(!*addr==NULL);
+                char (*test)() = *addr;
+                printf("executing   %p\n", *addr);
+                printf("test() returned:\n");
+                printf("%p\n", test());
+                pause();
+            } else {
+                printf("attempting to set *addr\n");
+                *addr += load_bias;
+                printf("*addr now = %p\n", *addr);
+                assert(!*addr==NULL);
+            }
             break;
         }
         case R_X86_64_64:	/* Direct 64 bit  */
@@ -396,7 +409,8 @@ dloader_p api_load(const char *filename)
         }
 #endif
         default:
-            assert(0 && "unknown relocation type");
+//             assert(0 && "unknown relocation type");
+            break;
         }
     }
 
