@@ -915,19 +915,19 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
             int (*testb)() = address;
             printf("testb();\n");
             testb();
-            nl();
-            printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
-            int (*testc)() = mappingb+sym_tbl[i].st_value;
-            printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
-            testc();
-            nl();
-            int foo(int i){ return i + 1;}
-
-            typedef int (*g)(int);  // Declare typedef
-
-            g func = mappingb+sym_tbl[i].st_value;          // Define function-pointer variable, and initialise
-
-            int hvar = func(3);     // Call function through pointer
+//             nl();
+//             printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
+//             int (*testc)() = mappingb+sym_tbl[i].st_value;
+//             printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
+//             testc();
+//             nl();
+//             int foo(int i){ return i + 1;}
+// 
+//             typedef int (*g)(int);  // Declare typedef
+// 
+//             g func = mappingb+sym_tbl[i].st_value;          // Define function-pointer variable, and initialise
+// 
+//             int hvar = func(3);     // Call function through pointer
             nl();
             print_maps();
         }
