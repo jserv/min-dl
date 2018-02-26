@@ -10,7 +10,6 @@ int main() {
 #endif
 
 #ifdef __SHARED__
-
 // for C++ symbol name demangling should libirty become incompatible
 // http://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
 // https://itanium-cxx-abi.github.io/cxx-abi/gcc-cxxabi.h
@@ -395,6 +394,7 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
 #include <fcntl.h>
 #include <assert.h>
 #include <sys/mman.h>
+uintptr_t mappingb;
 #define QUOTE_0_TERMINATED			0x01
 #define QUOTE_OMIT_LEADING_TRAILING_QUOTES	0x02
 #define QUOTE_OMIT_TRAILING_0			0x08
@@ -913,8 +913,21 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
             printf("int (*testb)()                               =%014p\n", address);
             printf("(%014p+%014p+%014p=%014p)\n", base_address, sym_tbl[i].st_value, align, sym_tbl[i].st_value+base_address+align);
             int (*testb)() = address;
-            printf("test();\n");
+            printf("testb();\n");
             testb();
+            nl();
+            printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
+            int (*testc)() = mappingb+sym_tbl[i].st_value;
+            printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
+            testc();
+            nl();
+            int foo(int i){ return i + 1;}
+
+            typedef int (*g)(int);  // Declare typedef
+
+            g func = mappingb+sym_tbl[i].st_value;          // Define function-pointer variable, and initialise
+
+            int hvar = func(3);     // Call function through pointer
             nl();
             print_maps();
         }
@@ -2196,6 +2209,7 @@ readelf_(const char * filename) {
 
             printf("reading                %d\n", span);
             read_fast_verify(array, len, &mapping, span);
+            mappingb = mapping;
             
             // base address = [ address of first mapping of PT_LOAD span ] - [ value of the last PT_LOAD p_vaddr rounded down to the pagesize ]
             
