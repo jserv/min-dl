@@ -52,10 +52,33 @@ int bcmp_(void const *vp, size_t n, void const *vp2, size_t n2)
 
 int bytecmp(void const * p, void const * pp) { return bcmp_(p, strlen(p), pp, strlen(pp)); }
 
+int bcmp_q(void const *vp, size_t n, void const *vp2, size_t n2)
+{
+    int string_match = 0;
+    if (n == n2) {
+        unsigned char const *p = vp;
+        unsigned char const *p2 = vp2;
+        for (size_t i=0; i<n; i++)
+            if (p[i] == p2[i]) {
+//                 printf("p[%d] = %c\n", i, p[i]);
+                string_match = 1;
+            } else { string_match = 0; break; }
+        if (string_match == 0) {
+            return -1;
+        } else return 0;
+    } else
+    {
+        return -1;
+    }
+}
+
+
+int bytecmpq(void const * p, void const * pp) { return bcmp_q(p, strlen(p), pp, strlen(pp)); }
+
 uintptr_t round_down(uintptr_t value, uintptr_t size)
 {
-    printf("called round_down\nreturning %014p\n", value ? size * (value / size) : size);
-    return value ? size * (value / size) : size;
+    printf("called round_down\nreturning %014p\n", value ? size * (value / size) : value);
+    return value ? size * (value / size) : value;
 }
 
 uintptr_t round_up(uintptr_t value, uintptr_t size)
@@ -1942,12 +1965,31 @@ int read_fast(const char *src, char *dest, int len) {
 
 // reads a string instead of a file descriptor, verifies length
 int read_fast_verify(const char *src, int len_of_source, char **dest, int requested_len) {
-    // either has to be ** and inputted with & or needs to be malloced outside of the function
     *dest = malloc(requested_len+4096);
     if (len_of_source < requested_len) memcpy(*dest, src, len_of_source);
     else memcpy(*dest, src, requested_len);
-    printf("memmove round_up(%014p, %014p) = %014p\n", *dest, 4096, round_up(*dest, 4096));
     *dest = memmove(round_up(*dest, 4096), *dest, requested_len);
+    return requested_len;
+}
+int read_fast_verifyb(const char *src, int len_of_source, char **dest, int requested_len, Elf64_Phdr PT_LOAD_F, Elf64_Phdr PT_LOAD_L) {
+    printf("memmove PT_LOAD 1 = \n");
+    printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", PT_LOAD_F.p_flags, PT_LOAD_F.p_offset, PT_LOAD_F.p_vaddr, PT_LOAD_F.p_paddr, PT_LOAD_F.p_filesz, PT_LOAD_F.p_memsz, PT_LOAD_F.p_align);
+    printf("span = %014p-%014p\n", PT_LOAD_F.p_vaddr, PT_LOAD_F.p_vaddr+PT_LOAD_F.p_memsz);
+    printf("memmove PT_LOAD 2 = \n");
+    printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", PT_LOAD_L.p_flags, PT_LOAD_L.p_offset, PT_LOAD_L.p_vaddr, PT_LOAD_L.p_paddr, PT_LOAD_L.p_filesz, PT_LOAD_L.p_memsz, PT_LOAD_L.p_align);
+    printf("span = %014p-%014p\n", PT_LOAD_L.p_vaddr, PT_LOAD_L.p_vaddr+PT_LOAD_L.p_memsz);
+
+//     p_vaddr:                /* Segment virtual address */   = 0x000000200f30
+    void * align = 0x10000000;
+    *dest = malloc(requested_len+align+PT_LOAD_L.p_align);
+    if (len_of_source < requested_len) memcpy(*dest, src, len_of_source);
+    else memcpy(*dest, src, requested_len);
+    printf("memmove: round_up(%014p, %014p)+%014p = %014p\n", *dest, align, PT_LOAD_L.p_align, round_up(*dest, align)+PT_LOAD_L.p_align);
+    *dest = memmove(round_up(*dest, align)+PT_LOAD_L.p_align, *dest, requested_len);
+    printf("dest = %014p\n", *dest);
+    *dest = memmove(*dest-PT_LOAD_L.p_align, *dest, PT_LOAD_F.p_memsz);
+    printf("dest = %014p\n", *dest);
+//     abort_();
     return requested_len;
 }
 

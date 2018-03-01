@@ -1,1 +1,17 @@
-dir=/home/exec/loader ; rm -rfv files ; mkdir ./files && gcc -g3 -O0 libstring.c --shared -fPIC -o files/libstring.so && gcc -g3 -O0 libstring.c -fPIC -c -o files/libstring.o && ar cur files/libstring.a files/libstring.o && gcc -g3 -O0 readelf_.c -o files/readelf_.so --shared -fPIC -D__SHARED__ -liberty && gcc -g3 -O0 readelf_.c -c -fPIC -D__SHARED__ -o files/readelf_.o && ar cur files/readelf_.a files/readelf_.o && gcc -g3 -O0 test_lib.c -o files/test_lib.so --shared -fPIC && gcc -g3 -O0 test_lib.c -c -fPIC -o files/test_lib.o && ar cur files/test_lib.a files/test_lib.o && gcc -fPIC -g3 -O0 test_loader.c -o files/loader files/libstring.so files/readelf_.so -ldl && ./files/loader $1 && ls -l -Sh --color=yes ; gdb ./files/loader -ex "set args $1" -ex "break test_loader.c:41" -ex "handle SIGSEGV nostop pass noprint" -ex "r" ; cd ../../
+dir=/home/exec/loader
+rm -rfv files
+mkdir ./files &&
+gcc -g3 -O0 libstring.c --shared -fPIC -o files/libstring.so &&
+gcc -g3 -O0 libstring.c -fPIC -c -o files/libstring.o &&
+ar cur files/libstring.a files/libstring.o &&
+gcc -g3 -O0 readelf_.c -o files/readelf_.so --shared -fPIC -D__SHARED__ -liberty &&
+gcc -g3 -O0 readelf_.c -c -fPIC -D__SHARED__ -o files/readelf_.o &&
+ar cur files/readelf_.a files/readelf_.o &&
+gcc -O0 test_lib.c -o files/test_lib.so --shared -fPIC -pie -nostdlib &&
+gcc -g3 -O0 test_lib.c -c -fPIC -o files/test_lib.o &&
+ar cur files/test_lib.a files/test_lib.o &&
+gcc -fPIC -g3 -O0 test_loader.c -o files/loader files/libstring.so files/readelf_.so -ldl &&
+./files/loader $1 &&
+ls -l -Sh --color=yes
+# gdb ./files/loader -ex "set context-sections dis" -ex "set args $1" -ex "r" -ex "break test_loader.c:41" -ex "break readelf_.c:1550" -ex "break test_loader.c:36" -ex "r"
+cd ../../

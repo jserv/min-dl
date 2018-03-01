@@ -1,0 +1,479 @@
+Breakpoint 2, symbol_lookup_name (arrayc=0x7fba65d8e000 "\177ELF\002\001\001", sh_table=0x7fba65d8f348, symbol_table=13, name_=0x400c7a "t") at readelf_.c:1550
+1550                return address;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+ ► 0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+Breakpoint readelf_.c:1550
+pwndbg> si 1
+0x00007fba6574287a      1550                return address;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+ ► 0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+pwndbg> si 1
+1554    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+ ► 0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+pwndbg> si 1
+0x00007fba65742895      1554    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+ ► 0x7fba65742895 <symbol_lookup_name+424>                    ret                                  <0x7fba65742971; print_elf_symbol_table_lookup_name+131>
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+pwndbg> si 1
+0x00007fba65742971 in print_elf_symbol_table_lookup_name (arrayc=0x7fba65d8e000 "\177ELF\002\001\001", eh=0x7fba65d8e000, sh_table=0x7fba65d8f348, symbol_table=13, index=0x400c7a "t") at readelf_.c:1582
+1582                    name_ = symbol_lookup_name(arrayc, sh_table, symbol_table, index);
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+ ► 0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+pwndbg> si 1
+1583                    if (name_ != NULL) {
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742876 <symbol_lookup_name+393>                    mov    rax, qword ptr [rbp - 0x38]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+ ► 0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+pwndbg> si 1
+0x00007fba6574297a      1583                    if (name_ != NULL) {
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574287a <symbol_lookup_name+397>                    jmp    symbol_lookup_name+423        <0x7fba65742894>
+    ↓
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+ ► 0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+pwndbg> si 1
+1584                        return name_;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742894 <symbol_lookup_name+423>                    leave  
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+ ► 0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+pwndbg> si 1
+0x00007fba65742980      1584                        return name_;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742895 <symbol_lookup_name+424>                    ret    
+    ↓
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+ ► 0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+pwndbg> si 1
+1594    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742971 <print_elf_symbol_table_lookup_name+131>    mov    qword ptr [rbp - 8], rax
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+ ► 0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+pwndbg> si 1
+0x00007fba6574298f      1594    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742975 <print_elf_symbol_table_lookup_name+135>    cmp    qword ptr [rbp - 8], 0
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+ ► 0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret                                  <0x7fba65742a38; print_symbols_lookup_name+66>
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+pwndbg> si 1
+0x00007fba65742a38 in print_symbols_lookup_name (arrayd=0x7fba65d8e000 "\177ELF\002\001\001", eh=0x7fba65d8e000, sh_table=0x7fba65d8f348, index=0x400c7a "t") at readelf_.c:1608
+1608            value = print_elf_symbol_table_lookup_name(arrayd, eh, sh_table, i, index);
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574297a <print_elf_symbol_table_lookup_name+140>    je     print_elf_symbol_table_lookup_name+148 <0x7fba65742982>
+ 
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+ ► 0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>             leave  
+pwndbg> si 1
+1609            if ( value != NULL ) {
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574297c <print_elf_symbol_table_lookup_name+142>    mov    rax, qword ptr [rbp - 8]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+ ► 0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>             leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>             ret    
+pwndbg> si 1
+0x00007fba65742a41      1609            if ( value != NULL ) {
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742980 <print_elf_symbol_table_lookup_name+146>    jmp    print_elf_symbol_table_lookup_name+160 <0x7fba6574298e>
+    ↓
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+ ► 0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>             leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>             ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>                mov    qword ptr [rbp - 0x18], rax
+pwndbg> si 1
+1610                return value;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574298e <print_elf_symbol_table_lookup_name+160>    leave  
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+ ► 0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>             leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>             ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>                mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>                mov    rax, qword ptr [rbp - 0x18]
+pwndbg> si 1
+0x00007fba65742a47      1610                return value;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574298f <print_elf_symbol_table_lookup_name+161>    ret    
+    ↓
+   0x7fba65742a38 <print_symbols_lookup_name+66>              mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>              cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>              je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>              mov    rax, qword ptr [rbp - 8]
+ ► 0x7fba65742a47 <print_symbols_lookup_name+81>              jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>             leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>             ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>                mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>                mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>                jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+pwndbg> si 1
+1615    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a38 <print_symbols_lookup_name+66>     mov    qword ptr [rbp - 8], rax
+   0x7fba65742a3c <print_symbols_lookup_name+70>     cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>     je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>     mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>     jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+ ► 0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+pwndbg> si 1
+0x00007fba65742a6c      1615    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a3c <print_symbols_lookup_name+70>     cmp    qword ptr [rbp - 8], 0
+   0x7fba65742a41 <print_symbols_lookup_name+75>     je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>     mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>     jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+ ► 0x7fba65742a6c <print_symbols_lookup_name+118>    ret                                  <0x7fba65743836; lookup_symbol_by_name_+129>
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>       ret    
+pwndbg> si 1
+0x00007fba65743836 in lookup_symbol_by_name_ (lib=0x400b98 "/chakra/home/un"..., name=0x400c7a "t") at readelf_.c:1891
+1891                    char * symbol = print_symbols_lookup_name(arrayb, eh, _elf_symbol_tableb, name);
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a41 <print_symbols_lookup_name+75>     je     print_symbols_lookup_name+83  <0x7fba65742a49>
+ 
+   0x7fba65742a43 <print_symbols_lookup_name+77>     mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>     jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+ ► 0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>       ret    
+    ↓
+   0x40098a       <main+154>                         cdqe   
+pwndbg> si 1
+1892                    return symbol;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a43 <print_symbols_lookup_name+77>     mov    rax, qword ptr [rbp - 8]
+   0x7fba65742a47 <print_symbols_lookup_name+81>     jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+ ► 0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>       ret    
+    ↓
+   0x40098a       <main+154>                         cdqe   
+   0x40098c       <main+156>                         mov    qword ptr [rbp - 8], rax
+pwndbg> si 1
+0x00007fba6574383e      1892                    return symbol;
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a47 <print_symbols_lookup_name+81>     jmp    print_symbols_lookup_name+117 <0x7fba65742a6b>
+    ↓
+   0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+ ► 0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>       ret    
+    ↓
+   0x40098a       <main+154>                         cdqe   
+   0x40098c       <main+156>                         mov    qword ptr [rbp - 8], rax
+   0x400990       <main+160>                         mov    rax, qword ptr [rbp - 8]
+pwndbg> si 1
+1896    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a6b <print_symbols_lookup_name+117>    leave  
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+ ► 0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>       ret    
+    ↓
+   0x40098a       <main+154>                         cdqe   
+   0x40098c       <main+156>                         mov    qword ptr [rbp - 8], rax
+   0x400990       <main+160>                         mov    rax, qword ptr [rbp - 8]
+   0x400994       <main+164>                         mov    rsi, rax
+pwndbg> si 1
+0x00007fba6574384b      1896    }
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65742a6c <print_symbols_lookup_name+118>    ret    
+    ↓
+   0x7fba65743836 <lookup_symbol_by_name_+129>       mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>       mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>       jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>       leave  
+ ► 0x7fba6574384b <lookup_symbol_by_name_+150>       ret                                  <0x40098a; main+154>
+    ↓
+   0x40098a       <main+154>                         cdqe   
+   0x40098c       <main+156>                         mov    qword ptr [rbp - 8], rax
+   0x400990       <main+160>                         mov    rax, qword ptr [rbp - 8]
+   0x400994       <main+164>                         mov    rsi, rax
+   0x400997       <main+167>                         lea    rdi, qword ptr [rip + 0x2de]
+pwndbg> si 1
+0x000000000040098a in main () at test_loader.c:21
+21          int (*testb)() = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so", "t");
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba65743836 <lookup_symbol_by_name_+129>    mov    qword ptr [rbp - 0x18], rax
+   0x7fba6574383a <lookup_symbol_by_name_+133>    mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>    jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>    leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>    ret    
+    ↓
+ ► 0x40098a       <main+154>                      cdqe   
+   0x40098c       <main+156>                      mov    qword ptr [rbp - 8], rax
+   0x400990       <main+160>                      mov    rax, qword ptr [rbp - 8]
+   0x400994       <main+164>                      mov    rsi, rax
+   0x400997       <main+167>                      lea    rdi, qword ptr [rip + 0x2de]
+   0x40099e       <main+174>                      mov    eax, 0
+pwndbg> si 1
+0x000000000040098c      21          int (*testb)() = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so", "t");
+LEGEND: STACK | HEAP | CODE | DATA | RWX | RODATA
+[──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────DISASM──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────]
+   0x7fba6574383a <lookup_symbol_by_name_+133>    mov    rax, qword ptr [rbp - 0x18]
+   0x7fba6574383e <lookup_symbol_by_name_+137>    jmp    lookup_symbol_by_name_+149    <0x7fba6574384a>
+    ↓
+   0x7fba6574384a <lookup_symbol_by_name_+149>    leave  
+   0x7fba6574384b <lookup_symbol_by_name_+150>    ret    
+    ↓
+   0x40098a       <main+154>                      cdqe   
+ ► 0x40098c       <main+156>                      mov    qword ptr [rbp - 8], rax
+   0x400990       <main+160>                      mov    rax, qword ptr [rbp - 8]
+   0x400994       <main+164>                      mov    rsi, rax
+   0x400997       <main+167>                      lea    rdi, qword ptr [rip + 0x2de]
+   0x40099e       <main+174>                      mov    eax, 0
+   0x4009a3       <main+179>                      call   printf@plt                    <0x400780>
+pwndbg> 

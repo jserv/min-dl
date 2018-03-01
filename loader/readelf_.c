@@ -10,6 +10,7 @@ int main() {
 #endif
 
 #ifdef __SHARED__
+void * lookup_symbol_by_name_(const char * lib, const char * name);
 // for C++ symbol name demangling should libirty become incompatible
 // http://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
 // https://itanium-cxx-abi.github.io/cxx-abi/gcc-cxxabi.h
@@ -51,7 +52,7 @@ char * __print_quoted_string__(const char *str, unsigned int size, const unsigne
 #include <link.h>
 size_t align;
 ElfW(Addr) base_address = 0x00000000;
-ElfW(Addr) base_address_end = 0x00000000;
+ElfW(Addr) mappingb_end = 0x00000000;
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
@@ -286,6 +287,50 @@ int test(char * address)
     }
 }
 
+int testh(char * address)
+{
+    init_handler();
+    int fault_code = setjmp(restore_point);
+    if (fault_code == 0)
+    {
+        /*
+        if this seg faults in gdb, pass "handle SIGSEGV nostop pass noprint" to gdb command line to allow the hander init_handler() to handle this instead of gdb:
+        (gdb) handle SIGSEGV nostop pass noprint
+        <enter>
+        (gdb) r
+        <enter>
+        
+        if u use pwndbg the instructions are the same:
+        pwndbg> handle SIGSEGV nostop pass noprint
+        <enter>
+        pwndbg> r
+        <enter>
+            
+        alternatively start gdb like this (this assumes this is run inside a script and the executable this is compiled into is named ./loader and compiled with  test_loader.c containing a
+        main() { 
+            ... ;
+            return 0;
+        }
+        with return 0; being on line 22, note the ... signifies a variable amount of text as we do not know what code main() {} can contain) :
+
+        gdb ./loader -ex "set args $1" -ex "break test_loader.c:22" -ex "handle SIGSEGV nostop pass noprint" -ex "r"
+
+        else this works fine:
+
+        gdb <file> -ex "handle SIGSEGV nostop pass noprint" -ex "r"
+
+
+        */
+        printf("value: %15x\t", *(int*)address);
+        return 0;
+    }
+    else
+    {
+        printf("value: %s\t", "     is not hex");
+        return -1;
+    }
+}
+
 static int
 callback(struct dl_phdr_info *info, size_t size, void *data)
 {
@@ -295,7 +340,7 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
     printf("name=%s (%d segments)\n", info->dlpi_name,
         info->dlpi_phnum);
         if (bytecmp(info->dlpi_name, argv[1]) == 0) for (j = 0; j < info->dlpi_phnum; j++) {
-        printf("\t\t header %2d: address=%10p (%014p)\n", j, (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr), (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr));
+        printf("\t\t header %2d: address=%14p (%014p)\n", j, (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr), (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr));
         printf("\t\t p_type:\t\t\t/* Segment type */\t\t= ");
         switch(info->dlpi_phdr[j].p_type)
         {
@@ -406,7 +451,144 @@ Elf64_Ehdr *_elf_header;
 Elf64_Phdr *_elf_program_header;
 Elf64_Shdr *_elf_symbol_table;
 char * program_hdr;
+size_t len;
+char * array;
 
+char * init(char * lib) {
+    if (array == NULL) {
+        int fd = open(lib, O_RDONLY);
+        if (fd < 0) {
+            printf("cannot open \"%s\", returned %i\n", lib, fd);
+            return -1;
+        }
+        len = 0;
+        len = lseek(fd, 0, SEEK_END);
+        lseek(fd, 0, 0);
+        array = mmap (NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (array == MAP_FAILED) {
+            printf ("map failed\n");
+            exit;
+        } else {
+            printf ("map succeded with address: %014p\n", array);
+            return array;
+        }
+    } else return array;
+    return "-1";
+}
+int is_mapped = 0;
+int PT_DYNAMIC_ = NULL;
+char * tmp99D;
+int First_Load_Header_index = NULL;
+int Last_Load_Header_index = NULL;
+void map() {
+    if (is_mapped == 0) {
+        Elf64_Ehdr * _elf_header = (Elf64_Ehdr *) array;
+        _elf_program_header = (Elf64_Phdr *)((unsigned long)_elf_header + _elf_header->e_phoff);
+
+// the very first thing we do is obtain the base address
+
+// Base Address
+// The virtual addresses in the program headers might not represent the actual virtual addresses
+// of the program's memory image. Executable files typically contain absolute code. To let the
+// process execute correctly, the segments must reside at the virtual addresses used to build the
+// executable file. On the other hand, shared object segments typically contain
+// position-independent code. This lets a segment's virtual address change from one process to
+// another, without invalidating execution behavior. Though the system chooses virtual addresses
+// for individual processes, it maintains the segments’ relative positions. Because
+// position-independent code uses relative addressing between segments, the difference between
+// virtual addresses in memory must match the difference between virtual addresses in the file.
+// 
+// The difference between the virtual address of any segment in memory and the corresponding
+// virtual address in the file is thus a single constant value for any one executable or shared object
+// in a given process. This difference is the base address. One use of the base address is to relocate
+// the memory image of the program during dynamic linking.
+// 
+// An executable or shared object file's base address is calculated during execution from three
+// values: the virtual memory load address, the maximum page size, and the lowest virtual address
+// of a program's loadable segment. To compute the base address, one determines the memory
+// address associated with the lowest p_vaddr value for a PT_LOAD segment. This address is
+// truncated to the nearest multiple of the maximum page size. The corresponding p_vaddr value
+// itself is also truncated to the nearest multiple of the maximum page size. The base address is
+// the difference between the truncated memory address and the truncated p_vaddr value.
+
+        int PT_LOADS=0;
+        for (int i = 0; i < _elf_header->e_phnum; ++i) {
+            switch(_elf_program_header[i].p_type)
+            {
+                case PT_LOAD:
+//                         printf("i = %d\n", i);
+//                         printf("PT_LOADS = %d\n", PT_LOADS);
+                    if (!PT_LOADS)  {
+//                             printf("saving first load\n");
+                        First_Load_Header_index = i;
+                    }
+                    if (PT_LOADS) {
+//                             printf("saving last load\n");
+                        Last_Load_Header_index = i;
+                    }
+                    PT_LOADS=PT_LOADS+1;
+                    break;
+            }
+        }
+        size_t span = _elf_program_header[Last_Load_Header_index].p_vaddr + _elf_program_header[Last_Load_Header_index].p_memsz - _elf_program_header[First_Load_Header_index].p_vaddr;
+
+        size_t pagesize = 0x1000;
+
+        read_fast_verifyb(array, len, &mappingb, span, _elf_program_header[First_Load_Header_index], _elf_program_header[Last_Load_Header_index]);
+
+        align = round_down(_elf_program_header[Last_Load_Header_index].p_vaddr, pagesize);
+        base_address = mappingb - align;
+        mappingb_end = mappingb+span;
+
+//             printf("base address range = %014p - %014p\nmapping = %014p\n", mappingb, mappingb_end, mapping);
+
+// base address aquired, map all PT_LOAD segments adjusting by base address then continue with the rest
+        printf("\n\n\nfind %014p, %014p, (int) 1239\n\n\n\n", mappingb, mappingb_end);
+
+        if (mappingb == 0x00000000) abort_();
+        int PT_LOADS_CURRENT = 0;
+        for (int i = 0; i < _elf_header->e_phnum; ++i) {
+            switch(_elf_program_header[i].p_type)
+            {
+                case PT_LOAD:
+                    PT_LOADS_CURRENT = PT_LOADS_CURRENT + 1;
+//                         printf ("mapping PT_LOAD number %d\n", PT_LOADS_CURRENT);
+//                         printf("\t\tp_flags:  %014p\n", _elf_program_header[i].p_flags);
+//                         printf("\t\tp_offset: %014p\n", _elf_program_header[i].p_offset);
+//                         printf("\t\tp_vaddr:  %014p\n", _elf_program_header[i].p_vaddr+mappingb);
+//                         printf("\t\tp_paddr:  %014p\n", _elf_program_header[i].p_paddr);
+//                         printf("\t\tp_filesz: %014p\n", _elf_program_header[i].p_filesz);
+//                         printf("\t\tp_memsz:  %014p\n", _elf_program_header[i].p_memsz);
+//                         printf("\t\tp_align:  %014p\n\n", _elf_program_header[i].p_align);
+// 
+//                         printf("\tp_flags: %014p", _elf_program_header[i].p_flags);
+//                         printf(" p_offset: %014p", _elf_program_header[i].p_offset);
+//                         printf(" p_vaddr: %014p", _elf_program_header[i].p_vaddr+mappingb);
+//                         printf(" p_paddr: %014p", _elf_program_header[i].p_paddr);
+//                         printf(" p_filesz: %014p", _elf_program_header[i].p_filesz);
+//                         printf(" p_memsz: %014p", _elf_program_header[i].p_memsz);
+//                         printf(" p_align: %014p\n\n\n", _elf_program_header[i].p_align);
+
+                    printf("mprotect(%014p+round_down(%014p, %014p), %014p, %014p);\n", mappingb, _elf_program_header[i].p_vaddr, _elf_program_header[i].p_align, _elf_program_header[i].p_memsz, _elf_program_header[i].p_flags);
+                    
+                    int check_map_success = mprotect(mappingb+round_down(_elf_program_header[i].p_vaddr, _elf_program_header[i].p_align), round_up(_elf_program_header[i].p_memsz, _elf_program_header[i].p_align), _elf_program_header[i].p_flags);
+                    if (errno == 0)
+                    {
+                        printf ("mprotect on %014p succeded with size: %014p\n", mappingb+round_down(_elf_program_header[i].p_vaddr, _elf_program_header[i].p_align), round_up(_elf_program_header[i].p_memsz, _elf_program_header[i].p_align));
+                        print_maps();
+                    }
+                    else
+                    {
+                        printf ("mprotect failed with: %s (errno: %d)\n", strerror(errno), errno);
+                        print_maps();
+                        abort_();
+                    }
+                    break;
+            }
+        }
+        is_mapped = 1;
+    }
+}
 // not used but kept incase needed
 void __lseek_string__(char **src, int len, int offset) {
     char *p = malloc(len);
@@ -620,12 +802,14 @@ __print_quoted_string__(const char *str, unsigned int size, const unsigned int s
 }
 
 // read section header table
-void read_section_header_table_(const char * arrayb, Elf64_Ehdr * eh, Elf64_Shdr * sh_table[])
+int read_section_header_table_(const char * arrayb, Elf64_Ehdr * eh, Elf64_Shdr * sh_table[])
 {
     *sh_table = (Elf64_Shdr *)(arrayb + eh->e_shoff);
-    if(!_elf_symbol_table) {
+    if(!sh_table) {
         printf("Failed to read table\n");
+        return -1;
     }
+    return 0;
 }
 
 char * read_section_(char * ar, Elf64_Shdr sh) {
@@ -635,7 +819,7 @@ char * read_section_(char * ar, Elf64_Shdr sh) {
 
 char * print_section_headers_(char * sourcePtr, Elf64_Ehdr * eh, Elf64_Shdr sh_table[]) {
     printf ("\n");
-    printf("eh->e_shstrndx = 0x%x\n", eh->e_shstrndx+base_address);
+    printf("eh->e_shstrndx = 0x%x (%d)\n", eh->e_shstrndx+mappingb, eh->e_shstrndx);
     char * sh_str;
     sh_str = read_section_(sourcePtr, sh_table[eh->e_shstrndx]); // will fail untill section header table can be read
     printf("\t========================================");
@@ -647,7 +831,7 @@ char * print_section_headers_(char * sourcePtr, Elf64_Ehdr * eh, Elf64_Shdr sh_t
     for(int i=0; i<eh->e_shnum; i++) { // will fail untill section header table can be read
         printf("\t%03d ", i);
         printf("%014p ", _elf_symbol_table[i].sh_offset); // not sure if this should be adjusted to base address
-        printf("%014p ", _elf_symbol_table[i].sh_addr+base_address);
+        printf("%014p ", _elf_symbol_table[i].sh_addr+mappingb);
         printf("%014p ", _elf_symbol_table[i].sh_size);
         printf("%4d ", _elf_symbol_table[i].sh_addralign);
         printf("%014p ", _elf_symbol_table[i].sh_type);
@@ -762,9 +946,9 @@ int symbol1(char * arrayc, Elf64_Sym sym_tbl[], uint64_t symbol_table) {
                 break;
         }
         if ( ELF64_ST_TYPE(sym_tbl[i].st_info) == STT_FUNC)
-            printf("address: %014p\t", sym_tbl[i].st_value+base_address+align);
+            printf("address: %014p\t", sym_tbl[i].st_value+mappingb+align);
         else
-            printf("address: %014p\t", sym_tbl[i].st_value+base_address);
+            printf("address: %014p\t", sym_tbl[i].st_value+mappingb);
         printf("name: [Not obtained due to unavailability]\n");
     }
 }
@@ -773,7 +957,7 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
     char *str_tbl;
     Elf64_Sym* sym_tbl;
     uint64_t i, symbol_count;
-
+    printf("symbol_table = %d\n", symbol_table);
     sym_tbl = (Elf64_Sym*)read_section_(arrayc, sh_table[symbol_table]);
 
     /* Read linked string-table
@@ -865,18 +1049,9 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
                 printf("protected (Not preemptible, not exported)        ");
                 break;
         }
-        char * address;
-        if ( ELF64_ST_TYPE(sym_tbl[i].st_info) == STT_FUNC)
-        {
-            address = sym_tbl[i].st_value+base_address+align;
-            printf("address: %014p\t", address);
-        }
-        else
-        {
-            address = sym_tbl[i].st_value+base_address;
-            printf("address: %014p\t", address);
-        }
-        if ( address > base_address && address < base_address_end ) test(address);
+        char * address = sym_tbl[i].st_value+mappingb;
+        printf("address: %014p\t", address);
+        if ( address > mappingb && address < mappingb_end ) test(address);
         else printf("value: %15s\t", "invalid range");
         printf("type: ");
         switch (ELF64_ST_TYPE(sym_tbl[i].st_info)) {
@@ -908,15 +1083,25 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         char * name = str_tbl + sym_tbl[i].st_name;
         printf("name: %s\n", demangle_it(name));
         nl();
-        if (bytecmp(name,"ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh") == 0) {
-            printf("ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh found\n");
-            printf("int (*testb)()                               =%014p\n", address);
-            printf("(%014p+%014p+%014p=%014p)\n", base_address, sym_tbl[i].st_value, align, sym_tbl[i].st_value+base_address+align);
-            int (*testb)() = address;
-            printf("testb();\n");
-            testb();
-//             nl();
+        if (bytecmp(name,"t") == 0) {
+
+            printf("t found\n");
+                        
+// #define JMP_ADDR(x) asm("\tjmp  *%0\n" :: "r" (x))
 //             printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
+//             printf("JMP_ADDR(%014p);\n", address);
+//             JMP_ADDR(address);
+                        printf("int (*testb)()                               =%014p\n", address);
+// 
+            printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
+// 
+            int (*testb)() = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so", "t");
+            printf("testb = %014p\n", testb);
+            printf("testb() returned %d;\n",
+            testb()
+            );
+
+            nl();
 //             int (*testc)() = mappingb+sym_tbl[i].st_value;
 //             printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
 //             testc();
@@ -1033,15 +1218,15 @@ int relocation(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         char * address;
         if ( ELF64_ST_TYPE(sym_tbl[i].st_info) == STT_FUNC)
         {
-            address = sym_tbl[i].st_value+base_address+align;
+            address = sym_tbl[i].st_value+mappingb+align;
             printf("address: %014p\t", address);
         }
         else
         {
-            address = sym_tbl[i].st_value+base_address;
+            address = sym_tbl[i].st_value+mappingb;
             printf("address: %014p\t", address);
         }
-        if ( address > base_address && address < base_address_end ) test(address);
+        if ( address > mappingb && address < mappingb_end ) test(address);
         else printf("value: %15s\t", "invalid range");
         printf("type: ");
         switch (ELF64_ST_TYPE(sym_tbl[i].st_info)) {
@@ -1183,7 +1368,6 @@ void print_elf_symbol_table(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[
                 break;
         }
 }
-// delete this line so it is even
 
 void print_symbols(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[])
 {
@@ -1337,34 +1521,400 @@ void print_symbols(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[])
     }
 }
 
-char * array;
-
-void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_index) {
-    // array is the current mapping of the file being examined:    
-//             int fd = open(filename, O_RDONLY);
-//             if (fd < 0) {
-//                 printf("cannot open \"%s\", returned %i\n", filename, fd);
-//                 return -1;
-//             }
-//             size_t len = 0;
-//             len = lseek(fd, 0, SEEK_END);
-//             lseek(fd, 0, 0);
-//             array = mmap (NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
-//             if (array == MAP_FAILED) {
-//                 printf ("map failed\n");
-//                 exit;
-//             } else {
-//                 printf ("map succeded with address: %014p\n", array);
-//             }
-
-        printf("attempting to look up symbol\n");
-        read_section_header_table_(arrayb, eh, &_elf_symbol_table);
-        char * symbol = &_elf_symbol_table[symbol_index];
-        printf("symbol = %d\n", *symbol);
-        return *symbol;
+char * symbol_lookup(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table, int index) {
+    printf("looking up index %d of table %d\n", index, symbol_table);
+    Elf64_Sym* sym_tbl = (Elf64_Sym*)read_section_(arrayc, sh_table[symbol_table]);
+    uint64_t str_tbl_ndx = sh_table[symbol_table].sh_link;
+    char *str_tbl = read_section_(arrayc, sh_table[str_tbl_ndx]);
+    uint64_t symbol_count = (sh_table[symbol_table].sh_size/sizeof(Elf64_Sym));
+    printf("requested symbol name for index %d is %s\n", index, demangle_it(str_tbl + sym_tbl[index].st_name));
+    return sym_tbl[index].st_value;
 }
 
-ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
+char * symbol_lookup_name(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table, char * name_) {
+    char *str_tbl;
+    Elf64_Sym* sym_tbl;
+    uint64_t i, symbol_count;
+    sym_tbl = (Elf64_Sym*)read_section_(arrayc, sh_table[symbol_table]);
+
+    uint64_t str_tbl_ndx = sh_table[symbol_table].sh_link;
+    str_tbl = read_section_(arrayc, sh_table[str_tbl_ndx]);
+
+    symbol_count = (sh_table[symbol_table].sh_size/sizeof(Elf64_Sym));
+
+    for(int i=0; i< symbol_count; i++) {
+        char * name = demangle_it(str_tbl + sym_tbl[i].st_name);
+        if (bytecmpq(name,name_) == 0) {
+            char * address = sym_tbl[i].st_value+mappingb;
+            printf("requested symbol name for lookup name %s is %s at address %014p\n", name_, name, address);
+            return address;
+        }
+    }
+    return NULL;
+}
+
+char * print_elf_symbol_table_lookup(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], uint64_t symbol_table, int index)
+{
+        switch(sh_table[symbol_table].sh_type) {
+            case SHT_DYNSYM:
+                return symbol_lookup(arrayc, sh_table, symbol_table, index);
+                break;
+            default:
+                return (int) -1;
+                break;
+        }
+}
+
+char * print_elf_symbol_table_lookup_name(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], uint64_t symbol_table, char * index)
+{
+        char * name_;
+        switch(sh_table[symbol_table].sh_type) {
+            case SHT_DYNSYM:
+                name_ = symbol_lookup_name(arrayc, sh_table, symbol_table, index);
+                if (name_ != NULL) {
+                    return name_;
+                }
+                else {
+                    return NULL;
+                }
+                break;
+            case SHT_SYMTAB:
+                name_ = symbol_lookup_name(arrayc, sh_table, symbol_table, index);
+                if (name_ != NULL) {
+                    return name_;
+                }
+                else {
+                    return NULL;
+                }
+                break;
+            default:
+                return NULL;
+                break;
+        }
+}
+
+char * print_symbols_lookup(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], int index)
+{
+    for(int i=0; i<eh->e_shnum; i++) {
+        int value = print_elf_symbol_table_lookup(arrayd, eh, sh_table, i, index);
+        if ( value != -1 ) return value;
+    }
+}
+
+char * print_symbols_lookup_name(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], char * index)
+{
+    char * value;
+    for(int i=0; i<eh->e_shnum; i++) {
+        value = print_elf_symbol_table_lookup_name(arrayd, eh, sh_table, i, index);
+        if ( value != NULL ) {
+            return value;
+        }
+    }
+    if (value == NULL) return NULL;
+
+}
+
+int relocation_got_and_plt(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
+    char *str_tbl;
+    Elf64_Sym* sym_tbl;
+    uint64_t i, symbol_count;
+
+    sym_tbl = (Elf64_Sym*)read_section_(arrayc, sh_table[symbol_table]);
+
+    /* Read linked string-table
+    * Section containing the string table having names of
+    * symbols of this section
+    */
+    uint64_t str_tbl_ndx = sh_table[symbol_table].sh_link;
+    printf("string/symbol table index = %d\n", str_tbl_ndx);
+    str_tbl = read_section_(arrayc, sh_table[str_tbl_ndx]);
+
+    symbol_count = (sh_table[symbol_table].sh_size);
+    int link_ = sh_table[symbol_table].sh_link;
+    link_ = sh_table[link_].sh_link;
+    int linkn = 0;
+    while (link_ != 0) {
+        link_ = sh_table[link_].sh_link;
+        linkn++;
+    }
+    printf("links: %d\n", linkn);
+    printf("%d symbols\n", symbol_count);
+
+//   Elf64_Word	st_name;		/* Symbol name (string tbl index) */
+//   unsigned char	st_info;		/* Symbol type and binding */
+//   unsigned char st_other;		/* Symbol visibility */
+//   Elf64_Section	st_shndx;		/* Section index */
+//   Elf64_Addr	st_value;		/* Symbol value */
+//   Elf64_Xword	st_size;		/* Symbol size */
+    for(int i=0; i< symbol_count; i++) {
+        printf("index: %d\t", i);
+        printf("size: %10d \t", sym_tbl[i].st_size);
+// /* Legal values for ST_BIND subfield of st_info (symbol binding).  */
+// 
+// #define STB_LOCAL	0		/* Local symbol */
+// #define STB_GLOBAL	1		/* Global symbol */
+// #define STB_WEAK	2		/* Weak symbol */
+// #define	STB_NUM		3		/* Number of defined types.  */
+// #define STB_LOOS	10		/* Start of OS-specific */
+// #define STB_GNU_UNIQUE	10		/* Unique symbol.  */
+// #define STB_HIOS	12		/* End of OS-specific */
+// #define STB_LOPROC	13		/* Start of processor-specific */
+// #define STB_HIPROC	15		/* End of processor-specific */
+        printf("binding: ");
+        switch (ELF64_ST_BIND(sym_tbl[i].st_info)) {
+            case STB_LOCAL:
+                printf("LOCAL   ( Local  symbol )  ");
+                break;
+            case STB_GLOBAL:
+                printf("GLOBAL  ( Global symbol )  ");
+                break;
+            case STB_WEAK:
+                printf("WEAK    (  Weak symbol  )  ");
+                break;
+            default:
+                printf("UNKNOWN (%d)                ", ELF64_ST_BIND(sym_tbl[i].st_info));
+                break;
+        }
+// /* Legal values for ST_TYPE subfield of st_info (symbol type).  */
+// 
+// #define STT_NOTYPE	0		/* Symbol type is unspecified */
+// #define STT_OBJECT	1		/* Symbol is a data object */
+// #define STT_FUNC	2		/* Symbol is a code object */
+// #define STT_SECTION	3		/* Symbol associated with a section */
+// #define STT_FILE	4		/* Symbol's name is file name */
+// #define STT_COMMON	5		/* Symbol is a common data object */
+// #define STT_TLS		6		/* Symbol is thread-local data object*/
+// #define	STT_NUM		7		/* Number of defined types.  */
+// #define STT_LOOS	10		/* Start of OS-specific */
+// #define STT_GNU_IFUNC	10		/* Symbol is indirect code object */
+// #define STT_HIOS	12		/* End of OS-specific */
+// #define STT_LOPROC	13		/* Start of processor-specific */
+// #define STT_HIPROC	15		/* End of processor-specific */
+// /* Symbol visibility specification encoded in the st_other field.  */
+// #define STV_DEFAULT	0		/* Default symbol visibility rules */
+// #define STV_INTERNAL	1		/* Processor specific hidden class */
+// #define STV_HIDDEN	2		/* Sym unavailable in other modules */
+// #define STV_PROTECTED	3		/* Not preemptible, not exported */
+        printf("visibility: ");
+        switch (ELF64_ST_VISIBILITY(sym_tbl[i].st_other)) {
+            case STV_DEFAULT:
+                printf("default   (Default symbol visibility rules)      ");
+                break;
+            case STV_INTERNAL:
+                printf("internal  (Processor specific hidden class)      ");
+                break;
+            case STV_HIDDEN:
+                printf("hidden    (Symbol unavailable in other modules)  ");
+                break;
+            case STV_PROTECTED:
+                printf("protected (Not preemptible, not exported)        ");
+                break;
+        }
+        char * address;
+        if ( ELF64_ST_TYPE(sym_tbl[i].st_info) == STT_FUNC)
+        {
+            address = sym_tbl[i].st_value+mappingb+align;
+            printf("address: %014p\t", address);
+        }
+        else
+        {
+            address = sym_tbl[i].st_value+mappingb;
+            printf("address: %014p\t", address);
+        }
+        if ( address > mappingb && address < mappingb_end ) test(address);
+        else printf("value: %15s\t", "invalid range");
+        printf("type: ");
+        switch (ELF64_ST_TYPE(sym_tbl[i].st_info)) {
+            case STT_NOTYPE:
+                printf("NOTYPE   (Symbol type is unspecified)             ");
+                break;
+            case STT_OBJECT:
+                printf("OBJECT   (Symbol is a data object)                ");
+                break;
+                case STT_FUNC:
+                printf("FUNCTION (Symbol is a code object)                ");
+                break;
+                case STT_SECTION:
+                printf("SECTION  (Symbol associated with a section)       ");
+                break;
+                case STT_FILE:
+                printf("FILE     (Symbol's name is file name)             ");
+                break;
+                case STT_COMMON:
+                printf("COMMON   (Symbol is a common data object)         ");
+                break;
+                case STT_TLS:
+                printf("TLS      (Symbol is thread-local data object)     ");
+                break;
+            default:
+                printf("UNKNOWN  (%d)                                     ", ELF64_ST_TYPE(sym_tbl[i].st_info));
+                break;
+        }
+        printf("name: [Not obtained due to it may crash this program]\n");
+//         printf("\n");
+    }
+}
+
+void print_elf_symbol_table_lookup_got_and_plt(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], uint64_t symbol_table)
+{
+    int level = 3;
+        switch(sh_table[symbol_table].sh_type) {
+            case SHT_NULL:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_PROGBITS:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_SYMTAB:
+                symbol(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_STRTAB:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_RELA:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_HASH:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_DYNAMIC:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_NOTE:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_NOBITS:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_REL:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_SHLIB:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_DYNSYM:
+                symbol(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_INIT_ARRAY:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_FINI_ARRAY:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_PREINIT_ARRAY:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GROUP:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_SYMTAB_SHNDX:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_NUM:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_LOOS:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_ATTRIBUTES:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_HASH:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_LIBLIST:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_CHECKSUM:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_LOSUNW:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_SUNW_COMDAT:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_SUNW_syminfo:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_verdef:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_verneed:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_GNU_versym:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_LOPROC:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_HIPROC:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_LOUSER:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            case SHT_HIUSER:
+                if (level == 3) relocation_got_and_plt(arrayc, sh_table, symbol_table);
+                break;
+            default:
+                printf("UNKNOWN ");
+                break;
+        }
+}
+
+char * print_symbols_lookup_got_and_ptl(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], int index)
+{
+//     for(int i=0; i<eh->e_shnum; i++) {
+        printf("print_symbols_lookup: trying index %d\n", 10);
+        print_elf_symbol_table_lookup_got_and_plt(arrayd, eh, sh_table, 10);
+        printf("print_symbols_lookup: trying index %d\n", 11);
+        print_elf_symbol_table_lookup_got_and_plt(arrayd, eh, sh_table, 11);
+//     }
+}
+
+void * lookup_symbol_by_name(const char * arrayb, Elf64_Ehdr * eh, char * name) {
+
+        read_section_header_table_(arrayb, eh, &_elf_symbol_table);
+        char * symbol = print_symbols_lookup_name(arrayb, eh, _elf_symbol_table, name);
+        return symbol;
+}
+
+void * lookup_symbol_by_name_(const char * lib, const char * name) {
+        const char * arrayb = init(lib);
+        map();
+        Elf64_Ehdr * eh = (Elf64_Ehdr *) arrayb;
+        Elf64_Shdr *_elf_symbol_tableb;
+        if(!strncmp((char*)eh->e_ident, "\177ELF", 4)) {
+            if ( read_section_header_table_(arrayb, eh, &_elf_symbol_tableb) == 0) {
+                char * symbol = print_symbols_lookup_name(arrayb, eh, _elf_symbol_tableb, name);
+                return symbol;
+            }
+        }
+        else abort_();
+}
+
+void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_index) {
+        printf("attempting to look up symbol, index = %d\n", symbol_index);
+
+        read_section_header_table_(arrayb, eh, &_elf_symbol_table);
+//         nl();
+//         nl();
+//         print_symbols_lookup_got_and_ptl(arrayb, eh, _elf_symbol_table, symbol_index);
+//         nl();
+//         nl();
+        char * GOT = lookup_symbol_by_name_("./test_lib.so", "_GLOBAL_OFFSET_TABLE_");
+        printf("address of GOT = %014p\n", GOT);
+        nl();
+        nl();
+        char * symbol = print_symbols_lookup(arrayb, eh, _elf_symbol_table, symbol_index);
+        printf("symbol = %d (%014p)\n", symbol, symbol);
+        return symbol;
+}
+
+ElfW(Word)
+get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 {
     printf("called get_dynamic_entry\n");
 
@@ -1876,29 +2426,7 @@ static int flags_to_prot(const int p_flags)
 int
 readelf_(const char * filename) {
     setlocale(LC_NUMERIC, "en_US.utf-8"); /* important */
-    int i;
-            int fd = open(filename, O_RDONLY);
-            if (fd < 0) {
-                printf("cannot open \"%s\", returned %i\n", filename, fd);
-                return -1;
-            }
-            size_t len = 0;
-            len = lseek(fd, 0, SEEK_END);
-            lseek(fd, 0, 0);
-            array = mmap (NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
-            if (array == MAP_FAILED) {
-                printf ("map failed\n");
-                exit;
-            } else {
-                printf ("map succeded with address: %014p\n", array);
-            }
-//             nl();
-//             printf("Name:\t\t %s\n", filename);
-//             printf("ELF Identifier\t (");
-//             __print_quoted_string__(array, 10, QUOTE_FORCE_LEN|QUOTE_OMIT_LEADING_TRAILING_QUOTES, "print");
-//             printf(")\n");
-//             nl();
-//             abort_();
+    array = init(filename);
         Elf64_Ehdr * _elf_header = (Elf64_Ehdr *) array;
         read_section_header_table_(array, _elf_header, &_elf_symbol_table);
         if(!strncmp((char*)_elf_header->e_ident, "\177ELF", 4)) {
@@ -2149,124 +2677,12 @@ readelf_(const char * filename) {
             _elf_header->e_phnum,
             _elf_header->e_phentsize
             );
-            Elf64_Phdr *elf_program_header = (Elf64_Phdr *)((unsigned long)_elf_header + _elf_header->e_phoff);
-            int PT_DYNAMIC_ = NULL;
-//             printf("calling dl_iterate_phdr\n");
-//             dl_iterate_phdr(callback, NULL);
-            char * tmp99D;/* = malloc((elf_program_header[i].p_memsz + elf_program_header[i].p_offset));*/
-
-// the very first thing we do is obtain the base address
-
-// Base Address
-// The virtual addresses in the program headers might not represent the actual virtual addresses
-// of the program's memory image. Executable files typically contain absolute code. To let the
-// process execute correctly, the segments must reside at the virtual addresses used to build the
-// executable file. On the other hand, shared object segments typically contain
-// position-independent code. This lets a segment's virtual address change from one process to
-// another, without invalidating execution behavior. Though the system chooses virtual addresses
-// for individual processes, it maintains the segments’ relative positions. Because
-// position-independent code uses relative addressing between segments, the difference between
-// virtual addresses in memory must match the difference between virtual addresses in the file.
-// 
-// The difference between the virtual address of any segment in memory and the corresponding
-// virtual address in the file is thus a single constant value for any one executable or shared object
-// in a given process. This difference is the base address. One use of the base address is to relocate
-// the memory image of the program during dynamic linking.
-// 
-// An executable or shared object file's base address is calculated during execution from three
-// values: the virtual memory load address, the maximum page size, and the lowest virtual address
-// of a program's loadable segment. To compute the base address, one determines the memory
-// address associated with the lowest p_vaddr value for a PT_LOAD segment. This address is
-// truncated to the nearest multiple of the maximum page size. The corresponding p_vaddr value
-// itself is also truncated to the nearest multiple of the maximum page size. The base address is
-// the difference between the truncated memory address and the truncated p_vaddr value.
-
-            int PT_LOADS=0;
-            int First_Load_Header_index = NULL;
-            int Last_Load_Header_index = NULL;
-            for (i = 0; i < _elf_header->e_phnum; ++i) {
-                switch(elf_program_header[i].p_type)
-                {
-                    case PT_LOAD:
-                        printf("i = %d\n", i);
-                        printf("PT_LOADS = %d\n", PT_LOADS);
-                        if (!PT_LOADS)  {
-                            printf("saving first load\n");
-                            First_Load_Header_index = i;
-                        }
-                        if (PT_LOADS) {
-                            printf("saving last load\n");
-                            Last_Load_Header_index = i;
-                        }
-                        PT_LOADS=PT_LOADS+1;
-                        break;
-                }
-            }
-            size_t span = elf_program_header[Last_Load_Header_index].p_vaddr + elf_program_header[Last_Load_Header_index].p_memsz - elf_program_header[First_Load_Header_index].p_vaddr;
-
-            size_t pagesize = 0x1000;
-            uintptr_t mapping;
-
-            printf("reading                %d\n", span);
-            read_fast_verify(array, len, &mapping, span);
-            mappingb = mapping;
-            
-            // base address = [ address of first mapping of PT_LOAD span ] - [ value of the last PT_LOAD p_vaddr rounded down to the pagesize ]
-            
-            align = round_down(elf_program_header[Last_Load_Header_index].p_vaddr, pagesize);
-            base_address = mapping - align;
-            base_address_end = base_address+span;
-
-            printf("base address range = %014p - %014p\nmapping = %014p\n", base_address, base_address_end, mapping);
-// base address aquired, map all PT_LOAD segments adjusting by base address then continue with the rest
-            printf("\n\n\nfind %014p, %014p, (int) 1239\n\n\n\n", mapping, base_address_end);
-
-            if (base_address == 0x00000000) abort_();
-            int PT_LOADS_CURRENT = 0;
-            for (i = 0; i < _elf_header->e_phnum; ++i) {
-                switch(elf_program_header[i].p_type)
-                {
-                    case PT_LOAD:
-                        PT_LOADS_CURRENT = PT_LOADS_CURRENT + 1;
-                        printf ("mapping PT_LOAD number %d\n", PT_LOADS_CURRENT);
-                        printf("\t\tp_flags:  %014p\n", elf_program_header[i].p_flags);
-                        printf("\t\tp_offset: %014p\n", elf_program_header[i].p_offset);
-                        printf("\t\tp_vaddr:  %014p\n", elf_program_header[i].p_vaddr+mapping);
-                        printf("\t\tp_paddr:  %014p\n", elf_program_header[i].p_paddr);
-                        printf("\t\tp_filesz: %014p\n", elf_program_header[i].p_filesz);
-                        printf("\t\tp_memsz:  %014p\n", elf_program_header[i].p_memsz);
-                        printf("\t\tp_align:  %014p\n\n", elf_program_header[i].p_align);
-
-                        printf("\tp_flags: %014p", elf_program_header[i].p_flags);
-                        printf(" p_offset: %014p", elf_program_header[i].p_offset);
-                        printf(" p_vaddr: %014p", elf_program_header[i].p_vaddr+mapping);
-                        printf(" p_paddr: %014p", elf_program_header[i].p_paddr);
-                        printf(" p_filesz: %014p", elf_program_header[i].p_filesz);
-                        printf(" p_memsz: %014p", elf_program_header[i].p_memsz);
-                        printf(" p_align: %014p\n\n\n", elf_program_header[i].p_align);
-                        
-                        printf("mprotect(%014p+round_down(%014p, %014p), %014p, %014p);\n", mapping, elf_program_header[i].p_vaddr, elf_program_header[i].p_align, elf_program_header[i].p_memsz, elf_program_header[i].p_flags);
-                        
-                        int check_map_success = mprotect(mapping+round_down(elf_program_header[i].p_vaddr, elf_program_header[i].p_align), elf_program_header[i].p_memsz, PROT_READ|PROT_WRITE);
-                        if (errno == 0)
-                        {
-                            printf ("mprotect succeded with size: %d (%014p)\n", elf_program_header[i].p_memsz, elf_program_header[i].p_memsz);
-                            print_maps();
-                        }
-                        else
-                        {
-                            printf ("mprotect failed with: %s (errno: %d)\n", strerror(errno), errno);
-                            print_maps();
-                            abort_();
-                        }
-                        break;
-                }
-            }
+            map();
 // continue analysis
-            for (i = 0; i < _elf_header->e_phnum; ++i) {
+            for (int i = 0; i < _elf_header->e_phnum; ++i) {
                 char * section_;
                 printf("p_type:\t\t\t/* Segment type */\t\t= ");
-                switch(elf_program_header[i].p_type)
+                switch(_elf_program_header[i].p_type)
                 {
                     case PT_NULL:
                         printf("PT_NULL\t\t/* Program header table entry unused */\n");
@@ -2349,27 +2765,27 @@ readelf_(const char * filename) {
                 if (section_ == "PT_DYNAMIC")
                 {
                     // obtain PT_DYNAMIC into seperate array for use later
-                    read_fast_verify(array, len, &tmp99D, (elf_program_header[i].p_memsz + elf_program_header[i].p_offset));
-                    __lseek_string__(&tmp99D, elf_program_header[i].p_memsz, elf_program_header[i].p_offset);
+                    read_fast_verify(array, len, &tmp99D, (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                    __lseek_string__(&tmp99D, _elf_program_header[i].p_memsz, _elf_program_header[i].p_offset);
                 }
-                char * tmp99;/* = malloc((elf_program_header[i].p_memsz + elf_program_header[i].p_offset));*/
+                char * tmp99;/* = malloc((_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));*/
                 printf("ATTEMPING TO READ\n");
-                printf("reading                %014p\n", (elf_program_header[i].p_memsz + elf_program_header[i].p_offset));
-                read_fast_verify(array, len, &tmp99, (elf_program_header[i].p_memsz + elf_program_header[i].p_offset));
-                printf("correcting position by %014p\n", elf_program_header[i].p_offset);
-                __lseek_string__(&tmp99, elf_program_header[i].p_memsz, elf_program_header[i].p_offset);
-                printf("reading                %d\n", elf_program_header[i].p_memsz);
-                __print_quoted_string__(tmp99, elf_program_header[i].p_memsz, 0, "print");
+                printf("reading                %014p\n", (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                read_fast_verify(array, len, &tmp99, (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                printf("correcting position by %014p\n", _elf_program_header[i].p_offset);
+                __lseek_string__(&tmp99, _elf_program_header[i].p_memsz, _elf_program_header[i].p_offset);
+                printf("reading                %d\n", _elf_program_header[i].p_memsz);
+                __print_quoted_string__(tmp99, _elf_program_header[i].p_memsz, 0, "print");
                 printf("\nREAD\n");
-                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", elf_program_header[i].p_flags, elf_program_header[i].p_offset, elf_program_header[i].p_vaddr+base_address, elf_program_header[i].p_paddr, elf_program_header[i].p_filesz, elf_program_header[i].p_memsz, elf_program_header[i].p_align);
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[i].p_flags, _elf_program_header[i].p_offset, _elf_program_header[i].p_vaddr+mappingb, _elf_program_header[i].p_paddr, _elf_program_header[i].p_filesz, _elf_program_header[i].p_memsz, _elf_program_header[i].p_align);
                 nl();
-                printf("\t\tp_flags: %014p", elf_program_header[i].p_flags);
-                printf(" p_offset: %014p", elf_program_header[i].p_offset);
-                printf(" p_vaddr:  %014p", elf_program_header[i].p_vaddr+base_address);
-                printf(" p_paddr: %014p", elf_program_header[i].p_paddr);
-                printf(" p_filesz: %014p", elf_program_header[i].p_filesz);
-                printf(" p_memsz: %014p", elf_program_header[i].p_memsz);
-                printf(" p_align: %014p\n", elf_program_header[i].p_align);
+                printf("\t\tp_flags: %014p", _elf_program_header[i].p_flags);
+                printf(" p_offset: %014p", _elf_program_header[i].p_offset);
+                printf(" p_vaddr:  %014p", _elf_program_header[i].p_vaddr+mappingb);
+                printf(" p_paddr: %014p", _elf_program_header[i].p_paddr);
+                printf(" p_filesz: %014p", _elf_program_header[i].p_filesz);
+                printf(" p_memsz: %014p", _elf_program_header[i].p_memsz);
+                printf(" p_align: %014p\n", _elf_program_header[i].p_align);
             }
 
             if (PT_DYNAMIC_ != 0) {
@@ -2384,11 +2800,11 @@ readelf_(const char * filename) {
 // 
 
                 printf("PT_LOAD 1 = \n");
-                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", elf_program_header[First_Load_Header_index].p_flags, elf_program_header[First_Load_Header_index].p_offset, elf_program_header[First_Load_Header_index].p_vaddr+base_address, elf_program_header[First_Load_Header_index].p_paddr, elf_program_header[First_Load_Header_index].p_filesz, elf_program_header[First_Load_Header_index].p_memsz, elf_program_header[First_Load_Header_index].p_align);
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[First_Load_Header_index].p_flags, _elf_program_header[First_Load_Header_index].p_offset, _elf_program_header[First_Load_Header_index].p_vaddr+mappingb, _elf_program_header[First_Load_Header_index].p_paddr, _elf_program_header[First_Load_Header_index].p_filesz, _elf_program_header[First_Load_Header_index].p_memsz, _elf_program_header[First_Load_Header_index].p_align);
                 printf("PT_LOAD 2 = \n");
-                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", elf_program_header[Last_Load_Header_index].p_flags, elf_program_header[Last_Load_Header_index].p_offset, elf_program_header[Last_Load_Header_index].p_vaddr+base_address, elf_program_header[Last_Load_Header_index].p_paddr, elf_program_header[Last_Load_Header_index].p_filesz, elf_program_header[Last_Load_Header_index].p_memsz, elf_program_header[Last_Load_Header_index].p_align);
-                printf("first PT_LOAD elf_program_header[%d]->p_paddr = \n%014p\n", First_Load_Header_index, elf_program_header[First_Load_Header_index].p_paddr+base_address);
-                printf("Second PT_LOAD elf_program_header[%d]->p_paddr = \n%014p\n", Last_Load_Header_index, elf_program_header[Last_Load_Header_index].p_paddr+base_address);
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[Last_Load_Header_index].p_flags, _elf_program_header[Last_Load_Header_index].p_offset, _elf_program_header[Last_Load_Header_index].p_vaddr+mappingb, _elf_program_header[Last_Load_Header_index].p_paddr, _elf_program_header[Last_Load_Header_index].p_filesz, _elf_program_header[Last_Load_Header_index].p_memsz, _elf_program_header[Last_Load_Header_index].p_align);
+                printf("first PT_LOAD _elf_program_header[%d]->p_paddr = \n%014p\n", First_Load_Header_index, _elf_program_header[First_Load_Header_index].p_paddr+mappingb);
+                printf("Second PT_LOAD _elf_program_header[%d]->p_paddr = \n%014p\n", Last_Load_Header_index, _elf_program_header[Last_Load_Header_index].p_paddr+mappingb);
                 ElfW(Dyn) * dynamic = tmp99D;
 
 /*
@@ -2489,319 +2905,320 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
 */
 
 //                 printf("printing symbol data\n");
-//                 Elf64_Sym *syms = base_address + get_dynamic_entry(dynamic, DT_SYMTAB);
+//                 Elf64_Sym *syms = mappingb + get_dynamic_entry(dynamic, DT_SYMTAB);
 //                 symbol1(array, syms, 0);
                 printf("examining current entries:\n");
                 get_dynamic_entry(dynamic, -1);
-//                 printf("printing relocation data\n");
-//                 // needs to be the address of the mapping itself, not the base address
-//                 Elf64_Rel *relocs = mapping + get_dynamic_entry(dynamic, DT_RELA);
-//                 printf("relocs = %p (%x)\n", relocs, relocs);
-//                 size_t relocs_size = get_dynamic_entry(dynamic, DT_RELASZ);
-//                 printf("relocs_size = %d\n", relocs_size);
-//                 if (relocs == mapping && relocs_size == 0) {} else {
-//                     for (i = 0; i < relocs_size  / sizeof(Elf64_Rel); i++) {
-//                         Elf64_Rel *reloc = &relocs[i];
-//                         int reloc_type = ELF64_R_TYPE(reloc->r_info);
-//                         printf("i = %d,\t\tELF64_R_TYPE(reloc->r_info)\t= ", i);
-//                         switch (reloc_type) {
-//                             #if defined(__x86_64__)
-//                                 
-//     // /* AMD x86-64 relocations.  */
-//     // #define R_X86_64_NONE		0	/* No reloc */
-//     // #define R_X86_64_64		1	/* Direct 64 bit  */
-//     // #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
-//     // #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
-//     // #define R_X86_64_PLT32		4	/* 32 bit PLT address */
-//     // #define R_X86_64_COPY		5	/* Copy symbol at runtime */
-//     // #define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
-//     // #define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
-//     // #define R_X86_64_RELATIVE	8	/* Adjust by program base */
-//     // #define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
-//     // 					   offset to GOT */
-//     // #define R_X86_64_32		10	/* Direct 32 bit zero extended */
-//     // #define R_X86_64_32S		11	/* Direct 32 bit sign extended */
-//     // #define R_X86_64_16		12	/* Direct 16 bit zero extended */
-//     // #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-//     // #define R_X86_64_8		14	/* Direct 8 bit sign extended  */
-//     // #define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
-//     // #define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
-//     // #define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
-//     // #define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
-//     // #define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
-//     // 					   to two GOT entries for GD symbol */
-//     // #define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
-//     // 					   to two GOT entries for LD symbol */
-//     // #define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
-//     // #define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
-//     // 					   to GOT entry for IE symbol */
-//     // #define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
-//     // #define R_X86_64_PC64		24	/* PC relative 64 bit */
-//     // #define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
-//     // #define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
-//     // 					   offset to GOT */
-//     // #define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
-//     // #define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
-//     // 					   to GOT entry */
-//     // #define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
-//     // #define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
-//     // #define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
-//     // 					   to PLT entry */
-//     // #define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
-//     // #define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
-//     // #define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
-//     // #define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
-//     // 					   descriptor.  */
-//     // #define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
-//     // #define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
-//     // #define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
-//     // 					/* 39 Reserved was R_X86_64_PC32_BND */
-//     // 					/* 40 Reserved was R_X86_64_PLT32_BND */
-//     // #define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
-//     // 					   offset to GOT entry without REX
-//     // 					   prefix, relaxable.  */
-//     // #define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
-//     // 					   offset to GOT entry with REX prefix,
-//     // 					   relaxable.  */
-//     // #define R_X86_64_NUM		43
-// 
-//                             case R_X86_64_NONE:
-//                             {
-//                                 printf("R_X86_64_NONE                calculation: none\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_64:
-//                             {
-//                                 printf("R_X86_64_64                  calculation: S + A (symbol value + r_offset)\n");
-//                                 printf("reloc->r_offset = %10p\n", reloc->r_offset);
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_offset+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_PC32:
-//                             {
-//                                 printf("R_X86_64_PC32                calculation: S + A - P (symbol value + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
-//                                 printf("reloc->r_offset = %10p\n", reloc->r_offset);
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_offset+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_GOT32:
-//                             {
-//                                 printf("R_X86_64_GOT32               calculation: G + A (address of global offset table + r_offset)\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_PLT32:
-//                             {
-//                                 printf("R_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
-//                                 break;
-//                             }
-//                             case R_X86_64_COPY:
-//                             {
-//                                 printf("R_X86_64_COPY                calculation: none\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GLOB_DAT:
-//                             {
-//                                 printf("R_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_JUMP_SLOT:
-//                             {
-//                                 printf("R_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_RELATIVE:
-//                             {
-//                                 printf("R_X86_64_RELATIVE            calculation: B + A (base address + r_offset)\n");
-//                                 char * addr = base_address + reloc->r_offset+base_address;
-//                                 printf("base_address    = %10p\n", base_address);
-//                                 printf("reloc->r_offset = %10p\n", reloc->r_offset);
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPCREL:
-//                             {
-//                                 printf("R_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
-//                                 break;
-//                             }
-//                             case R_X86_64_32:
-//                             {
-//                                 printf("R_X86_64_32                  calculation: S + A (symbol value + r_offset)\n");
-//                                 printf("reloc->r_offset = %10p\n", reloc->r_offset);
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_offset+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_32S:
-//                             {
-//                                 printf("R_X86_64_32S\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_16:
-//                             {
-//                                 printf("R_X86_64_16\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_PC16:
-//                             {
-//                                 printf("R_X86_64_PC16\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_8:
-//                             {
-//                                 printf("R_X86_64_8\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_PC8:
-//                             {
-//                                 printf("R_X86_64_PC8\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_DTPMOD64:
-//                             {
-//                                 printf("R_X86_64_DTPMOD64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_DTPOFF64:
-//                             {
-//                                 printf("R_X86_64_DTPOFF64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TPOFF64:
-//                             {
-//                                 printf("R_X86_64_TPOFF64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TLSGD:
-//                             {
-//                                 printf("R_X86_64_TLSGD\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TLSLD:
-//                             {
-//                                 printf("R_X86_64_TLSLD\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_DTPOFF32:
-//                             {
-//                                 printf("R_X86_64_DTPOFF32\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTTPOFF:
-//                             {
-//                                 printf("R_X86_64_GOTTPOFF\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TPOFF32:
-//                             {
-//                                 printf("R_X86_64_TPOFF32\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_PC64:
-//                             {
-//                                 printf("R_X86_64_PC64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTOFF64:
-//                             {
-//                                 printf("R_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_offset - address of global offset table)\n");
-//                                 printf("reloc->r_offset = %10p\n", reloc->r_offset);
-//                                 char * addr = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_offset+base_address;
-//                                 printf("addr            = %10p\n", addr);
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPC32:
-//                             {
-//                                 printf("R_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOT64:
-//                             {
-//                                 printf("R_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPCREL64:
-//                             {
-//                                 printf("R_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPC64:
-//                             {
-//                                 printf("R_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPLT64:
-//                             {
-//                                 printf("R_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_PLTOFF64:
-//                             {
-//                                 printf("R_X86_64_PLTOFF64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_SIZE32:
-//                             {
-//                                 printf("R_X86_64_SIZE32\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_SIZE64:
-//                             {
-//                                 printf("R_X86_64_SIZE64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPC32_TLSDESC:
-//                             {
-//                                 printf("R_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TLSDESC_CALL:
-//                             {
-//                                 printf("R_X86_64_TLSDESC_CALL\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_TLSDESC:
-//                             {
-//                                 printf("R_X86_64_TLSDESC\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_IRELATIVE:
-//                             {
-//                                 printf("R_X86_64_IRELATIVE\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_RELATIVE64:
-//                             {
-//                                 printf("R_X86_64_RELATIVE64\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_GOTPCRELX:
-//                             {
-//                                 printf("R_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_REX_GOTPCRELX:
-//                             {
-//                                 printf("R_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_offset - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-//                                 break;
-//                             }
-//                             case R_X86_64_NUM:
-//                             {
-//                                 printf("R_X86_64_NUM\n");
-//                                 break;
-//                             }
-//                             #endif
-//                             default:
-//                                 printf("unknown type, got %d\n", reloc_type);
-//                                 break;
-//                         }
-//                     }
-//                 }
+                printf("printing relocation data\n");
+                // needs to be the address of the mapping itself, not the base address
+                Elf64_Rela *relocs = mappingb + get_dynamic_entry(dynamic, DT_RELA);
+                printf("relocs = %p (%x)\n", relocs, relocs);
+                size_t relocs_size = get_dynamic_entry(dynamic, DT_RELASZ);
+                printf("relocs_size = %d\n", relocs_size);
+                if (relocs == mappingb && relocs_size == 0) {} else {
+                    for (int i = 0; i < relocs_size  / sizeof(Elf64_Rela); i++) {
+                        Elf64_Rela *reloc = &relocs[i];
+                        int reloc_type = ELF64_R_TYPE(reloc->r_info);
+                        printf("i = %d,\t\tELF64_R_TYPE(reloc->r_info)\t= ", i);
+                        switch (reloc_type) {
+                            #if defined(__x86_64__)
+                                
+    // /* AMD x86-64 relocations.  */
+    // #define R_X86_64_NONE		0	/* No reloc */
+    // #define R_X86_64_64		1	/* Direct 64 bit  */
+    // #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
+    // #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
+    // #define R_X86_64_PLT32		4	/* 32 bit PLT address */
+    // #define R_X86_64_COPY		5	/* Copy symbol at runtime */
+    // #define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+    // #define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+    // #define R_X86_64_RELATIVE	8	/* Adjust by program base */
+    // #define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
+    // 					   offset to GOT */
+    // #define R_X86_64_32		10	/* Direct 32 bit zero extended */
+    // #define R_X86_64_32S		11	/* Direct 32 bit sign extended */
+    // #define R_X86_64_16		12	/* Direct 16 bit zero extended */
+    // #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+    // #define R_X86_64_8		14	/* Direct 8 bit sign extended  */
+    // #define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+    // #define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
+    // #define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
+    // #define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
+    // #define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
+    // 					   to two GOT entries for GD symbol */
+    // #define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
+    // 					   to two GOT entries for LD symbol */
+    // #define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
+    // #define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
+    // 					   to GOT entry for IE symbol */
+    // #define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
+    // #define R_X86_64_PC64		24	/* PC relative 64 bit */
+    // #define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
+    // #define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
+    // 					   offset to GOT */
+    // #define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
+    // #define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
+    // 					   to GOT entry */
+    // #define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
+    // #define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
+    // #define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
+    // 					   to PLT entry */
+    // #define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
+    // #define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
+    // #define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
+    // #define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
+    // 					   descriptor.  */
+    // #define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
+    // #define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
+    // #define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
+    // 					/* 39 Reserved was R_X86_64_PC32_BND */
+    // 					/* 40 Reserved was R_X86_64_PLT32_BND */
+    // #define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
+    // 					   offset to GOT entry without REX
+    // 					   prefix, relaxable.  */
+    // #define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
+    // 					   offset to GOT entry with REX prefix,
+    // 					   relaxable.  */
+    // #define R_X86_64_NUM		43
+
+                            case R_X86_64_NONE:
+                            {
+                                printf("\n\n\nR_X86_64_NONE                calculation: none\n");
+                                break;
+                            }
+                            case R_X86_64_64:
+                            {
+                                printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
+                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_PC32:
+                            {
+                                printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
+                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_GOT32:
+                            {
+                                printf("\n\n\nR_X86_64_GOT32               calculation: G + A (address of global offset table + r_addend)\n");
+                                break;
+                            }
+                            case R_X86_64_PLT32:
+                            {
+                                printf("\n\n\nR_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
+                                break;
+                            }
+                            case R_X86_64_COPY:
+                            {
+                                printf("\n\n\nR_X86_64_COPY                calculation: none\n");
+                                break;
+                            }
+                            case R_X86_64_GLOB_DAT:
+                            {
+                                printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_JUMP_SLOT:
+                            {
+                                printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_RELATIVE:
+                            {
+                                printf("\n\n\nR_X86_64_RELATIVE            calculation: B + A (base address + r_addend)\n");
+                                printf("mappingb    = %14p\n", mappingb);
+                                printf("reloc->r_offset = %14p+%14p=%14p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                                printf("reloc->r_addend = %14p\n", reloc->r_addend);
+                                *((char*)mappingb + reloc->r_offset) = mappingb + reloc->r_addend;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_GOTPCREL:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
+                                break;
+                            }
+                            case R_X86_64_32:
+                            {
+                                printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
+                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_32S:
+                            {
+                                printf("\n\n\nR_X86_64_32S\n");
+                                break;
+                            }
+                            case R_X86_64_16:
+                            {
+                                printf("\n\n\nR_X86_64_16\n");
+                                break;
+                            }
+                            case R_X86_64_PC16:
+                            {
+                                printf("\n\n\nR_X86_64_PC16\n");
+                                break;
+                            }
+                            case R_X86_64_8:
+                            {
+                                printf("\n\n\nR_X86_64_8\n");
+                                break;
+                            }
+                            case R_X86_64_PC8:
+                            {
+                                printf("\n\n\nR_X86_64_PC8\n");
+                                break;
+                            }
+                            case R_X86_64_DTPMOD64:
+                            {
+                                printf("\n\n\nR_X86_64_DTPMOD64\n");
+                                break;
+                            }
+                            case R_X86_64_DTPOFF64:
+                            {
+                                printf("\n\n\nR_X86_64_DTPOFF64\n");
+                                break;
+                            }
+                            case R_X86_64_TPOFF64:
+                            {
+                                printf("\n\n\nR_X86_64_TPOFF64\n");
+                                break;
+                            }
+                            case R_X86_64_TLSGD:
+                            {
+                                printf("\n\n\nR_X86_64_TLSGD\n");
+                                break;
+                            }
+                            case R_X86_64_TLSLD:
+                            {
+                                printf("\n\n\nR_X86_64_TLSLD\n");
+                                break;
+                            }
+                            case R_X86_64_DTPOFF32:
+                            {
+                                printf("\n\n\nR_X86_64_DTPOFF32\n");
+                                break;
+                            }
+                            case R_X86_64_GOTTPOFF:
+                            {
+                                printf("\n\n\nR_X86_64_GOTTPOFF\n");
+                                break;
+                            }
+                            case R_X86_64_TPOFF32:
+                            {
+                                printf("\n\n\nR_X86_64_TPOFF32\n");
+                                break;
+                            }
+                            case R_X86_64_PC64:
+                            {
+                                printf("\n\n\nR_X86_64_PC64\n");
+                                break;
+                            }
+                            case R_X86_64_GOTOFF64:
+                            {
+                                printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
+                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
+                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                break;
+                            }
+                            case R_X86_64_GOTPC32:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_GOT64:
+                            {
+                                printf("\n\n\nR_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_GOTPCREL64:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_GOTPC64:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_GOTPLT64:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_PLTOFF64:
+                            {
+                                printf("\n\n\nR_X86_64_PLTOFF64\n");
+                                break;
+                            }
+                            case R_X86_64_SIZE32:
+                            {
+                                printf("\n\n\nR_X86_64_SIZE32\n");
+                                break;
+                            }
+                            case R_X86_64_SIZE64:
+                            {
+                                printf("\n\n\nR_X86_64_SIZE64\n");
+                                break;
+                            }
+                            case R_X86_64_GOTPC32_TLSDESC:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_TLSDESC_CALL:
+                            {
+                                printf("\n\n\nR_X86_64_TLSDESC_CALL\n");
+                                break;
+                            }
+                            case R_X86_64_TLSDESC:
+                            {
+                                printf("\n\n\nR_X86_64_TLSDESC\n");
+                                break;
+                            }
+                            case R_X86_64_IRELATIVE:
+                            {
+                                printf("\n\n\nR_X86_64_IRELATIVE\n");
+                                break;
+                            }
+                            case R_X86_64_RELATIVE64:
+                            {
+                                printf("\n\n\nR_X86_64_RELATIVE64\n");
+                                break;
+                            }
+                            case R_X86_64_GOTPCRELX:
+                            {
+                                printf("\n\n\nR_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_REX_GOTPCRELX:
+                            {
+                                printf("\n\n\nR_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                                break;
+                            }
+                            case R_X86_64_NUM:
+                            {
+                                printf("\n\n\nR_X86_64_NUM\n");
+                                break;
+                            }
+                            #endif
+                            default:
+                                printf("unknown type, got %d\n", reloc_type);
+                                break;
+                        }
+                    }
+                }
             }
 //             nl();
             

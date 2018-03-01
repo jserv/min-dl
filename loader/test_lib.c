@@ -1,4 +1,21 @@
 #include <stdio.h>
-int TESTTTTTTTTTTTTTT = 1234;
+
+#include <assert.h>
+
+int k = 1239;
+
+// int t() { /* printf("k = %d\n", k);*/ return k; }
+
+__attribute__((visibility("hidden")))
+const int TESTTTTTTTTTTTTTT = 1234;
+
 int __attribute__((visibility("hidden"))) test_GLOBALB = 5;
-int ggggggggggydcfiygitfghvjygftghvjbgytfucghvjhyftcgh() { int k = 1239; printf("TESTTTTTTTTTTTTTT = %d\nk = %d\n", TESTTTTTTTTTTTTTT, k); }
+
+const char *foo() { return "foo"; }
+
+char * bar_ = "bar";
+
+__attribute__((visibility("hidden")))
+const char *bar() { return "bar" ; }
+
+int *bar_int() { return k ; }
