@@ -74,7 +74,7 @@ void Handlerb(int sig, siginfo_t *si, ucontext_t *unused)
         printf("\r    NOTICE\n");
         void * h_ = &Handlerb;
         printf("    received SegFault (%d)\n", sig);
-        printf("    addr:   %p\n", si->si_addr);
+        printf("    addr:   %014p\n", si->si_addr);
         printf("    arch:   %d\n", si->si_arch);
         printf("    signo:  %d\n", si->si_signo);
         printf("    errno:  %d\n", si->si_errno);
@@ -113,7 +113,7 @@ void Handler(int sig, siginfo_t *si, ucontext_t *context)
 //         printf("NOTICE\n");
         void * h = &Handler;
 //         printf("received SegFault (%d)\n", sig);
-//         printf("addr:   %p\n", si->si_addr);
+//         printf("addr:   %014p\n", si->si_addr);
 //         int fault_code = setjmp(restore_pointb);
 //         if (fault_code == 0) printf("arch:   %d\n", si->si_arch);
 //         else  printf("arch:   NULL (recovered from a fault, code = %d)\n", fault_code);
@@ -340,7 +340,7 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
     printf("name=%s (%d segments)\n", info->dlpi_name,
         info->dlpi_phnum);
         if (bytecmp(info->dlpi_name, argv[1]) == 0) for (j = 0; j < info->dlpi_phnum; j++) {
-        printf("\t\t header %2d: address=%14p (%014p)\n", j, (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr), (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr));
+        printf("\t\t header %2d: address=%014p (%014p)\n", j, (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr), (void *) (info->dlpi_addr + info->dlpi_phdr[j].p_vaddr));
         printf("\t\t p_type:\t\t\t/* Segment type */\t\t= ");
         switch(info->dlpi_phdr[j].p_type)
         {
@@ -480,6 +480,28 @@ int PT_DYNAMIC_ = NULL;
 char * tmp99D;
 int First_Load_Header_index = NULL;
 int Last_Load_Header_index = NULL;
+
+int prot_from_phdr(const int p_flags)
+{
+    int prot = 0;
+    if (p_flags & PF_R)
+    {
+        printf("PROT_READ|");
+        prot |= PROT_READ;
+    }
+    if (p_flags & PF_W)
+    {
+        printf("PROT_WRITE|");
+        prot |= PROT_WRITE;
+    }
+    if (p_flags & PF_X)
+    {
+        printf("PROT_EXEC|");
+        prot |= PROT_EXEC;
+    }
+    return prot;
+}
+
 void map() {
     if (is_mapped == 0) {
         Elf64_Ehdr * _elf_header = (Elf64_Ehdr *) array;
@@ -569,7 +591,9 @@ void map() {
 //                         printf(" p_memsz: %014p", _elf_program_header[i].p_memsz);
 //                         printf(" p_align: %014p\n\n\n", _elf_program_header[i].p_align);
 
-                    printf("mprotect(%014p+round_down(%014p, %014p), %014p, %014p);\n", mappingb, _elf_program_header[i].p_vaddr, _elf_program_header[i].p_align, _elf_program_header[i].p_memsz, _elf_program_header[i].p_flags);
+                    printf("mprotect(%014p+round_down(%014p, %014p), %014p, ", mappingb, _elf_program_header[i].p_vaddr, _elf_program_header[i].p_align, _elf_program_header[i].p_memsz);
+                    prot_from_phdr(_elf_program_header[i].p_flags);
+                    printf(");\n");
                     
                     int check_map_success = mprotect(mappingb+round_down(_elf_program_header[i].p_vaddr, _elf_program_header[i].p_align), round_up(_elf_program_header[i].p_memsz, _elf_program_header[i].p_align), _elf_program_header[i].p_flags);
                     if (errno == 0)
@@ -1083,39 +1107,39 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         char * name = str_tbl + sym_tbl[i].st_name;
         printf("name: %s\n", demangle_it(name));
         nl();
-        if (bytecmp(name,"t") == 0) {
-
-            printf("t found\n");
-                        
-// #define JMP_ADDR(x) asm("\tjmp  *%0\n" :: "r" (x))
+//         if (bytecmp(name,"t") == 0) {
+// 
+//             printf("t found\n");
+//                         
+// // #define JMP_ADDR(x) asm("\tjmp  *%0\n" :: "r" (x))
+// //             printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
+// //             printf("JMP_ADDR(%014p);\n", address);
+// //             JMP_ADDR(address);
+//                         printf("int (*testb)()                               =%014p\n", address);
+// // 
 //             printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
-//             printf("JMP_ADDR(%014p);\n", address);
-//             JMP_ADDR(address);
-                        printf("int (*testb)()                               =%014p\n", address);
+// // 
+//             int (*testb)() = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so", "t");
+//             printf("testb = %014p\n", testb);
+//             printf("testb() returned %d;\n",
+//             testb()
+//             );
 // 
-            printf("(%014p+%014p=%014p)\n", mappingb, sym_tbl[i].st_value, sym_tbl[i].st_value+mappingb);
-// 
-            int (*testb)() = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/test_lib.so", "t");
-            printf("testb = %014p\n", testb);
-            printf("testb() returned %d;\n",
-            testb()
-            );
-
-            nl();
-//             int (*testc)() = mappingb+sym_tbl[i].st_value;
-//             printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
-//             testc();
 //             nl();
-//             int foo(int i){ return i + 1;}
-// 
-//             typedef int (*g)(int);  // Declare typedef
-// 
-//             g func = mappingb+sym_tbl[i].st_value;          // Define function-pointer variable, and initialise
-// 
-//             int hvar = func(3);     // Call function through pointer
-            nl();
-            print_maps();
-        }
+// //             int (*testc)() = mappingb+sym_tbl[i].st_value;
+// //             printf("int (*testc)()                =%014p ; testc();\n", mappingb+sym_tbl[i].st_value);
+// //             testc();
+// //             nl();
+// //             int foo(int i){ return i + 1;}
+// // 
+// //             typedef int (*g)(int);  // Declare typedef
+// // 
+// //             g func = mappingb+sym_tbl[i].st_value;          // Define function-pointer variable, and initialise
+// // 
+// //             int hvar = func(3);     // Call function through pointer
+//             nl();
+//             print_maps();
+//         }
     }
 }
 
@@ -2402,25 +2426,12 @@ get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
         }
         printf("\n");
         if (dynamic->d_tag == field) {
-            printf("returning %p\n", dynamic->d_un.d_val);
+            printf("returning %014p\n", dynamic->d_un.d_val);
             return dynamic->d_un.d_val;
         }
     }
     printf("returning 0\n");
     return 0;
-}
-
-static int flags_to_prot(const int p_flags)
-{
-    printf("called prot_from_phdr\n");
-    int prot = 0;
-    if (p_flags & PF_R)
-        prot |= PROT_READ;
-    if (p_flags & PF_W)
-        prot |= PROT_WRITE;
-    if (p_flags & PF_X)
-        prot |= PROT_EXEC;
-    return prot;
 }
 
 int
@@ -2912,7 +2923,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 printf("printing relocation data\n");
                 // needs to be the address of the mapping itself, not the base address
                 Elf64_Rela *relocs = mappingb + get_dynamic_entry(dynamic, DT_RELA);
-                printf("relocs = %p (%x)\n", relocs, relocs);
+                printf("relocs = %014p (%x)\n", relocs, relocs);
                 size_t relocs_size = get_dynamic_entry(dynamic, DT_RELASZ);
                 printf("relocs_size = %d\n", relocs_size);
                 if (relocs == mappingb && relocs_size == 0) {} else {
@@ -2989,16 +3000,16 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                             case R_X86_64_64:
                             {
                                 printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
-                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }
                             case R_X86_64_PC32:
                             {
                                 printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
-                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }
@@ -3020,25 +3031,24 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                             case R_X86_64_GLOB_DAT:
                             {
                                 printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }
                             case R_X86_64_JUMP_SLOT:
                             {
                                 printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }
                             case R_X86_64_RELATIVE:
                             {
                                 printf("\n\n\nR_X86_64_RELATIVE            calculation: B + A (base address + r_addend)\n");
-                                printf("mappingb    = %14p\n", mappingb);
-                                printf("reloc->r_offset = %14p+%14p=%14p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
-                                printf("reloc->r_addend = %14p\n", reloc->r_addend);
-                                *((char*)mappingb + reloc->r_offset) = mappingb + reloc->r_addend;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                                printf("mappingb    = %014p\n", mappingb);
+                                printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                                printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                                *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
                                 break;
                             }
                             case R_X86_64_GOTPCREL:
@@ -3049,8 +3059,8 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                             case R_X86_64_32:
                             {
                                 printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
-                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }
@@ -3127,8 +3137,8 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                             case R_X86_64_GOTOFF64:
                             {
                                 printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
-                                printf("reloc->r_offset = %14p\n", reloc->r_offset);
-                                *((char*)mappingb + reloc->r_offset) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
                                 printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                                 break;
                             }

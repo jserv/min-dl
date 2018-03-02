@@ -17,6 +17,7 @@
 void * lookup_symbol_by_name_(const char * lib, const char * name);
 
 int main() {
+    readelf_("./files/test_lib.so");
     printf("Test exported functions >\n");
     const char *result_char;
     const int *result_int;
