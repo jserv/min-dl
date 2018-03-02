@@ -20,3 +20,5 @@ __attribute__((visibility("hidden")))
 char *bar() { return bar_p ; }
 
 int *bar_int() { return k ; }
+
+char * test() { printf("test\n"); }
