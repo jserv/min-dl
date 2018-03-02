@@ -7,7 +7,7 @@ ar cur files/libstring.a files/libstring.o &&
 gcc -g3 -O0 readelf_.c -o files/readelf_.so --shared -fPIC -D__SHARED__ -liberty &&
 gcc -g3 -O0 readelf_.c -c -fPIC -D__SHARED__ -o files/readelf_.o &&
 ar cur files/readelf_.a files/readelf_.o &&
-gcc -O0 test_lib.c -o files/test_lib.so --shared -fPIC -pie -nostdlib &&
+gcc -O0 test_lib.c -o files/test_lib.so --shared -fPIC -nostdlib &&
 gcc -g3 -O0 test_lib.c -c -fPIC -o files/test_lib.o &&
 ar cur files/test_lib.a files/test_lib.o &&
 gcc -fPIC -g3 -O0 test_loader.c -o files/loader files/libstring.so files/readelf_.so -ldl &&
