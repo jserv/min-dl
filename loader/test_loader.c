@@ -18,22 +18,62 @@ void * lookup_symbol_by_name_(const char * lib, const char * name);
 
 int main() {
     readelf_("./files/test_lib.so");
-    printf("Test exported functions >\n");
     const char *result_char;
     const int *result_int;
     const char *(*func)(void);
+    char * (*func_char)();
+    int (*func_int)();
+
+    printf("Test exported functions >\n");
+
     func = lookup_symbol_by_name_("./files/test_lib.so", "foo");
-    result_char = func();
-    assert(!strcmp(result_char, "foo"));
     printf("func = %s\n", func());
     
-    int (*func_int)() = lookup_symbol_by_name_("./files/test_lib.so", "bar_int");
-    result_int = func_int();
+    func_int = lookup_symbol_by_name_("./files/test_lib.so", "bar_int");
     printf("func_int = %d\n", func_int());
 
-    char * (*func_char)() = lookup_symbol_by_name_("./files/test_lib.so", "bar");
+    func_char = lookup_symbol_by_name_("./files/test_lib.so", "bar");
     printf("func_char = %s\n", func_char());
 
     printf("OK!\n");
+
+
+
+    printf("Test nested functions >\n");
+
+    func_int = lookup_symbol_by_name_("./files/test_lib.so", "test_nested.2240");
+    printf("test_nested = %d\n", func_int());
+
+    func_int = lookup_symbol_by_name_("./files/test_lib.so", "test");
+    printf("test = %d\n", func_int());
+
+
+    printf("OK!\n");
+
+
+
+    printf("Test libc functions >\n");
+
+//     readelf_("/lib/libc.so.6");
+    int (*func_int_write)();
+    func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
+    func_int_write(1, "write\n", 7);
+    int (*func_int_strlen)();
+    func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
+    printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
+
+    printf("OK!\n");
+
+    
+//     printf("Test functions that call external libc functions >\n");
+// 
+//     func_int = lookup_symbol_by_name_("./files/test_lib.so", "test_printf");
+//     result_int = func_int();
+//     printf("func_int = %d\n", func_int());
+// 
+//     printf("OK!\n");
+
+
+
     return 0;
 }

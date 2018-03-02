@@ -10,6 +10,12 @@ int main() {
 #endif
 
 #ifdef __SHARED__
+
+int init__ = 0;
+int init_(const char * filename);
+int initv_(const char * filename);
+
+
 void * lookup_symbol_by_name_(const char * lib, const char * name);
 // for C++ symbol name demangling should libirty become incompatible
 // http://itanium-cxx-abi.github.io/cxx-abi/abi.html#mangling
@@ -453,8 +459,12 @@ Elf64_Shdr *_elf_symbol_table;
 char * program_hdr;
 size_t len;
 char * array;
-
+char * current_lib = "";
+char * last_lib = "";
+int is_mapped = 0;
 char * init(char * lib) {
+    if (bytecmpq(lib, last_lib) != 0) { array = NULL; is_mapped = 0; init__ = 0; }
+    last_lib=lib;
     if (array == NULL) {
         int fd = open(lib, O_RDONLY);
         if (fd < 0) {
@@ -470,12 +480,11 @@ char * init(char * lib) {
             exit;
         } else {
             printf ("map succeded with address: %014p\n", array);
-            return array;
+            return 0;
         }
-    } else return array;
-    return "-1";
+    } else return 0;
+    return -1;
 }
-int is_mapped = 0;
 int PT_DYNAMIC_ = NULL;
 char * tmp99D;
 int First_Load_Header_index = NULL;
@@ -841,6 +850,13 @@ char * read_section_(char * ar, Elf64_Shdr sh) {
     return buff ;
 }
 
+size_t RELA_PLT_SIZE = 0;
+
+char * obtain_rela_plt_size(char * sourcePtr, Elf64_Ehdr * eh, Elf64_Shdr sh_table[]) {
+    char * sh_str = read_section_(sourcePtr, sh_table[eh->e_shstrndx]); // will fail untill section header table can be read
+    for(int i=0; i<eh->e_shnum; i++) if (bytecmpq((sh_str + sh_table[i].sh_name), ".rela.plt") == 0) RELA_PLT_SIZE=_elf_symbol_table[i].sh_size;
+}
+
 char * print_section_headers_(char * sourcePtr, Elf64_Ehdr * eh, Elf64_Shdr sh_table[]) {
     printf ("\n");
     printf("eh->e_shstrndx = 0x%x (%d)\n", eh->e_shstrndx+mappingb, eh->e_shstrndx);
@@ -862,6 +878,7 @@ char * print_section_headers_(char * sourcePtr, Elf64_Ehdr * eh, Elf64_Shdr sh_t
         printf("%014p ", _elf_symbol_table[i].sh_flags);
         printf("%s\t", (sh_str + sh_table[i].sh_name));
         printf("\n");
+        if (bytecmpq((sh_str + sh_table[i].sh_name), ".rela.plt") == 0) RELA_PLT_SIZE=_elf_symbol_table[i].sh_size;
     }
     printf("\t========================================");
     printf("========================================\n");
@@ -1076,7 +1093,7 @@ int symbol(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table) {
         char * address = sym_tbl[i].st_value+mappingb;
         printf("address: %014p\t", address);
         if ( address > mappingb && address < mappingb_end ) test(address);
-        else printf("value: %15s\t", "invalid range");
+        else printf("value: %015p\t", sym_tbl[i].st_value);
         printf("type: ");
         switch (ELF64_ST_TYPE(sym_tbl[i].st_info)) {
             case STT_NOTYPE:
@@ -1906,8 +1923,8 @@ void * lookup_symbol_by_name(const char * arrayb, Elf64_Ehdr * eh, char * name) 
 }
 
 void * lookup_symbol_by_name_(const char * lib, const char * name) {
-        const char * arrayb = init(lib);
-        map();
+        init_(lib);
+        const char * arrayb = array;
         Elf64_Ehdr * eh = (Elf64_Ehdr *) arrayb;
         Elf64_Shdr *_elf_symbol_tableb;
         if(!strncmp((char*)eh->e_ident, "\177ELF", 4)) {
@@ -1928,8 +1945,8 @@ void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_i
 //         print_symbols_lookup_got_and_ptl(arrayb, eh, _elf_symbol_table, symbol_index);
 //         nl();
 //         nl();
-        char * GOT = lookup_symbol_by_name_("./test_lib.so", "_GLOBAL_OFFSET_TABLE_");
-        printf("address of GOT = %014p\n", GOT);
+//         char * GOT = lookup_symbol_by_name_("./test_lib.so", "_GLOBAL_OFFSET_TABLE_");
+//         printf("address of GOT = %014p\n", GOT);
         nl();
         nl();
         char * symbol = print_symbols_lookup(arrayb, eh, _elf_symbol_table, symbol_index);
@@ -2433,13 +2450,515 @@ get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
     printf("returning 0\n");
     return 0;
 }
+Elf64_Ehdr * _elf_header;
+
+r(Elf64_Rela *relocs, size_t relocs_size) {
+/*
+
+Relocation
+Relocation Types
+Relocation entries describe how to alter the following instruction and data fields (bit numbers
+appear in the lower box corners).
+
+
+        word32
+31                  0
+
+word32      This specifies a 32-bit field occupying 4 bytes with arbitrary byte alignment. These
+            values use the same byte order as other word values in the Intel architecture.
+
+                         3    2    1    0
+0x01020304           01   02   03   04
+                 31                     0
+
+Calculations below assume the actions are transforming a relocatable file into either an
+executable or a shared object file. Conceptually, the link editor merges one or more relocatable
+files to form the output. It first decides how to combine and locate the input files, then updates
+the symbol values, and finally performs the relocation. Relocations applied to executable or
+shared object files are similar and accomplish the same result. Descriptions below use the
+following notation.
+
+A       This means the addend used to compute the value of the relocatable field.
+
+B       This means the base address at which a shared object has been loaded into memory
+        during execution. Generally, a shared object file is built with a 0 base virtual address,
+        but the execution address will be different.
+
+G       This means the offset into the global offset table at which the address of the
+        relocation entry's symbol will reside during execution. See "Global Offset Table''
+        below for more information.
+
+GOT     This means the address of the global offset table. See "Global Offset Table'' below
+        for more information.
+
+L       This means the place (section offset or address) of the procedure linkage table entry
+        for a symbol. A procedure linkage table entry redirects a function call to the proper
+        destination. The link editor builds the initial procedure linkage table, and the
+        dynamic linker modifies the entries during execution. See "Procedure Linkage
+        Table'' below for more information.
+
+P       This means the place (section offset or address) of the storage unit being relocated
+        (computed using r_offset ).
+        
+S       This means the value of the symbol whose index resides in the relocation entry.
+
+A relocation entry's r_offset value designates the offset or virtual address of the first byte
+of the affected storage unit. The relocation type specifies which bits to change and how to
+calculate their values. The Intel architecture uses only Elf32_Rel relocation entries, the field
+to be relocated holds the addend. In all cases, the addend and the computed result use the same
+byte order.
+
+Name                Value       Field       Calculation
+R_386_NONE          0           none        none
+R_386_32            1           word32      S + A
+R_386_PC32          2           word32      S + A - P
+R_386_GOT32         3           word32      G + A
+R_386_PLT32         4           word32      L + A - P
+R_386_COPY          5           none        none
+R_386_GLOB_DAT      6           word32      S
+R_386_JMP_SLOT      7           word32      S
+R_386_RELATIVE      8           word32      B + A
+R_386_GOTOFF        9           word32      S + A - GOT
+R_386_GOTPC         10          word32      GOT + A - P
+
+Some relocation types have semantics beyond simple calculation.
+
+R_386_GLOB_DAT      This relocation type is used to set a global offset table entry to the address
+                    of the specified symbol. The special relocation type allows one to determine
+                    the correspondence between symbols and global offset table entries.
+
+R_386_JMP_SLOT      The link editor creates this relocation type for dynamic linking. Its offset
+                    member gives the location of a procedure linkage table entry. The dynamic
+                    linker modifies the procedure linkage table entry to transfer control to the
+                    designated symbol's address [see "Procedure Linkage Table'' below].
+
+R_386_RELATIVE      The link editor creates this relocation type for dynamic linking. Its offset
+                    member gives a location within a shared object that contains a value
+                    representing a relative address. The dynamic linker computes the
+                    corresponding virtual address by adding the virtual address at which the
+                    shared object was loaded to the relative address. Relocation entries for this
+                    type must specify 0 for the symbol table index.
+
+R_386_GOTOFF        This relocation type computes the difference between a symbol's value and
+                    the address of the global offset table. It additionally instructs the link editor
+                    to build the global offset table.
+                    
+R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses the address
+                    of the global offset table in its calculation. The symbol referenced in this
+                    relocation normally is _GLOBAL_OFFSET_TABLE_, which additionally
+                    instructs the link editor to build the global offset table.
+
+*/
+    if (relocs != mappingb && relocs_size != 0) {
+        for (int i = 0; i < relocs_size  / sizeof(Elf64_Rela); i++) {
+            Elf64_Rela *reloc = &relocs[i];
+            int reloc_type = ELF64_R_TYPE(reloc->r_info);
+            printf("i = %d,\t\tELF64_R_TYPE(reloc->r_info)\t= ", i);
+            switch (reloc_type) {
+                #if defined(__x86_64__)
+                    
+// /* AMD x86-64 relocations.  */
+// #define R_X86_64_NONE		0	/* No reloc */
+// #define R_X86_64_64		1	/* Direct 64 bit  */
+// #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
+// #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
+// #define R_X86_64_PLT32		4	/* 32 bit PLT address */
+// #define R_X86_64_COPY		5	/* Copy symbol at runtime */
+// #define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
+// #define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
+// #define R_X86_64_RELATIVE	8	/* Adjust by program base */
+// #define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
+// 					   offset to GOT */
+// #define R_X86_64_32		10	/* Direct 32 bit zero extended */
+// #define R_X86_64_32S		11	/* Direct 32 bit sign extended */
+// #define R_X86_64_16		12	/* Direct 16 bit zero extended */
+// #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
+// #define R_X86_64_8		14	/* Direct 8 bit sign extended  */
+// #define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
+// #define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
+// #define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
+// #define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
+// #define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
+// 					   to two GOT entries for GD symbol */
+// #define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
+// 					   to two GOT entries for LD symbol */
+// #define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
+// #define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
+// 					   to GOT entry for IE symbol */
+// #define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
+// #define R_X86_64_PC64		24	/* PC relative 64 bit */
+// #define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
+// #define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
+// 					   offset to GOT */
+// #define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
+// #define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
+// 					   to GOT entry */
+// #define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
+// #define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
+// #define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
+// 					   to PLT entry */
+// #define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
+// #define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
+// #define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
+// #define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
+// 					   descriptor.  */
+// #define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
+// #define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
+// #define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
+// 					/* 39 Reserved was R_X86_64_PC32_BND */
+// 					/* 40 Reserved was R_X86_64_PLT32_BND */
+// #define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
+// 					   offset to GOT entry without REX
+// 					   prefix, relaxable.  */
+// #define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
+// 					   offset to GOT entry with REX prefix,
+// 					   relaxable.  */
+// #define R_X86_64_NUM		43
+
+                case R_X86_64_NONE:
+                {
+                    printf("\n\n\nR_X86_64_NONE                calculation: none\n");
+                    break;
+                }
+                case R_X86_64_64:
+                {
+                    printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                    break;
+                }
+                case R_X86_64_PC32:
+                {
+                    printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                    break;
+                }
+                case R_X86_64_GOT32:
+                {
+                    printf("\n\n\nR_X86_64_GOT32               calculation: G + A (address of global offset table + r_addend)\n");
+                    break;
+                }
+                case R_X86_64_PLT32:
+                {
+                    printf("\n\n\nR_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
+                    break;
+                }
+                case R_X86_64_COPY:
+                {
+                    printf("\n\n\nR_X86_64_COPY                calculation: none\n");
+                    break;
+                }
+                case R_X86_64_GLOB_DAT:
+                {
+                    printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
+                    printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                    char ** addr = reloc->r_offset + mappingb;
+                    printf("%014p = %014p\n", addr, *addr);
+                    break;
+                }
+                case R_X86_64_JUMP_SLOT:
+                {
+                    printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
+                    printf("mappingb    = %014p\n", mappingb);
+                    printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                    printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", *((char*)mappingb + reloc->r_offset));
+                    char ** addr = reloc->r_offset + mappingb;
+                    printf("%014p = %014p\n", addr, *addr);
+                    break;
+                }
+                case R_X86_64_RELATIVE:
+                {
+                    printf("\n\n\nR_X86_64_RELATIVE            calculation: B + A (base address + r_addend)\n");
+                    printf("mappingb    = %014p\n", mappingb);
+                    printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                    printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                    *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                    char ** addr = reloc->r_offset + mappingb;
+                    printf("%014p = %014p\n", addr, *addr);
+                    break;
+                }
+                case R_X86_64_GOTPCREL:
+                {
+                    printf("\n\n\nR_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
+                    break;
+                }
+                case R_X86_64_32:
+                {
+                    printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                    break;
+                }
+                case R_X86_64_32S:
+                {
+                    printf("\n\n\nR_X86_64_32S\n");
+                    break;
+                }
+                case R_X86_64_16:
+                {
+                    printf("\n\n\nR_X86_64_16\n");
+                    break;
+                }
+                case R_X86_64_PC16:
+                {
+                    printf("\n\n\nR_X86_64_PC16\n");
+                    break;
+                }
+                case R_X86_64_8:
+                {
+                    printf("\n\n\nR_X86_64_8\n");
+                    break;
+                }
+                case R_X86_64_PC8:
+                {
+                    printf("\n\n\nR_X86_64_PC8\n");
+                    break;
+                }
+                case R_X86_64_DTPMOD64:
+                {
+                    printf("\n\n\nR_X86_64_DTPMOD64\n");
+                    break;
+                }
+                case R_X86_64_DTPOFF64:
+                {
+                    printf("\n\n\nR_X86_64_DTPOFF64\n");
+                    break;
+                }
+                case R_X86_64_TPOFF64:
+                {
+                    printf("\n\n\nR_X86_64_TPOFF64\n");
+                    break;
+                }
+                case R_X86_64_TLSGD:
+                {
+                    printf("\n\n\nR_X86_64_TLSGD\n");
+                    break;
+                }
+                case R_X86_64_TLSLD:
+                {
+                    printf("\n\n\nR_X86_64_TLSLD\n");
+                    break;
+                }
+                case R_X86_64_DTPOFF32:
+                {
+                    printf("\n\n\nR_X86_64_DTPOFF32\n");
+                    break;
+                }
+                case R_X86_64_GOTTPOFF:
+                {
+                    printf("\n\n\nR_X86_64_GOTTPOFF\n");
+                    break;
+                }
+                case R_X86_64_TPOFF32:
+                {
+                    printf("\n\n\nR_X86_64_TPOFF32\n");
+                    break;
+                }
+                case R_X86_64_PC64:
+                {
+                    printf("\n\n\nR_X86_64_PC64\n");
+                    break;
+                }
+                case R_X86_64_GOTOFF64:
+                {
+                    printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                    break;
+                }
+                case R_X86_64_GOTPC32:
+                {
+                    printf("\n\n\nR_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_GOT64:
+                {
+                    printf("\n\n\nR_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_GOTPCREL64:
+                {
+                    printf("\n\n\nR_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_GOTPC64:
+                {
+                    printf("\n\n\nR_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_GOTPLT64:
+                {
+                    printf("\n\n\nR_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_PLTOFF64:
+                {
+                    printf("\n\n\nR_X86_64_PLTOFF64\n");
+                    break;
+                }
+                case R_X86_64_SIZE32:
+                {
+                    printf("\n\n\nR_X86_64_SIZE32\n");
+                    break;
+                }
+                case R_X86_64_SIZE64:
+                {
+                    printf("\n\n\nR_X86_64_SIZE64\n");
+                    break;
+                }
+                case R_X86_64_GOTPC32_TLSDESC:
+                {
+                    printf("\n\n\nR_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_TLSDESC_CALL:
+                {
+                    printf("\n\n\nR_X86_64_TLSDESC_CALL\n");
+                    break;
+                }
+                case R_X86_64_TLSDESC:
+                {
+                    printf("\n\n\nR_X86_64_TLSDESC\n");
+                    break;
+                }
+                case R_X86_64_IRELATIVE:
+                {
+                    printf("\n\n\nR_X86_64_IRELATIVE\n");
+                    break;
+                }
+                case R_X86_64_RELATIVE64:
+                {
+                    printf("\n\n\nR_X86_64_RELATIVE64\n");
+                    break;
+                }
+                case R_X86_64_GOTPCRELX:
+                {
+                    printf("\n\n\nR_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_REX_GOTPCRELX:
+                {
+                    printf("\n\n\nR_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    break;
+                }
+                case R_X86_64_NUM:
+                {
+                    printf("\n\n\nR_X86_64_NUM\n");
+                    break;
+                }
+                #endif
+                default:
+                    printf("unknown type, got %d\n", reloc_type);
+                    break;
+            }
+        }
+    }
+}
 
 int
-readelf_(const char * filename) {
+init_(const char * filename) {
+    init(filename);
+    if (init__ == 1) return 0;
+    _elf_header = (Elf64_Ehdr *) array;
+    read_section_header_table_(array, _elf_header, &_elf_symbol_table);
+    obtain_rela_plt_size(array, _elf_header, _elf_symbol_table);
+    if(!strncmp((char*)_elf_header->e_ident, "\177ELF", 4)) {
+        map();
+        for (int i = 0; i < _elf_header->e_phnum; ++i) {
+            char * section_;
+            switch(_elf_program_header[i].p_type)
+            {
+                case PT_NULL:
+                    section_="PT_NULL";
+                    break;
+                case PT_LOAD:
+                    section_="PT_LOAD";
+                    break;
+                case PT_DYNAMIC:
+                    section_="PT_DYNAMIC";
+                    PT_DYNAMIC_=i;
+                    break;
+                case PT_INTERP:
+                    section_="PT_INTERP";
+                    break;
+                case PT_NOTE:
+                    section_="PT_NOTE";
+                    break;
+                case PT_SHLIB:
+                    section_="PT_SHLIB";
+                    break;
+                case PT_PHDR:
+                    section_="PT_PHDR";
+                    break;
+                case PT_TLS:
+                    section_="PT_TLS";
+                    break;
+                case PT_NUM:
+                    section_="PT_NUM";
+                    break;
+                case PT_LOOS:
+                    section_="PT_LOOS";
+                    break;
+                case PT_GNU_EH_FRAME:
+                    section_="PT_GNU_EH_FRAME";
+                    break;
+                case PT_GNU_STACK:
+                    section_="PT_GNU_STACK";
+                    break;
+                case PT_GNU_RELRO:
+                    section_="PT_GNU_RELRO";
+                    break;
+                case PT_SUNWBSS:
+                    section_="PT_SUNWBSS";
+                    break;
+                case PT_SUNWSTACK:
+                    section_="PT_SUNWSTACK";
+                    break;
+                case PT_HIOS:
+                    section_="PT_HIOS";
+                    break;
+                case PT_LOPROC:
+                    section_="PT_LOPROC";
+                    break;
+                case PT_HIPROC:
+                    section_="PT_HIPROC";
+                    break;
+                default:
+                    section_="Unknown";
+                    break;
+            }
+            if (section_ == "PT_DYNAMIC")
+            {
+                read_fast_verify(array, len, &tmp99D, (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                __lseek_string__(&tmp99D, _elf_program_header[i].p_memsz, _elf_program_header[i].p_offset);
+            }
+        }
+        if (PT_DYNAMIC_ != 0) {
+            ElfW(Dyn) * dynamic = tmp99D;
+            r(mappingb + get_dynamic_entry(dynamic, DT_RELA), get_dynamic_entry(dynamic, DT_RELASZ));
+            r(mappingb + get_dynamic_entry(dynamic, DT_JMPREL), RELA_PLT_SIZE);
+        }
+    } else return -1;
+    init__ = 1;
+    return 0;
+}
+
+int
+initv_(const char * filename) {
+    init(filename);
+    if (init__ == 1) return 0;
     setlocale(LC_NUMERIC, "en_US.utf-8"); /* important */
-    array = init(filename);
-        Elf64_Ehdr * _elf_header = (Elf64_Ehdr *) array;
+        _elf_header = (Elf64_Ehdr *) array;
         read_section_header_table_(array, _elf_header, &_elf_symbol_table);
+        obtain_rela_plt_size(array, _elf_header, _elf_symbol_table);
         if(!strncmp((char*)_elf_header->e_ident, "\177ELF", 4)) {
 //                 ELF Header:
 //                 Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
@@ -2818,103 +3337,6 @@ readelf_(const char * filename) {
                 printf("Second PT_LOAD _elf_program_header[%d]->p_paddr = \n%014p\n", Last_Load_Header_index, _elf_program_header[Last_Load_Header_index].p_paddr+mappingb);
                 ElfW(Dyn) * dynamic = tmp99D;
 
-/*
-
-Relocation
-Relocation Types
-Relocation entries describe how to alter the following instruction and data fields (bit numbers
-appear in the lower box corners).
-
-
-        word32
-31                  0
-
-word32      This specifies a 32-bit field occupying 4 bytes with arbitrary byte alignment. These
-            values use the same byte order as other word values in the Intel architecture.
-
-                         3    2    1    0
-0x01020304           01   02   03   04
-                 31                     0
-
-Calculations below assume the actions are transforming a relocatable file into either an
-executable or a shared object file. Conceptually, the link editor merges one or more relocatable
-files to form the output. It first decides how to combine and locate the input files, then updates
-the symbol values, and finally performs the relocation. Relocations applied to executable or
-shared object files are similar and accomplish the same result. Descriptions below use the
-following notation.
-
-A       This means the addend used to compute the value of the relocatable field.
-
-B       This means the base address at which a shared object has been loaded into memory
-        during execution. Generally, a shared object file is built with a 0 base virtual address,
-        but the execution address will be different.
-
-G       This means the offset into the global offset table at which the address of the
-        relocation entry's symbol will reside during execution. See "Global Offset Table''
-        below for more information.
-
-GOT     This means the address of the global offset table. See "Global Offset Table'' below
-        for more information.
-
-L       This means the place (section offset or address) of the procedure linkage table entry
-        for a symbol. A procedure linkage table entry redirects a function call to the proper
-        destination. The link editor builds the initial procedure linkage table, and the
-        dynamic linker modifies the entries during execution. See "Procedure Linkage
-        Table'' below for more information.
-
-P       This means the place (section offset or address) of the storage unit being relocated
-        (computed using r_offset ).
-        
-S       This means the value of the symbol whose index resides in the relocation entry.
-
-A relocation entry's r_offset value designates the offset or virtual address of the first byte
-of the affected storage unit. The relocation type specifies which bits to change and how to
-calculate their values. The Intel architecture uses only Elf32_Rel relocation entries, the field
-to be relocated holds the addend. In all cases, the addend and the computed result use the same
-byte order.
-
-Name                Value       Field       Calculation
-R_386_NONE          0           none        none
-R_386_32            1           word32      S + A
-R_386_PC32          2           word32      S + A - P
-R_386_GOT32         3           word32      G + A
-R_386_PLT32         4           word32      L + A - P
-R_386_COPY          5           none        none
-R_386_GLOB_DAT      6           word32      S
-R_386_JMP_SLOT      7           word32      S
-R_386_RELATIVE      8           word32      B + A
-R_386_GOTOFF        9           word32      S + A - GOT
-R_386_GOTPC         10          word32      GOT + A - P
-
-Some relocation types have semantics beyond simple calculation.
-
-R_386_GLOB_DAT      This relocation type is used to set a global offset table entry to the address
-                    of the specified symbol. The special relocation type allows one to determine
-                    the correspondence between symbols and global offset table entries.
-
-R_386_JMP_SLOT      The link editor creates this relocation type for dynamic linking. Its offset
-                    member gives the location of a procedure linkage table entry. The dynamic
-                    linker modifies the procedure linkage table entry to transfer control to the
-                    designated symbol's address [see "Procedure Linkage Table'' below].
-
-R_386_RELATIVE      The link editor creates this relocation type for dynamic linking. Its offset
-                    member gives a location within a shared object that contains a value
-                    representing a relative address. The dynamic linker computes the
-                    corresponding virtual address by adding the virtual address at which the
-                    shared object was loaded to the relative address. Relocation entries for this
-                    type must specify 0 for the symbol table index.
-
-R_386_GOTOFF        This relocation type computes the difference between a symbol's value and
-                    the address of the global offset table. It additionally instructs the link editor
-                    to build the global offset table.
-                    
-R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses the address
-                    of the global offset table in its calculation. The symbol referenced in this
-                    relocation normally is _GLOBAL_OFFSET_TABLE_, which additionally
-                    instructs the link editor to build the global offset table.
-
-*/
-
 //                 printf("printing symbol data\n");
 //                 Elf64_Sym *syms = mappingb + get_dynamic_entry(dynamic, DT_SYMTAB);
 //                 symbol1(array, syms, 0);
@@ -2922,313 +3344,8 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 get_dynamic_entry(dynamic, -1);
                 printf("printing relocation data\n");
                 // needs to be the address of the mapping itself, not the base address
-                Elf64_Rela *relocs = mappingb + get_dynamic_entry(dynamic, DT_RELA);
-                printf("relocs = %014p (%x)\n", relocs, relocs);
-                size_t relocs_size = get_dynamic_entry(dynamic, DT_RELASZ);
-                printf("relocs_size = %d\n", relocs_size);
-                if (relocs == mappingb && relocs_size == 0) {} else {
-                    for (int i = 0; i < relocs_size  / sizeof(Elf64_Rela); i++) {
-                        Elf64_Rela *reloc = &relocs[i];
-                        int reloc_type = ELF64_R_TYPE(reloc->r_info);
-                        printf("i = %d,\t\tELF64_R_TYPE(reloc->r_info)\t= ", i);
-                        switch (reloc_type) {
-                            #if defined(__x86_64__)
-                                
-    // /* AMD x86-64 relocations.  */
-    // #define R_X86_64_NONE		0	/* No reloc */
-    // #define R_X86_64_64		1	/* Direct 64 bit  */
-    // #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
-    // #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
-    // #define R_X86_64_PLT32		4	/* 32 bit PLT address */
-    // #define R_X86_64_COPY		5	/* Copy symbol at runtime */
-    // #define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
-    // #define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
-    // #define R_X86_64_RELATIVE	8	/* Adjust by program base */
-    // #define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
-    // 					   offset to GOT */
-    // #define R_X86_64_32		10	/* Direct 32 bit zero extended */
-    // #define R_X86_64_32S		11	/* Direct 32 bit sign extended */
-    // #define R_X86_64_16		12	/* Direct 16 bit zero extended */
-    // #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-    // #define R_X86_64_8		14	/* Direct 8 bit sign extended  */
-    // #define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
-    // #define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
-    // #define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
-    // #define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
-    // #define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
-    // 					   to two GOT entries for GD symbol */
-    // #define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
-    // 					   to two GOT entries for LD symbol */
-    // #define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
-    // #define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
-    // 					   to GOT entry for IE symbol */
-    // #define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
-    // #define R_X86_64_PC64		24	/* PC relative 64 bit */
-    // #define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
-    // #define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
-    // 					   offset to GOT */
-    // #define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
-    // #define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
-    // 					   to GOT entry */
-    // #define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
-    // #define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
-    // #define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
-    // 					   to PLT entry */
-    // #define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
-    // #define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
-    // #define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
-    // #define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
-    // 					   descriptor.  */
-    // #define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
-    // #define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
-    // #define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
-    // 					/* 39 Reserved was R_X86_64_PC32_BND */
-    // 					/* 40 Reserved was R_X86_64_PLT32_BND */
-    // #define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
-    // 					   offset to GOT entry without REX
-    // 					   prefix, relaxable.  */
-    // #define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
-    // 					   offset to GOT entry with REX prefix,
-    // 					   relaxable.  */
-    // #define R_X86_64_NUM		43
-
-                            case R_X86_64_NONE:
-                            {
-                                printf("\n\n\nR_X86_64_NONE                calculation: none\n");
-                                break;
-                            }
-                            case R_X86_64_64:
-                            {
-                                printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
-                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_PC32:
-                            {
-                                printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
-                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_GOT32:
-                            {
-                                printf("\n\n\nR_X86_64_GOT32               calculation: G + A (address of global offset table + r_addend)\n");
-                                break;
-                            }
-                            case R_X86_64_PLT32:
-                            {
-                                printf("\n\n\nR_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
-                                break;
-                            }
-                            case R_X86_64_COPY:
-                            {
-                                printf("\n\n\nR_X86_64_COPY                calculation: none\n");
-                                break;
-                            }
-                            case R_X86_64_GLOB_DAT:
-                            {
-                                printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_JUMP_SLOT:
-                            {
-                                printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_RELATIVE:
-                            {
-                                printf("\n\n\nR_X86_64_RELATIVE            calculation: B + A (base address + r_addend)\n");
-                                printf("mappingb    = %014p\n", mappingb);
-                                printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
-                                printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
-                                *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
-                                break;
-                            }
-                            case R_X86_64_GOTPCREL:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
-                                break;
-                            }
-                            case R_X86_64_32:
-                            {
-                                printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
-                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_32S:
-                            {
-                                printf("\n\n\nR_X86_64_32S\n");
-                                break;
-                            }
-                            case R_X86_64_16:
-                            {
-                                printf("\n\n\nR_X86_64_16\n");
-                                break;
-                            }
-                            case R_X86_64_PC16:
-                            {
-                                printf("\n\n\nR_X86_64_PC16\n");
-                                break;
-                            }
-                            case R_X86_64_8:
-                            {
-                                printf("\n\n\nR_X86_64_8\n");
-                                break;
-                            }
-                            case R_X86_64_PC8:
-                            {
-                                printf("\n\n\nR_X86_64_PC8\n");
-                                break;
-                            }
-                            case R_X86_64_DTPMOD64:
-                            {
-                                printf("\n\n\nR_X86_64_DTPMOD64\n");
-                                break;
-                            }
-                            case R_X86_64_DTPOFF64:
-                            {
-                                printf("\n\n\nR_X86_64_DTPOFF64\n");
-                                break;
-                            }
-                            case R_X86_64_TPOFF64:
-                            {
-                                printf("\n\n\nR_X86_64_TPOFF64\n");
-                                break;
-                            }
-                            case R_X86_64_TLSGD:
-                            {
-                                printf("\n\n\nR_X86_64_TLSGD\n");
-                                break;
-                            }
-                            case R_X86_64_TLSLD:
-                            {
-                                printf("\n\n\nR_X86_64_TLSLD\n");
-                                break;
-                            }
-                            case R_X86_64_DTPOFF32:
-                            {
-                                printf("\n\n\nR_X86_64_DTPOFF32\n");
-                                break;
-                            }
-                            case R_X86_64_GOTTPOFF:
-                            {
-                                printf("\n\n\nR_X86_64_GOTTPOFF\n");
-                                break;
-                            }
-                            case R_X86_64_TPOFF32:
-                            {
-                                printf("\n\n\nR_X86_64_TPOFF32\n");
-                                break;
-                            }
-                            case R_X86_64_PC64:
-                            {
-                                printf("\n\n\nR_X86_64_PC64\n");
-                                break;
-                            }
-                            case R_X86_64_GOTOFF64:
-                            {
-                                printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
-                                printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                                *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
-                                printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
-                                break;
-                            }
-                            case R_X86_64_GOTPC32:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_GOT64:
-                            {
-                                printf("\n\n\nR_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_GOTPCREL64:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_GOTPC64:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_GOTPLT64:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_PLTOFF64:
-                            {
-                                printf("\n\n\nR_X86_64_PLTOFF64\n");
-                                break;
-                            }
-                            case R_X86_64_SIZE32:
-                            {
-                                printf("\n\n\nR_X86_64_SIZE32\n");
-                                break;
-                            }
-                            case R_X86_64_SIZE64:
-                            {
-                                printf("\n\n\nR_X86_64_SIZE64\n");
-                                break;
-                            }
-                            case R_X86_64_GOTPC32_TLSDESC:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_TLSDESC_CALL:
-                            {
-                                printf("\n\n\nR_X86_64_TLSDESC_CALL\n");
-                                break;
-                            }
-                            case R_X86_64_TLSDESC:
-                            {
-                                printf("\n\n\nR_X86_64_TLSDESC\n");
-                                break;
-                            }
-                            case R_X86_64_IRELATIVE:
-                            {
-                                printf("\n\n\nR_X86_64_IRELATIVE\n");
-                                break;
-                            }
-                            case R_X86_64_RELATIVE64:
-                            {
-                                printf("\n\n\nR_X86_64_RELATIVE64\n");
-                                break;
-                            }
-                            case R_X86_64_GOTPCRELX:
-                            {
-                                printf("\n\n\nR_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_REX_GOTPCRELX:
-                            {
-                                printf("\n\n\nR_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
-                                break;
-                            }
-                            case R_X86_64_NUM:
-                            {
-                                printf("\n\n\nR_X86_64_NUM\n");
-                                break;
-                            }
-                            #endif
-                            default:
-                                printf("unknown type, got %d\n", reloc_type);
-                                break;
-                        }
-                    }
-                }
+                r(mappingb + get_dynamic_entry(dynamic, DT_RELA), get_dynamic_entry(dynamic, DT_RELASZ));
+                r(mappingb + get_dynamic_entry(dynamic, DT_JMPREL), RELA_PLT_SIZE);
             }
 //             nl();
             
@@ -3258,7 +3375,421 @@ _elf_header->e_shoff = %014p)\n",\
                 printf(" )\n");
             return 0;
         }
-//     printf("Exited\n");
+    init__ = 1;
+    return 0;
+}
+
+int
+readelf_(const char * filename) {
+    setlocale(LC_NUMERIC, "en_US.utf-8"); /* important */
+    init_(filename);
+        if(!strncmp((char*)_elf_header->e_ident, "\177ELF", 4)) {
+//                 ELF Header:
+//                 Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00 
+//                 Class:                             ELF64
+//                 Data:                              2's complement, little endian
+//                 Version:                           1 (current)
+//                 OS/ABI:                            UNIX - System V
+//                 ABI Version:                       0
+//                 Type:                              EXEC (Executable file)
+//                 Machine:                           Advanced Micro Devices X86-64
+//                 Version:                           0x1
+//                 Entry point address:               0x400820
+//                 Start of program headers:          64 (bytes into file)
+//                 Start of section headers:          11408 (bytes into file)
+//                 Flags:                             0x0
+//                 Size of this header:               64 (bytes)
+//                 Size of program headers:           56 (bytes)
+//                 Number of program headers:         9
+//                 Size of section headers:           64 (bytes)
+//                 Number of section headers:         30
+//                 Section header string table index: 29
+//
+            printf("Name:\t\t %s\n", filename);
+            printf("ELF Identifier\t %s (", _elf_header->e_ident);
+            __print_quoted_string__(_elf_header->e_ident, sizeof(_elf_header->e_ident), QUOTE_FORCE_HEX|QUOTE_OMIT_LEADING_TRAILING_QUOTES, "print");
+            printf(" )\n");
+
+            printf("Architecture\t ");
+            switch(_elf_header->e_ident[EI_CLASS])
+            {
+                case ELFCLASSNONE:
+                    printf("None\n");
+                    break;
+
+                case ELFCLASS32:
+                    printf("32-bit\n");
+                    break;
+
+                case ELFCLASS64:
+                    printf("64-bit\n");
+                    break;
+                    
+                case ELFCLASSNUM:
+                    printf("NUM ( unspecified )\n");
+                    break;
+
+                default:
+                    printf("Unknown CLASS\n");
+                    break;
+            }
+
+            printf("Data Type\t ");
+            switch(_elf_header->e_ident[EI_DATA])
+            {
+                case ELFDATANONE:
+                    printf("None\n");
+                    break;
+
+                case ELFDATA2LSB:
+                    printf("2's complement, little endian\n");
+                    break;
+
+                case ELFDATA2MSB:
+                    printf("2's complement, big endian\n");
+                    break;
+                    
+                case ELFDATANUM:
+                    printf("NUM ( unspecified )\n");
+                    break;
+
+                default:
+                    printf("Unknown \n");
+                    break;
+            }
+
+            printf("Version\t\t ");
+            switch(_elf_header->e_ident[EI_VERSION])
+            {
+                case EV_NONE:
+                    printf("None\n");
+                    break;
+
+                case EV_CURRENT:
+                    printf("Current\n");
+                    break;
+
+                case EV_NUM:
+                    printf("NUM ( Unspecified )\n");
+                    break;
+
+                default:
+                    printf("Unknown \n");
+                    break;
+            }
+
+            printf("OS ABI\t\t ");
+            switch(_elf_header->e_ident[EI_OSABI])
+            {
+                case ELFOSABI_NONE:
+                    printf("UNIX System V ABI\n");
+                    break;
+
+//                     case ELFOSABI_SYSV:
+//                         printf("SYSV\n");
+//                         break;
+// 
+                case ELFOSABI_HPUX:
+                    printf("HP-UX\n");
+                    break;
+
+                case ELFOSABI_NETBSD:
+                    printf("NetBSD\n");
+                    break;
+
+                case ELFOSABI_GNU:
+                    printf("GNU\n");
+                    break;
+
+//                     case ELFOSABI_LINUX:
+//                         printf("Linux\n");
+//                         break;
+// 
+                case ELFOSABI_SOLARIS:
+                    printf("Sun Solaris\n");
+                    break;
+
+                case ELFOSABI_AIX:
+                    printf("ABM AIX\n");
+                    break;
+
+                case ELFOSABI_FREEBSD:
+                    printf("FreeBSD\n");
+                    break;
+
+                case ELFOSABI_TRU64:
+                    printf("Compaq Tru64\n");
+                    break;
+
+                case ELFOSABI_MODESTO:
+                    printf("Novell Modesto\n");
+                    break;
+
+                case ELFOSABI_OPENBSD:
+                    printf("OpenBSD\n");
+                    break;
+
+                case ELFOSABI_ARM_AEABI:
+                    printf("ARM EABI\n");
+                    break;
+
+                case ELFOSABI_ARM:
+                    printf("ARM\n");
+                    break;
+
+                case ELFOSABI_STANDALONE:
+                    printf("Standalone (embedded) application\n");
+                    break;
+
+                default:
+                    printf("Unknown \n");
+                    break;
+            }
+
+            printf("File Type\t ");
+            switch(_elf_header->e_type)
+            {
+                case ET_NONE:
+                    printf("None\n");
+                    break;
+
+                case ET_REL:
+                    printf("Relocatable file\n");
+                    break;
+
+                case ET_EXEC:
+                    printf("Executable file\n");
+                    break;
+
+                case ET_DYN:
+                    printf("Shared object file\n");
+                    break;
+
+                case ET_CORE:
+                    printf("Core file\n");
+                    break;
+
+                case ET_NUM:
+                    printf("Number of defined types\n");
+                    break;
+
+                case ET_LOOS:
+                    printf("OS-specific range start\n");
+                    break;
+
+                case ET_HIOS:
+                    printf("OS-specific range end\n");
+                    break;
+
+                case ET_LOPROC:
+                    printf("Processor-specific range start\n");
+                    break;
+
+                case ET_HIPROC:
+                    printf("Processor-specific range end\n");
+                    break;
+
+                default:
+                    printf("Unknown \n");
+                    break;
+            }
+
+            printf("Machine\t\t ");
+            switch(_elf_header->e_machine)
+            {
+                case EM_NONE:
+                    printf("None\n");
+                    break;
+
+                case EM_386:
+                        printf("INTEL x86\n");
+                        break;
+
+                case EM_X86_64:
+                        printf("AMD x86-64 architecture\n");
+                        break;
+
+                case EM_ARM:
+                        printf("ARM\n");
+                        break;
+                default:
+                        printf("Unknown\n");
+                break;
+            }
+            
+            /* Entry point */
+            int entry=_elf_header->e_entry;
+            printf("Entry point\t %014p\n", _elf_header->e_entry);
+            
+
+            /* ELF header size in bytes */
+            printf("ELF header size\t %014p\n", _elf_header->e_ehsize);
+
+            /* Program Header */
+            printf("Program Header\t %014p (%d entries with a total of %d bytes)\n",
+            _elf_header->e_phoff,
+            _elf_header->e_phnum,
+            _elf_header->e_phentsize
+            );
+// continue analysis
+            for (int i = 0; i < _elf_header->e_phnum; ++i) {
+                char * section_;
+                printf("p_type:\t\t\t/* Segment type */\t\t= ");
+                switch(_elf_program_header[i].p_type)
+                {
+                    case PT_NULL:
+                        printf("PT_NULL\t\t/* Program header table entry unused */\n");
+                        section_="PT_NULL";
+                        break;
+                    case PT_LOAD:
+                        printf("PT_LOAD\t\t/* Loadable program segment */\n");
+                        section_="PT_LOAD";
+                        break;
+                    case PT_DYNAMIC:
+                        printf("PT_DYNAMIC\t\t/* Dynamic linking information */\n");
+                        section_="PT_DYNAMIC";
+                        PT_DYNAMIC_=i;
+                        break;
+                    case PT_INTERP:
+                        printf("PT_INTERP\t\t/* Program interpreter */\n");
+                        section_="PT_INTERP";
+                        break;
+                    case PT_NOTE:
+                        printf("PT_NOTE\t\t/* Auxiliary information */\n");
+                        section_="PT_NOTE";
+                        break;
+                    case PT_SHLIB:
+                        printf("PT_SHLIB\t\t/* Reserved */\n");
+                        section_="PT_SHLIB";
+                        break;
+                    case PT_PHDR:
+                        printf("PT_PHDR\t\t/* Entry for header table itself */\n");
+                        section_="PT_PHDR";
+                        break;
+                    case PT_TLS:
+                        printf("PT_TLS\t\t/* Thread-local storage segment */\n");
+                        section_="PT_TLS";
+                        break;
+                    case PT_NUM:
+                        printf("PT_NUM\t\t/* Number of defined types */\n");
+                        section_="PT_NUM";
+                        break;
+                    case PT_LOOS:
+                        printf("PT_LOOS\t\t/* Start of OS-specific */\n");
+                        section_="PT_LOOS";
+                        break;
+                    case PT_GNU_EH_FRAME:
+                        printf("PT_GNU_EH_FRAME\t/* GCC .eh_frame_hdr segment */\n");
+                        section_="PT_GNU_EH_FRAME";
+                        break;
+                    case PT_GNU_STACK:
+                        printf("PT_GNU_STACK\t\t/* Indicates stack executability */\n");
+                        section_="PT_GNU_STACK";
+                        break;
+                    case PT_GNU_RELRO:
+                        printf("PT_GNU_RELRO\t\t/* Read-only after relocation */\n");
+                        section_="PT_GNU_RELRO";
+                        break;
+                    case PT_SUNWBSS:
+                        printf("PT_SUNWBSS\t\t/* Sun Specific segment */\n");
+                        section_="PT_SUNWBSS";
+                        break;
+                    case PT_SUNWSTACK:
+                        printf("PT_SUNWSTACK\t\t/* Stack segment */\n");
+                        section_="PT_SUNWSTACK";
+                        break;
+                    case PT_HIOS:
+                        printf("PT_HIOS\t\t/* End of OS-specific */\n");
+                        section_="PT_HIOS";
+                        break;
+                    case PT_LOPROC:
+                        printf("PT_LOPROC\t\t/* Start of processor-specific */\n");
+                        section_="PT_LOPROC";
+                        break;
+                    case PT_HIPROC:
+                        printf("PT_HIPROC\t\t/* End of processor-specific */\n");
+                        section_="PT_HIPROC";
+                        break;
+                    default:
+                        printf("Unknown\n");
+                        section_="Unknown";
+                        break;
+                }
+                if (section_ == "PT_DYNAMIC")
+                {
+                    // obtain PT_DYNAMIC into seperate array for use later
+                    read_fast_verify(array, len, &tmp99D, (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                    __lseek_string__(&tmp99D, _elf_program_header[i].p_memsz, _elf_program_header[i].p_offset);
+                }
+                char * tmp99;/* = malloc((_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));*/
+                printf("ATTEMPING TO READ\n");
+                printf("reading                %014p\n", (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                read_fast_verify(array, len, &tmp99, (_elf_program_header[i].p_memsz + _elf_program_header[i].p_offset));
+                printf("correcting position by %014p\n", _elf_program_header[i].p_offset);
+                __lseek_string__(&tmp99, _elf_program_header[i].p_memsz, _elf_program_header[i].p_offset);
+                printf("reading                %d\n", _elf_program_header[i].p_memsz);
+                __print_quoted_string__(tmp99, _elf_program_header[i].p_memsz, 0, "print");
+                printf("\nREAD\n");
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[i].p_flags, _elf_program_header[i].p_offset, _elf_program_header[i].p_vaddr+mappingb, _elf_program_header[i].p_paddr, _elf_program_header[i].p_filesz, _elf_program_header[i].p_memsz, _elf_program_header[i].p_align);
+                nl();
+                printf("\t\tp_flags: %014p", _elf_program_header[i].p_flags);
+                printf(" p_offset: %014p", _elf_program_header[i].p_offset);
+                printf(" p_vaddr:  %014p", _elf_program_header[i].p_vaddr+mappingb);
+                printf(" p_paddr: %014p", _elf_program_header[i].p_paddr);
+                printf(" p_filesz: %014p", _elf_program_header[i].p_filesz);
+                printf(" p_memsz: %014p", _elf_program_header[i].p_memsz);
+                printf(" p_align: %014p\n", _elf_program_header[i].p_align);
+            }
+
+            if (PT_DYNAMIC_ != 0) {
+// A PT_DYNAMIC program header element points at the .dynamic section, explained in
+// "Dynamic Section" below. The .got and .plt sections also hold information related to
+// position-independent code and dynamic linking. Although the .plt appears in a text segment
+// above, it may reside in a text or a data segment, depending on the processor.
+// 
+// As "Sections" describes, the .bss section has the type SHT_NOBITS. Although it occupies no
+// space in the file, it contributes to the segment's memory image. Normally, these uninitialized
+// data reside at the end of the segment, thereby making p_memsz larger than p_filesz.
+// 
+
+                printf("PT_LOAD 1 = \n");
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[First_Load_Header_index].p_flags, _elf_program_header[First_Load_Header_index].p_offset, _elf_program_header[First_Load_Header_index].p_vaddr+mappingb, _elf_program_header[First_Load_Header_index].p_paddr, _elf_program_header[First_Load_Header_index].p_filesz, _elf_program_header[First_Load_Header_index].p_memsz, _elf_program_header[First_Load_Header_index].p_align);
+                printf("PT_LOAD 2 = \n");
+                printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", _elf_program_header[Last_Load_Header_index].p_flags, _elf_program_header[Last_Load_Header_index].p_offset, _elf_program_header[Last_Load_Header_index].p_vaddr+mappingb, _elf_program_header[Last_Load_Header_index].p_paddr, _elf_program_header[Last_Load_Header_index].p_filesz, _elf_program_header[Last_Load_Header_index].p_memsz, _elf_program_header[Last_Load_Header_index].p_align);
+                printf("first PT_LOAD _elf_program_header[%d]->p_paddr = \n%014p\n", First_Load_Header_index, _elf_program_header[First_Load_Header_index].p_paddr+mappingb);
+                printf("Second PT_LOAD _elf_program_header[%d]->p_paddr = \n%014p\n", Last_Load_Header_index, _elf_program_header[Last_Load_Header_index].p_paddr+mappingb);
+                ElfW(Dyn) * dynamic = tmp99D;
+
+                printf("examining current entries:\n");
+                get_dynamic_entry(dynamic, -1);
+            }
+
+            printf("Section Header\t \
+_elf_header->e_shstrndx %014p (\
+_elf_header->e_shnum = %d entries with a total of \
+_elf_header->e_shentsize = %d (should match %d) bytes, offset is \
+_elf_header->e_shoff = %014p)\n",\
+            _elf_header->e_shstrndx,\
+            _elf_header->e_shnum,\
+            _elf_header->e_shentsize,\
+            sizeof(Elf64_Shdr),\
+            _elf_header->e_shoff,\
+            (char *)array + _elf_header->e_shoff\
+            );
+            read_section_header_table_(array, _elf_header, &_elf_symbol_table);
+            print_section_headers_(array, _elf_header, _elf_symbol_table);
+            print_symbols(array, _elf_header, _elf_symbol_table);
+        } else {
+                /* Not ELF file */
+                printf("ELFMAGIC not found\n");
+                printf ("header = ");
+                __print_quoted_string__(array, sizeof(_elf_header->e_ident), QUOTE_OMIT_LEADING_TRAILING_QUOTES, "print");
+                printf("\n");
+                printf("ELF Identifier\t %s (", _elf_header->e_ident);
+                __print_quoted_string__(_elf_header->e_ident, sizeof(_elf_header->e_ident), QUOTE_FORCE_HEX|QUOTE_OMIT_LEADING_TRAILING_QUOTES, "print");
+                printf(" )\n");
+            return 0;
+        }
     return 0;
 }
 
