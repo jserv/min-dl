@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
-#include <dlfcn.h>
+// #include <dlfcn.h>
 // #include <string.h>
 // #include <elf.h>
 // #include <link.h>
@@ -51,27 +51,27 @@ int main() {
 
     printf("OK!\n");
 
-    char * l;
-    printf("attempting to load libc.so.6\n\n\n");
-    void * h = dlopen("/lib/libc.so.6", RTLD_LAZY);
-    l = dlerror();
-    printf("\n\n\ndlerror returned with %s\n", l);
-    dlerror();
-    printf("\n\n\nloaded libc.so.6\n");
-    printf("aquiring symbol printf\n\n\n\n");
-    int (*t)() = dlsym(h, "printf");
-    l = dlerror();
-    printf("\n\n\ndlerror returned with %s\n", l);
-    dlerror();
-    printf("\n\n\naquired symbol printf\n");
-    assert(t);
-    printf("testing that printf works\n");
-    t("do i work? %d, %s\n", 0, "i work");
-    printf("attempting to close libc.so\n");
-    dlclose(h);
-    l = dlerror();
-    printf("\n\n\ndlerror returned with %s\n", l);
-    printf("closed libc.so.6\n");
+//     char * l;
+//     printf("attempting to load libc.so.6\n\n\n");
+//     void * h = dlopen("/lib/libc.so.6", RTLD_LAZY);
+//     l = dlerror();
+//     printf("\n\n\ndlerror returned with %s\n", l);
+//     dlerror();
+//     printf("\n\n\nloaded libc.so.6\n");
+//     printf("aquiring symbol printf\n\n\n\n");
+//     int (*t)() = dlsym(h, "printf");
+//     l = dlerror();
+//     printf("\n\n\ndlerror returned with %s\n", l);
+//     dlerror();
+//     printf("\n\n\naquired symbol printf\n");
+//     assert(t);
+//     printf("testing that printf works\n");
+//     t("do i work? %d, %s\n", 0, "i work");
+//     printf("attempting to close libc.so\n");
+//     dlclose(h);
+//     l = dlerror();
+//     printf("\n\n\ndlerror returned with %s\n", l);
+//     printf("closed libc.so.6\n");
 
 
 //     printf("Test libc functions >\n");
