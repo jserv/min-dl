@@ -12,6 +12,6 @@ gcc -g3 -O0 test_lib.c -c -fPIC -o files/test_lib.o &&
 ar cur files/test_lib.a files/test_lib.o &&
 gcc -fPIC -g3 -O0 test_loader.c -o files/loader files/libstring.so files/readelf_.so -ldl &&
 ./files/loader $1 &&
-ls -l -Sh --color=yes
-gdb ./files/loader -ex "r"
+# ls -l -Sh --color=yes
+# gdb ./files/loader -ex "r"
 cd ../../
