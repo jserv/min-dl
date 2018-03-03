@@ -1591,7 +1591,7 @@ char * symbol_lookup_name(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_
         char * name = demangle_it(str_tbl + sym_tbl[i].st_name);
         if (bytecmpq(name,name_) == 0) {
             char * address = sym_tbl[i].st_value+mappingb;
-            printf("requested symbol name for lookup name \"%s\" is \"%s\" at address %014p\n", name_, name, address);
+            printf("requested symbol name \"%s\" found in table %d at address %014p is \"%s\"\n", name_, symbol_table, address, name);
             return address;
         }
     }

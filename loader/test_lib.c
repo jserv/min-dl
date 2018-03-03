@@ -34,7 +34,7 @@ int test() {
     }
     int l = test_nested();
     a = l;
-    return l+a+bar_int();
+    return l+a+bar_int()+external();
 }
 
 
