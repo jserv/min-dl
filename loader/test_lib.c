@@ -25,7 +25,8 @@ int *bar_int() { return k ; }
 
 int test_printf() { printf("test\n"); return 0; }
 
-int test() { 
+// call internal functions
+int test() {
     int a;
     int test_nested() { 
         int k=5;
@@ -33,7 +34,7 @@ int test() {
     }
     int l = test_nested();
     a = l;
-    return l+a;
+    return l+a+bar_int();
 }
 
 

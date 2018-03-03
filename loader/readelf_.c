@@ -54,7 +54,10 @@ char * demangle_it (char *mangled_name)
 char * __print_quoted_string__(const char *str, unsigned int size, const unsigned int style, const char * return_type);
 #define _GNU_SOURCE
 #define __USE_GNU
-// ELF Spec FULL:  http://refspecs.linuxbase.org/elf/elf.pdf
+
+// ELF Spec     FULL:  http://refspecs.linuxbase.org/elf/elf.pdf
+// ELF Spec ABI FULL:  https://github.com/hjl-tools/x86-psABI/wiki/x86-64-psABI-1.0.pdf
+
 #include <link.h>
 size_t align;
 ElfW(Addr) base_address = 0x00000000;
@@ -1562,14 +1565,15 @@ void print_symbols(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[])
     }
 }
 
-char * symbol_lookup(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table, int index) {
+char * symbol_lookup(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table, int index, int mode) {
     printf("looking up index %d of table %d\n", index, symbol_table);
     Elf64_Sym* sym_tbl = (Elf64_Sym*)read_section_(arrayc, sh_table[symbol_table]);
     uint64_t str_tbl_ndx = sh_table[symbol_table].sh_link;
     char *str_tbl = read_section_(arrayc, sh_table[str_tbl_ndx]);
     uint64_t symbol_count = (sh_table[symbol_table].sh_size/sizeof(Elf64_Sym));
     printf("requested symbol name for index %d is %s\n", index, demangle_it(str_tbl + sym_tbl[index].st_name));
-    return sym_tbl[index].st_value;
+    if ( mode == 1) return sym_tbl[index].st_value;
+    else if (mode == 2) return sym_tbl[index].st_size;
 }
 
 char * symbol_lookup_name(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_table, char * name_) {
@@ -1587,18 +1591,19 @@ char * symbol_lookup_name(char * arrayc, Elf64_Shdr sh_table[], uint64_t symbol_
         char * name = demangle_it(str_tbl + sym_tbl[i].st_name);
         if (bytecmpq(name,name_) == 0) {
             char * address = sym_tbl[i].st_value+mappingb;
-            printf("requested symbol name for lookup name %s is %s at address %014p\n", name_, name, address);
+            printf("requested symbol name for lookup name \"%s\" is \"%s\" at address %014p\n", name_, name, address);
             return address;
         }
     }
+    printf("\nrequested symbol name \"%s\" could not be found in table %d\n\n", name_, symbol_table);
     return NULL;
 }
 
-char * print_elf_symbol_table_lookup(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], uint64_t symbol_table, int index)
+char * print_elf_symbol_table_lookup(char * arrayc, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], uint64_t symbol_table, int index, int mode)
 {
         switch(sh_table[symbol_table].sh_type) {
             case SHT_DYNSYM:
-                return symbol_lookup(arrayc, sh_table, symbol_table, index);
+                return symbol_lookup(arrayc, sh_table, symbol_table, index, mode);
                 break;
             default:
                 return (int) -1;
@@ -1634,10 +1639,10 @@ char * print_elf_symbol_table_lookup_name(char * arrayc, Elf64_Ehdr * eh, Elf64_
         }
 }
 
-char * print_symbols_lookup(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], int index)
+char * print_symbols_lookup(char * arrayd, Elf64_Ehdr * eh, Elf64_Shdr sh_table[], int index, int mode)
 {
     for(int i=0; i<eh->e_shnum; i++) {
-        int value = print_elf_symbol_table_lookup(arrayd, eh, sh_table, i, index);
+        int value = print_elf_symbol_table_lookup(arrayd, eh, sh_table, i, index, mode);
         if ( value != -1 ) return value;
     }
 }
@@ -1936,7 +1941,7 @@ void * lookup_symbol_by_name_(const char * lib, const char * name) {
         else abort_();
 }
 
-void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_index) {
+void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_index, int mode) {
         printf("attempting to look up symbol, index = %d\n", symbol_index);
 
         read_section_header_table_(arrayb, eh, &_elf_symbol_table);
@@ -1949,7 +1954,7 @@ void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_i
 //         printf("address of GOT = %014p\n", GOT);
         nl();
         nl();
-        char * symbol = print_symbols_lookup(arrayb, eh, _elf_symbol_table, symbol_index);
+        char * symbol = print_symbols_lookup(arrayb, eh, _elf_symbol_table, symbol_index, mode);
         printf("symbol = %d (%014p)\n", symbol, symbol);
         return symbol;
 }
@@ -2452,6 +2457,9 @@ get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
 }
 Elf64_Ehdr * _elf_header;
 
+#define symbol_mode_S 1
+#define symbol_mode_Z 2
+
 r(Elf64_Rela *relocs, size_t relocs_size) {
 /*
 
@@ -2549,6 +2557,159 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                     instructs the link editor to build the global offset table.
 
 */
+
+/*
+
+Relocation
+Relocation Types
+Relocation entries describe how to alter the following instruction and data fields (bit numbers
+appear in the lower box corners).
+
+              word8  
+            7       0
+            
+                  word16
+            15              0
+            
+                          word32
+            31                              0
+
+                                          word64
+            63                                                              0
+
+word8       This specifies a 8-bit field occupying 1 byte.
+
+word16      This specifies a 16-bit field occupying 2 bytes with arbitrary
+            byte alignment. These values use the same byte order as
+            other word values in the AMD64 architecture.
+
+word32      This specifies a 32-bit field occupying 4 bytes with arbitrary
+            byte alignment. These values use the same byte order as
+            other word values in the AMD64 architecture.
+
+word64      This specifies a 64-bit field occupying 8 bytes with arbitrary
+            byte alignment. These values use the same byte order as
+            other word values in the AMD64 architecture.
+
+wordclass   This specifies word64 for LP64 and specifies word32 for
+            ILP32.
+
+Calculations below assume the actions are transforming a relocatable file into either an
+executable or a shared object file. Conceptually, the link editor merges one or more relocatable
+files to form the output. It first decides how to combine and locate the input files, then updates
+the symbol values, and finally performs the relocation. Relocations applied to executable or
+shared object files are similar and accomplish the same result. Descriptions below use the
+following notation.
+
+A           Represents the addend used to compute the value of the relocatable field.
+
+B           Represents the base address at which a shared object has been loaded into
+            memory during execution. Generally, a shared object is built with a 0 base
+            virtual address, but the execution address will be different.
+
+G           Represents the offset into the global offset table at which the relocation
+            entry’s symbol will reside during execution.
+
+GOT         Represents the address of the global offset table.
+
+L           Represents the place (section offset or address) of the Procedure Linkage Table
+            entry for a symbol.
+
+P           Represents the place (section offset or address) of the storage unit being
+            relocated (computed using r_offset).
+
+S           Represents the value of the symbol whose index resides in the relocation entry.
+
+Z           Represents the size of the symbol whose index resides in the relocation entry.
+
+A relocation entry's r_offset value designates the offset or virtual address of the first byte
+of the affected storage unit. The relocation type specifies which bits to change and how to
+calculate their values. The Intel architecture uses only Elf32_Rel relocation entries, the field
+to be relocated holds the addend. In all cases, the addend and the computed result use the same
+byte order.
+
+The AMD64 LP64 ABI architecture uses only Elf64_Rela relocation entries with explicit addends.
+The r_addend member serves as the relocation addend.
+
+The AMD64 ILP32 ABI architecture uses only Elf32_Rela relocation entries in relocatable files.
+Executable files or shared objects may use either Elf32_Rela or Elf32_Rel relocation entries.
+
+Name                        Value       Field       Calculation
+R_X86_64_NONE               0           none        none
+R_X86_64_64                 1           word64      S + A
+R_X86_64_PC32               2           word32      S + A - P
+R_X86_64_GOT32              3           word32      G + A
+R_X86_64_PLT32              4           word32      L + A - P
+R_X86_64_COPY               5           none        none
+R_X86_64_GLOB_DAT           6           wordclass   S
+R_X86_64_JUMP_SLOT          7           wordclass   S
+R_X86_64_RELATIVE           8           wordclass   B + A
+R_X86_64_GOTPCREL           9           word32      G + GOT + A - P
+R_X86_64_32                 10          word32      S + A
+R_X86_64_32S                11          word32      S + A
+R_X86_64_16                 12          word16      S + A
+R_X86_64_PC16               13          word16      S + A - P
+R_X86_64_8                  14          word8       S + A
+R_X86_64_PC8                15          word8       S + A - P
+R_X86_64_DTPMOD64           16          word64      none
+R_X86_64_DTPOFF64           17          word64      none
+R_X86_64_TPOFF64            18          word64      none
+R_X86_64_TLSGD              19          word32      none
+R_X86_64_TLSLD              20          word32      none
+R_X86_64_DTPOFF32           21          word32      none
+R_X86_64_GOTTPOFF           22          word32      none
+R_X86_64_TPOFF32            23          word32      none                †
+R_X86_64_PC64               24          word64      S + A - P           †
+R_X86_64_GOTOFF64           25          word64      S + A - GOT
+R_X86_64_GOTPC32            26          word32      GOT + A - P
+R_X86_64_GOT64              27          word64      G + A
+R_X86_64_GOTPCREL64         28          word64      G + GOT - P + A
+R_X86_64_GOTPC64            29          word64      GOT - P + A
+Deprecated                  30          none        none
+R_X86_64_PLTOFF64           31          word64      L - GOT + A
+R_X86_64_SIZE32             32          word32      Z + A               †
+R_X86_64_SIZE64             33          word64      Z + A
+R_X86_64_GOTPC32_TLSDESC    34          word32      none
+R_X86_64_TLSDESC_CALL       35          none        none
+R_X86_64_TLSDESC            36          word64×2    none
+R_X86_64_IRELATIVE          37          wordclass   indirect (B + A)    ††
+R_X86_64_RELATIVE64         38          word64      B + A
+Deprecated                  39          none        none
+Deprecated                  40          none        none
+R_X86_64_GOTPCRELX          41          word32      G + GOT + A - P
+R_X86_64_REX_GOTPCRELX      42          word32      G + GOT + A - P
+
+†   This relocation is used only for LP64.
+††  This relocation only appears in ILP32 executable files or shared objects.
+
+Some relocation types have semantics beyond simple calculation.
+
+R_386_GLOB_DAT      This relocation type is used to set a global offset table entry to the address
+                    of the specified symbol. The special relocation type allows one to determine
+                    the correspondence between symbols and global offset table entries.
+
+R_386_JMP_SLOT      The link editor creates this relocation type for dynamic linking. Its offset
+                    member gives the location of a procedure linkage table entry. The dynamic
+                    linker modifies the procedure linkage table entry to transfer control to the
+                    designated symbol's address [see "Procedure Linkage Table'' below].
+
+R_386_RELATIVE      The link editor creates this relocation type for dynamic linking. Its offset
+                    member gives a location within a shared object that contains a value
+                    representing a relative address. The dynamic linker computes the
+                    corresponding virtual address by adding the virtual address at which the
+                    shared object was loaded to the relative address. Relocation entries for this
+                    type must specify 0 for the symbol table index.
+
+R_386_GOTOFF        This relocation type computes the difference between a symbol's value and
+                    the address of the global offset table. It additionally instructs the link editor
+                    to build the global offset table.
+                    
+R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses the address
+                    of the global offset table in its calculation. The symbol referenced in this
+                    relocation normally is _GLOBAL_OFFSET_TABLE_, which additionally
+                    instructs the link editor to build the global offset table.
+
+*/
     if (relocs != mappingb && relocs_size != 0) {
         for (int i = 0; i < relocs_size  / sizeof(Elf64_Rela); i++) {
             Elf64_Rela *reloc = &relocs[i];
@@ -2557,64 +2718,6 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
             switch (reloc_type) {
                 #if defined(__x86_64__)
                     
-// /* AMD x86-64 relocations.  */
-// #define R_X86_64_NONE		0	/* No reloc */
-// #define R_X86_64_64		1	/* Direct 64 bit  */
-// #define R_X86_64_PC32		2	/* PC relative 32 bit signed */
-// #define R_X86_64_GOT32		3	/* 32 bit GOT entry */
-// #define R_X86_64_PLT32		4	/* 32 bit PLT address */
-// #define R_X86_64_COPY		5	/* Copy symbol at runtime */
-// #define R_X86_64_GLOB_DAT	6	/* Create GOT entry */
-// #define R_X86_64_JUMP_SLOT	7	/* Create PLT entry */
-// #define R_X86_64_RELATIVE	8	/* Adjust by program base */
-// #define R_X86_64_GOTPCREL	9	/* 32 bit signed PC relative
-// 					   offset to GOT */
-// #define R_X86_64_32		10	/* Direct 32 bit zero extended */
-// #define R_X86_64_32S		11	/* Direct 32 bit sign extended */
-// #define R_X86_64_16		12	/* Direct 16 bit zero extended */
-// #define R_X86_64_PC16		13	/* 16 bit sign extended pc relative */
-// #define R_X86_64_8		14	/* Direct 8 bit sign extended  */
-// #define R_X86_64_PC8		15	/* 8 bit sign extended pc relative */
-// #define R_X86_64_DTPMOD64	16	/* ID of module containing symbol */
-// #define R_X86_64_DTPOFF64	17	/* Offset in module's TLS block */
-// #define R_X86_64_TPOFF64	18	/* Offset in initial TLS block */
-// #define R_X86_64_TLSGD		19	/* 32 bit signed PC relative offset
-// 					   to two GOT entries for GD symbol */
-// #define R_X86_64_TLSLD		20	/* 32 bit signed PC relative offset
-// 					   to two GOT entries for LD symbol */
-// #define R_X86_64_DTPOFF32	21	/* Offset in TLS block */
-// #define R_X86_64_GOTTPOFF	22	/* 32 bit signed PC relative offset
-// 					   to GOT entry for IE symbol */
-// #define R_X86_64_TPOFF32	23	/* Offset in initial TLS block */
-// #define R_X86_64_PC64		24	/* PC relative 64 bit */
-// #define R_X86_64_GOTOFF64	25	/* 64 bit offset to GOT */
-// #define R_X86_64_GOTPC32	26	/* 32 bit signed pc relative
-// 					   offset to GOT */
-// #define R_X86_64_GOT64		27	/* 64-bit GOT entry offset */
-// #define R_X86_64_GOTPCREL64	28	/* 64-bit PC relative offset
-// 					   to GOT entry */
-// #define R_X86_64_GOTPC64	29	/* 64-bit PC relative offset to GOT */
-// #define R_X86_64_GOTPLT64	30 	/* like GOT64, says PLT entry needed */
-// #define R_X86_64_PLTOFF64	31	/* 64-bit GOT relative offset
-// 					   to PLT entry */
-// #define R_X86_64_SIZE32		32	/* Size of symbol plus 32-bit addend */
-// #define R_X86_64_SIZE64		33	/* Size of symbol plus 64-bit addend */
-// #define R_X86_64_GOTPC32_TLSDESC 34	/* GOT offset for TLS descriptor.  */
-// #define R_X86_64_TLSDESC_CALL   35	/* Marker for call through TLS
-// 					   descriptor.  */
-// #define R_X86_64_TLSDESC        36	/* TLS descriptor.  */
-// #define R_X86_64_IRELATIVE	37	/* Adjust indirectly by program base */
-// #define R_X86_64_RELATIVE64	38	/* 64-bit adjust by program base */
-// 					/* 39 Reserved was R_X86_64_PC32_BND */
-// 					/* 40 Reserved was R_X86_64_PLT32_BND */
-// #define R_X86_64_GOTPCRELX	41	/* Load from 32 bit signed pc relative
-// 					   offset to GOT entry without REX
-// 					   prefix, relaxable.  */
-// #define R_X86_64_REX_GOTPCRELX	42	/* Load from 32 bit signed pc relative
-// 					   offset to GOT entry with REX prefix,
-// 					   relaxable.  */
-// #define R_X86_64_NUM		43
-
                 case R_X86_64_NONE:
                 {
                     printf("\n\n\nR_X86_64_NONE                calculation: none\n");
@@ -2624,7 +2727,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 {
                     printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
                     printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
@@ -2632,7 +2735,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 {
                     printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
                     printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
@@ -2655,7 +2758,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 {
                     printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
                     printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S)+mappingb;
                     char ** addr = reloc->r_offset + mappingb;
                     printf("%014p = %014p\n", addr, *addr);
                     break;
@@ -2665,9 +2768,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                     printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
                     printf("mappingb    = %014p\n", mappingb);
                     printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
-                    printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info))+mappingb;
-                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", *((char*)mappingb + reloc->r_offset));
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S)+mappingb;
                     char ** addr = reloc->r_offset + mappingb;
                     printf("%014p = %014p\n", addr, *addr);
                     break;
@@ -2681,6 +2782,7 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                     *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
                     char ** addr = reloc->r_offset + mappingb;
                     printf("%014p = %014p\n", addr, *addr);
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_GOTPCREL:
@@ -2692,33 +2794,48 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 {
                     printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
                     printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_32S:
                 {
-                    printf("\n\n\nR_X86_64_32S\n");
+                    printf("\n\n\nR_X86_64_32S                 calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_16:
                 {
-                    printf("\n\n\nR_X86_64_16\n");
+                    printf("\n\n\nR_X86_64_16                  calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_PC16:
                 {
-                    printf("\n\n\nR_X86_64_PC16\n");
+                    printf("\n\n\nR_X86_64_PC16                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_8:
                 {
-                    printf("\n\n\nR_X86_64_8\n");
+                    printf("\n\n\nR_X86_64_8                   calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_PC8:
                 {
-                    printf("\n\n\nR_X86_64_PC8\n");
+                    printf("\n\n\nR_X86_64_PC8                 calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_DTPMOD64:
@@ -2763,14 +2880,17 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 }
                 case R_X86_64_PC64:
                 {
-                    printf("\n\n\nR_X86_64_PC64\n");
+                    printf("\n\n\nR_X86_64_PC64                calculation: S + A (symbol value + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_GOTOFF64:
                 {
                     printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
                     printf("reloc->r_offset = %014p\n", reloc->r_offset);
-                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info)) + reloc->r_addend+mappingb;
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
@@ -2806,12 +2926,18 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 }
                 case R_X86_64_SIZE32:
                 {
-                    printf("\n\n\nR_X86_64_SIZE32\n");
+                    printf("\n\n\nR_X86_64_SIZE32                 calculation: Z + A (symbol size + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_Z) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_SIZE64:
                 {
-                    printf("\n\n\nR_X86_64_SIZE64\n");
+                    printf("\n\n\nR_X86_64_SIZE64                 calculation: Z + A (symbol size + r_addend)\n");
+                    printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                    *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_Z) + reloc->r_addend+mappingb;
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_GOTPC32_TLSDESC:
@@ -2831,12 +2957,26 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 }
                 case R_X86_64_IRELATIVE:
                 {
-                    printf("\n\n\nR_X86_64_IRELATIVE\n");
+                    printf("\n\n\nR_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)\n");
+                    printf("mappingb    = %014p\n", mappingb);
+                    printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                    printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                    *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                    char ** addr = reloc->r_offset + mappingb;
+                    printf("%014p = %014p\n", addr, *addr);
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_RELATIVE64:
                 {
-                    printf("\n\n\nR_X86_64_RELATIVE64\n");
+                    printf("\n\n\nR_X86_64_RELATIVE64                 calculation: B + A (base address + r_addend)\n");
+                    printf("mappingb    = %014p\n", mappingb);
+                    printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                    printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                    *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                    char ** addr = reloc->r_offset + mappingb;
+                    printf("%014p = %014p\n", addr, *addr);
+                    printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
                     break;
                 }
                 case R_X86_64_GOTPCRELX:
@@ -2861,6 +3001,9 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
             }
         }
     }
+    nl();
+    nl();
+    nl();
 }
 
 int
