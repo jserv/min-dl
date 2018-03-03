@@ -1971,15 +1971,9 @@ int read_fast_verify(const char *src, int len_of_source, char **dest, int reques
     *dest = memmove(round_up(*dest, 4096), *dest, requested_len);
     return requested_len;
 }
-int read_fast_verifyb(const char *src, int len_of_source, char **dest, int requested_len, Elf64_Phdr PT_LOAD_F, Elf64_Phdr PT_LOAD_L) {
-    printf("memmove PT_LOAD 1 = \n");
-    printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", PT_LOAD_F.p_flags, PT_LOAD_F.p_offset, PT_LOAD_F.p_vaddr, PT_LOAD_F.p_paddr, PT_LOAD_F.p_filesz, PT_LOAD_F.p_memsz, PT_LOAD_F.p_align);
-    printf("span = %014p-%014p\n", PT_LOAD_F.p_vaddr, PT_LOAD_F.p_vaddr+PT_LOAD_F.p_memsz);
-    printf("memmove PT_LOAD 2 = \n");
-    printf("p_flags:\t\t/* Segment flags */\t\t= %014p\np_offset:\t\t/* Segment file offset */\t= %014p\np_vaddr:\t\t/* Segment virtual address */\t= %014p\np_paddr:\t\t/* Segment physical address */\t= %014p\np_filesz:\t\t/* Segment size in file */\t= %014p\np_memsz:\t\t/* Segment size in memory */\t= %014p\np_align:\t\t/* Segment alignment */\t\t= %014p\n\n\n", PT_LOAD_L.p_flags, PT_LOAD_L.p_offset, PT_LOAD_L.p_vaddr, PT_LOAD_L.p_paddr, PT_LOAD_L.p_filesz, PT_LOAD_L.p_memsz, PT_LOAD_L.p_align);
-    printf("span = %014p-%014p\n", PT_LOAD_L.p_vaddr, PT_LOAD_L.p_vaddr+PT_LOAD_L.p_memsz);
 
-//     p_vaddr:                /* Segment virtual address */   = 0x000000200f30
+// special version specifically for PT_LOAD handling
+int read_fast_verifyb(const char *src, int len_of_source, char **dest, int requested_len, Elf64_Phdr PT_LOAD_F, Elf64_Phdr PT_LOAD_L) {
     void * align = 0x10000000;
     *dest = malloc(requested_len+align+PT_LOAD_L.p_align);
     if (len_of_source < requested_len) memcpy(*dest, src, len_of_source);
@@ -1989,7 +1983,6 @@ int read_fast_verifyb(const char *src, int len_of_source, char **dest, int reque
     printf("dest = %014p\n", *dest);
     *dest = memmove(*dest-PT_LOAD_L.p_align, *dest, PT_LOAD_F.p_memsz);
     printf("dest = %014p\n", *dest);
-//     abort_();
     return requested_len;
 }
 

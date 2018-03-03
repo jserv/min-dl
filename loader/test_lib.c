@@ -10,6 +10,9 @@ char * bar_p = "bar_";
 static
 char *bar() { return bar_p ; }
 
+static
+char *bar2() { return bar_a ; }
+
 // int t() { /* printf("k = %d\n", k);*/ return k; }
 
 __attribute__((visibility("hidden")))
@@ -25,10 +28,12 @@ int *bar_int() { return k ; }
 
 int test_printf() { printf("test\n"); return 0; }
 
+int test_strlen() { return strlen("int test_strlen() { return strlen(\"TEST\n\"); }\n"); }
+
 // call internal functions
 int test() {
     int a;
-    int test_nested() { 
+    int test_nested() {
         int k=5;
         return k;
     }
