@@ -195,6 +195,7 @@ dloader_p api_load(const char *filename)
     switch (ehdr.e_machine) {
     case EM_X86_64:
     case EM_ARM:
+    case EM_AARCH64:
         break;
     default:
         fail(filename, "ELF file has wrong architecture!  ",
@@ -305,6 +306,7 @@ dloader_p api_load(const char *filename)
         switch (reloc_type) {
         case R_X86_64_RELATIVE:
         case R_ARM_RELATIVE:
+        case R_AARCH64_RELATIVE:
         {
             ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
             /*

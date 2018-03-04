@@ -5,7 +5,7 @@ CFLAGS += -DPROG_HEADER=prog_header
 
 OUT = out
 
-ARCH = x86_64 arm
+ARCH = x86_64 arm aarch64
 CHECK_ARCH = $(addprefix check_, $(ARCH))
 CHECK_CC_ARCH = $(addprefix check_cc_, $(ARCH))
 BIN = $(OUT) $(OUT)/test_lib.so $(OUT)/loader
@@ -29,11 +29,22 @@ LOADER_OBJS = $(OUT)/loader.o $(OUT)/test_loader.o
 $(OUT)/loader: $(LOADER_OBJS)
 	$(CC) -o $@ $(LOADER_OBJS)
 
-$(CHECK_CC_ARCH):
+$(CHECK_CC_ARCH)::
 	@echo "Check cross compiler exist or not"
 	@echo "CROSS_COMPILE_SUFFIX=$(CROSS_COMPILE_SUFFIX)"
 	@which $(patsubst check_cc_%,%,$@)$(CROSS_COMPILE_SUFFIX)-gcc
 	@echo "Pass"
+
+# The old version ld (< 2.28) will corrupt the global variable array which
+# contains another global variables with -shared option involved.
+# For example, func_table will contain NULL after linking test_lib.so.
+check_cc_aarch64::
+	@$(eval LD_VERSION=$(shell echo `aarch64$(CROSS_COMPILE_SUFFIX)-ld -v | grep -oE '[^ ]+$$'`))
+	@$(eval LD_VERSION=$(shell echo $(LD_VERSION) | awk -F "." '{print $$1$$2}'))
+	@if [ $(LD_VERSION) -lt 228 ]; then \
+		echo "Error: aarch64$(CROSS_COMPILE_SUFFIX)-ld version must >= 2.28 in AARCH64."; \
+		return 1;\
+	fi;
 
 $(ARCH): % : check_cc_%
 	@make CROSS_COMPILE=$@$(CROSS_COMPILE_SUFFIX)- all
