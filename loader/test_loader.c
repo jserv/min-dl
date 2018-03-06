@@ -57,25 +57,37 @@ int main() {
 
     printf("OK!\n");
 
-    printf("Test libc functions >\n");
     
-//     printf("attempting to obtain init_\n");
-//     int (*func_int_init_)();
-//     func_int_init_ = lookup_symbol_by_name_("/lib/libc.so.6", "init_");
-//     printf("attempting to call init_\n");
-//     func_int_init_();
+    printf("Test musl libc functions >\n");
 
-    int (*func_int_write)();
-    func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
-    func_int_write(1, "write\n", 7);
+    int (*func_int_write_musl)();
+    func_int_write_musl = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/musl/lib/libc.so", "write");
+    func_int_write_musl(1, "write\n", 7);
 
-    int (*func_int_strlen)();
-    func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
-    printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
+    int (*func_int_strlen_musl)();
+    func_int_strlen_musl = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/musl/lib/libc.so", "strlen");
+    printf("func_int_strlen_musl(\"test string\\n\") = %d\n", func_int_strlen_musl("test string\n"));
 
-    int (*func_int_printf)();
-    func_int_printf = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
-    func_int_printf("func_int_strlen(\"test string\n\")\n");
+    int (*func_int_printf_musl)();
+    func_int_printf_musl = lookup_symbol_by_name_("/chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/musl/lib/libc.so", "printf");
+    func_int_printf_musl("func_int_strlen_musl(\"test string\\n\")\n");
+
+    printf("OK!\n");
+
+    
+    printf("Test gnu libc functions >\n");
+    
+    int (*func_int_write_gnu)();
+    func_int_write_gnu = lookup_symbol_by_name_("/lib/libc.so.6", "write");
+    func_int_write_gnu(1, "write\n", 7);
+
+    int (*func_int_strlen_gnu)();
+    func_int_strlen_gnu = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
+    printf("func_int_strlen_gnu(\"test string\\n\") = %d\n", func_int_strlen_gnu("test string\n"));
+
+    int (*func_int_printf_gnu)();
+    func_int_printf_gnu = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
+    func_int_printf_gnu("func_int_strlen_gnu(\"test string\\n\")\n");
 
     printf("OK!\n");
 
