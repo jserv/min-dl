@@ -1,5 +1,33 @@
 # min-dl: minimal dynamic linker implementation
 
+##### TODO
+      1. add support for address and variable retreival, at the moment it is only a info gathering tool
+      
+      2. find a way to initialize global variables required in functions for correct execution (may need alot of help with this part)
+      
+      3. correct address bugs
+
+      4. Impliment As A Fully Functional Dynamic Loader
+ 
+
+re-written loader is in loader (https://github.com/mgood7123/min-dl-dynamic-loader/blob/master/loader/)
+
+original min-dl is in min-dl
+
+#### compilation:
+
+git clone https://github.com/mgood7123/min-dl-dynamic-loader.git
+
+cd min-dl-dynamic-loader/loader
+
+./make_loader
+
+cd ../
+
+
+
+
+#### UNCHANGED from original README.MD
 To support dynamic linking, each ELF shared libary and each executable that
 uses shared libraries has a Procedure Linkage Table (PLT), which adds a level
 of indirection for function calls analogous to that provided by the GOT for
