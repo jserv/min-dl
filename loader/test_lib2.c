@@ -9,3 +9,4 @@ int external()
 {
     return o;
 }
+

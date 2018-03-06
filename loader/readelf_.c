@@ -1950,10 +1950,15 @@ void * lookup_symbol_by_index(const char * arrayb, Elf64_Ehdr * eh, int symbol_i
 //         print_symbols_lookup_got_and_ptl(arrayb, eh, _elf_symbol_table, symbol_index);
 //         nl();
 //         nl();
-//         char * GOT = lookup_symbol_by_name_("./test_lib.so", "_GLOBAL_OFFSET_TABLE_");
-//         printf("address of GOT = %014p\n", GOT);
-        nl();
-        nl();
+//         Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+//         printf("\n\naddress of GOT = %014p\n", lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_"));
+//         printf("address of GOT[1] = %014p\n", GOT[1]);
+//         printf("address of GOT[2] = %014p\n", GOT[2]);
+//         printf("address of GOT[3] = %014p\n", GOT[3]);
+//         printf("address of GOT[4] = %014p\n", GOT[4]);
+//         printf("address of GOT[5] = %014p\n", GOT[5]);
+//         printf("address of GOT[6] = %014p\n", GOT[6]);
+//         printf("address of GOT[7] = %014p\n", GOT[7]);
         char * symbol = print_symbols_lookup(arrayb, eh, _elf_symbol_table, symbol_index, mode);
         printf("symbol = %d (%014p)\n", symbol, symbol);
         return symbol;
@@ -2742,11 +2747,14 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 case R_X86_64_GOT32:
                 {
                     printf("\n\n\nR_X86_64_GOT32               calculation: G + A (address of global offset table + r_addend)\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_PLT32:
                 {
                     printf("\n\n\nR_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
+                    abort_();
                     break;
                 }
                 case R_X86_64_COPY:
@@ -2787,7 +2795,10 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 }
                 case R_X86_64_GOTPCREL:
                 {
+//                     printf("\n\naddress of GOT[0] = %014p\n", ((Elf64_Addr *) lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_"))[0]);
                     printf("\n\n\nR_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_32:
@@ -2871,6 +2882,8 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 case R_X86_64_GOTTPOFF:
                 {
                     printf("\n\n\nR_X86_64_GOTTPOFF\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_TPOFF32:
@@ -2892,36 +2905,50 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                     printf("reloc->r_offset = %014p\n", reloc->r_offset);
                     *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_GOTPC32:
                 {
                     printf("\n\n\nR_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_GOT64:
                 {
                     printf("\n\n\nR_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_GOTPCREL64:
                 {
                     printf("\n\n\nR_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_GOTPC64:
                 {
                     printf("\n\n\nR_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_GOTPLT64:
                 {
                     printf("\n\n\nR_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_PLTOFF64:
                 {
                     printf("\n\n\nR_X86_64_PLTOFF64\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_SIZE32:
@@ -2943,6 +2970,8 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 case R_X86_64_GOTPC32_TLSDESC:
                 {
                     printf("\n\n\nR_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_TLSDESC_CALL:
@@ -2957,11 +2986,19 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 }
                 case R_X86_64_IRELATIVE:
                 {
+
                     printf("\n\n\nR_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)\n");
                     printf("mappingb    = %014p\n", mappingb);
                     printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
                     printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
-                    *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                    ElfW(Addr) value;
+                    // changed
+                    value = ((char*)mappingb + reloc->r_addend);
+                    value = ((ElfW(Addr) (*) (void)) value) ();
+                    *((char**)((char*)mappingb + reloc->r_offset)) = value;
+                    // original
+//                     *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                    //
                     char ** addr = reloc->r_offset + mappingb;
                     printf("%014p = %014p\n", addr, *addr);
                     printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
@@ -2982,11 +3019,15 @@ R_386_GOTPC         This relocation type resembles R_386_PC32, except it uses th
                 case R_X86_64_GOTPCRELX:
                 {
                     printf("\n\n\nR_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_REX_GOTPCRELX:
                 {
                     printf("\n\n\nR_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                    Elf64_Addr * GOT = lookup_symbol_by_name(array, _elf_header, "_GLOBAL_OFFSET_TABLE_");
+                    abort_();
                     break;
                 }
                 case R_X86_64_NUM:

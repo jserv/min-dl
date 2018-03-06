@@ -42,7 +42,6 @@ int test() {
     return l+a+bar_int()+external();
 }
 
-
 //     25: 0000000000000000     0 SECTION LOCAL  DEFAULT   25                               // NULL, start of static list
 //     26: 0000000000000000     0 FILE    LOCAL  DEFAULT  ABS crtstuff.c
 //     27: 0000000000200e08     0 OBJECT  LOCAL  DEFAULT   19 __JCR_LIST__
