@@ -57,27 +57,27 @@ int main() {
 
     printf("OK!\n");
 
-//     printf("Test libc functions >\n");
-//     
+    printf("Test libc functions >\n");
+    
 //     printf("attempting to obtain init_\n");
 //     int (*func_int_init_)();
 //     func_int_init_ = lookup_symbol_by_name_("/lib/libc.so.6", "init_");
 //     printf("attempting to call init_\n");
 //     func_int_init_();
-// 
-//     int (*func_int_write)();
-//     func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
-//     func_int_write(1, "write\n", 7);
-// 
-//     int (*func_int_strlen)();
-//     func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
-//     printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
-// 
-//     int (*func_int_printf)();
-//     func_int_printf = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
-//     func_int_printf("func_int_strlen(\"test string\n\")\n");
-// 
-//     printf("OK!\n");
+
+    int (*func_int_write)();
+    func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
+    func_int_write(1, "write\n", 7);
+
+    int (*func_int_strlen)();
+    func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
+    printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
+
+    int (*func_int_printf)();
+    func_int_printf = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
+    func_int_printf("func_int_strlen(\"test string\n\")\n");
+
+    printf("OK!\n");
 
 
     return 0;
