@@ -1,0 +1,463 @@
+i was going to post about how to obtain and the printf function but then i thought that i mays aswell get all my relocations correct first just to rule them out, so first of all, i have a few relocation in wich i am not sure how i would obtain there values and what to do in order to correctly process them
+
+
+    G       This means the offset into the global offset table at which the address of the
+            relocation entry's symbol will reside during execution. See "Global Offset Table''
+            below for more information.
+
+    GOT     This means the address of the global offset table. See "Global Offset Table'' below
+            for more information.
+
+    L       This means the place (section offset or address) of the procedure linkage table entry
+            for a symbol. A procedure linkage table entry redirects a function call to the proper
+            destination. The link editor builds the initial procedure linkage table, and the
+            dynamic linker modifies the entries during execution. See "Procedure Linkage
+            Table'' below for more information.
+
+    P       This means the place (section offset or address) of the storage unit being relocated
+            (computed using r_offset ).
+
+in particulare these relocation types:
+
+    Name                        Value       Field       Calculation
+    R_X86_64_PC64               24          word64      S + A - P           †
+    R_X86_64_PC32               2           word32      S + A - P
+    R_X86_64_GOT32              3           word32      G + A
+    R_X86_64_PLT32              4           word32      L + A - P
+    R_X86_64_GOTPCREL           9           word32      G + GOT + A - P
+    R_X86_64_PC16               13          word16      S + A - P
+    R_X86_64_PC8                15          word8       S + A - P
+    R_X86_64_GOTOFF64           25          word64      S + A - GOT
+    R_X86_64_GOTPC32            26          word32      GOT + A - P
+    R_X86_64_GOT64              27          word64      G + A
+    R_X86_64_GOTPCREL64         28          word64      G + GOT - P + A
+    R_X86_64_GOTPC64            29          word64      GOT - P + A
+    R_X86_64_PLTOFF64           31          word64      L - GOT + A
+    R_X86_64_IRELATIVE          37          wordclass   indirect (B + A)    ††
+    R_X86_64_GOTPCRELX          41          word32      G + GOT + A - P
+    R_X86_64_REX_GOTPCRELX      42          word32      G + GOT + A - P
+
+    †   This relocation is used only for LP64.
+    ††  This relocation only appears in ILP32 executable files or shared objects.
+
+
+this is my current relocation processing function
+
+please let me know if any relocations are incorrect and how to fix them (and if possible, why they are incorrect)
+
+but primarily i would like to know how to obtain and process the values L, P, GOT, and G, and also what (indirect) means and how it should be processed compared to the non indirect relocations
+
+    r(Elf64_Rela *relocs, size_t relocs_size) {
+        if (relocs != mappingb && relocs_size != 0) {
+            for (int i = 0; i < relocs_size  / sizeof(Elf64_Rela); i++) {
+                Elf64_Rela *reloc = &relocs[i];
+                int reloc_type = ELF64_R_TYPE(reloc->r_info);
+                printf("i = %d,\t\tELF64_R_TYPE(reloc->r_info)\t= ", i);
+                switch (reloc_type) {
+                    #if defined(__x86_64__)
+                        
+                    case R_X86_64_NONE:
+                    {
+                        printf("\n\n\nR_X86_64_NONE                calculation: none\n");
+                        break;
+                    }
+                    case R_X86_64_64:
+                    {
+                        printf("\n\n\nR_X86_64_64                  calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_PC32:
+                    {
+                        printf("\n\n\nR_X86_64_PC32                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOT32:
+                    {
+                        printf("\n\n\nR_X86_64_GOT32               calculation: G + A (address of global offset table + r_addend)\n");
+                        break;
+                    }
+                    case R_X86_64_PLT32:
+                    {
+                        printf("\n\n\nR_X86_64_PLT32               calculation: L + A - P ((L: This means the place (section offset or address) of the procedure linkage table entry for a symbol) + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).) \n");
+                        break;
+                    }
+                    case R_X86_64_COPY:
+                    {
+                        printf("\n\n\nR_X86_64_COPY                calculation: none\n");
+                        break;
+                    }
+                    case R_X86_64_GLOB_DAT:
+                    {
+                        printf("\n\n\nR_X86_64_GLOB_DAT            calculation: S (symbol value)\n");
+                        printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S)+mappingb;
+                        char ** addr = reloc->r_offset + mappingb;
+                        printf("%014p = %014p\n", addr, *addr);
+                        break;
+                    }
+                    case R_X86_64_JUMP_SLOT:
+                    {
+                        printf("\n\n\nR_X86_64_JUMP_SLOT           calculation: S (symbol value)\n");
+                        printf("mappingb    = %014p\n", mappingb);
+                        printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S)+mappingb;
+                        char ** addr = reloc->r_offset + mappingb;
+                        printf("%014p = %014p\n", addr, *addr);
+                        break;
+                    }
+                    case R_X86_64_RELATIVE:
+                    {
+                        printf("\n\n\nR_X86_64_RELATIVE            calculation: B + A (base address + r_addend)\n");
+                        printf("mappingb    = %014p\n", mappingb);
+                        printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                        printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                        *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                        char ** addr = reloc->r_offset + mappingb;
+                        printf("%014p = %014p\n", addr, *addr);
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOTPCREL:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPCREL            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))) \n");
+                        break;
+                    }
+                    case R_X86_64_32:
+                    {
+                        printf("\n\n\nR_X86_64_32                  calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_32S:
+                    {
+                        printf("\n\n\nR_X86_64_32S                 calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_16:
+                    {
+                        printf("\n\n\nR_X86_64_16                  calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_PC16:
+                    {
+                        printf("\n\n\nR_X86_64_PC16                calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_8:
+                    {
+                        printf("\n\n\nR_X86_64_8                   calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_PC8:
+                    {
+                        printf("\n\n\nR_X86_64_PC8                 calculation: S + A - P (symbol value + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).))\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_DTPMOD64:
+                    {
+                        printf("\n\n\nR_X86_64_DTPMOD64\n");
+                        break;
+                    }
+                    case R_X86_64_DTPOFF64:
+                    {
+                        printf("\n\n\nR_X86_64_DTPOFF64\n");
+                        break;
+                    }
+                    case R_X86_64_TPOFF64:
+                    {
+                        printf("\n\n\nR_X86_64_TPOFF64\n");
+                        break;
+                    }
+                    case R_X86_64_TLSGD:
+                    {
+                        printf("\n\n\nR_X86_64_TLSGD\n");
+                        break;
+                    }
+                    case R_X86_64_TLSLD:
+                    {
+                        printf("\n\n\nR_X86_64_TLSLD\n");
+                        break;
+                    }
+                    case R_X86_64_DTPOFF32:
+                    {
+                        printf("\n\n\nR_X86_64_DTPOFF32\n");
+                        break;
+                    }
+                    case R_X86_64_GOTTPOFF:
+                    {
+                        printf("\n\n\nR_X86_64_GOTTPOFF\n");
+                        break;
+                    }
+                    case R_X86_64_TPOFF32:
+                    {
+                        printf("\n\n\nR_X86_64_TPOFF32\n");
+                        break;
+                    }
+                    case R_X86_64_PC64:
+                    {
+                        printf("\n\n\nR_X86_64_PC64                calculation: S + A (symbol value + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOTOFF64:
+                    {
+                        printf("\n\n\nR_X86_64_GOTOFF64            calculation: S + A - GOT (symbol value + r_addend - address of global offset table)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_S) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOTPC32:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPC32             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_GOT64:
+                    {
+                        printf("\n\n\nR_X86_64_GOT64               calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_GOTPCREL64:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPCREL64          calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_GOTPC64:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPC64             calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_GOTPLT64:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPLT64            calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_PLTOFF64:
+                    {
+                        printf("\n\n\nR_X86_64_PLTOFF64\n");
+                        break;
+                    }
+                    case R_X86_64_SIZE32:
+                    {
+                        printf("\n\n\nR_X86_64_SIZE32                 calculation: Z + A (symbol size + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_Z) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_SIZE64:
+                    {
+                        printf("\n\n\nR_X86_64_SIZE64                 calculation: Z + A (symbol size + r_addend)\n");
+                        printf("reloc->r_offset = %014p\n", reloc->r_offset);
+                        *((char**)((char*)mappingb + reloc->r_offset)) = lookup_symbol_by_index(array, _elf_header, ELF64_R_SYM(reloc->r_info), symbol_mode_Z) + reloc->r_addend+mappingb;
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOTPC32_TLSDESC:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPC32_TLSDESC     calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_TLSDESC_CALL:
+                    {
+                        printf("\n\n\nR_X86_64_TLSDESC_CALL\n");
+                        break;
+                    }
+                    case R_X86_64_TLSDESC:
+                    {
+                        printf("\n\n\nR_X86_64_TLSDESC\n");
+                        break;
+                    }
+                    case R_X86_64_IRELATIVE:
+                    {
+                        printf("\n\n\nR_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)\n");
+                        printf("mappingb    = %014p\n", mappingb);
+                        printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                        printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                        *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                        char ** addr = reloc->r_offset + mappingb;
+                        printf("%014p = %014p\n", addr, *addr);
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_RELATIVE64:
+                    {
+                        printf("\n\n\nR_X86_64_RELATIVE64                 calculation: B + A (base address + r_addend)\n");
+                        printf("mappingb    = %014p\n", mappingb);
+                        printf("reloc->r_offset = %014p+%014p=%014p\n", mappingb, reloc->r_offset, mappingb+reloc->r_offset);
+                        printf("reloc->r_addend = %014p+%014p=%014p\n", mappingb, reloc->r_addend, ((char*)mappingb + reloc->r_addend) );
+                        *((char**)((char*)mappingb + reloc->r_offset)) = ((char*)mappingb + reloc->r_addend);
+                        char ** addr = reloc->r_offset + mappingb;
+                        printf("%014p = %014p\n", addr, *addr);
+                        printf("((char*)mappingb + reloc->r_offset)            = %014p\n", ((char*)mappingb + reloc->r_offset));
+                        break;
+                    }
+                    case R_X86_64_GOTPCRELX:
+                    {
+                        printf("\n\n\nR_X86_64_GOTPCRELX           calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_REX_GOTPCRELX:
+                    {
+                        printf("\n\n\nR_X86_64_REX_GOTPCRELX       calculation: (_GOTPC: GOT + A - P (address of global offset table + r_addend - (P: This means the place (section offset or address) of the storage unit being relocated (computed using r_offset ).)))\n");
+                        break;
+                    }
+                    case R_X86_64_NUM:
+                    {
+                        printf("\n\n\nR_X86_64_NUM\n");
+                        break;
+                    }
+                    #endif
+                    default:
+                        printf("unknown type, got %d\n", reloc_type);
+                        break;
+                }
+            }
+        }
+    }
+
+
+this is the full minimal code (as i only posted the relocation function the rest is not of relivance except for the sake of explaining what all the values like mappingb and how the relocation table is obtained cus this is reaching the 30k character limit)
+
+(originally a fork but ended up being a complete rewrite from scratch)
+
+https://raw.githubusercontent.com/mgood7123/min-dl-dynamic-loader/master/loader/readelf__min.c
+
+loader.c
+
+    #include <stdio.h>
+
+    // unfortunately this is nessicary
+    void * lookup_symbol_by_name_(const char * lib, const char * name);
+
+    int main() {
+        const char * (*func_char)();
+        const int (*func_int)();
+
+        printf("Test libc functions >\n");
+
+        int (*func_int_write)();
+        func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
+        func_int_write(1, "write\n", 7);
+
+        int (*func_int_strlen)();
+        func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
+        printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
+
+        int (*func_int_printf)();
+        func_int_printf = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
+        func_int_printf("func_int_strlen(\"test string\n\")\n");
+
+        printf("OK!\n");
+
+        return 0;
+    }
+
+compilation:
+
+    mkdir files
+    curl -L https://raw.githubusercontent.com/mgood7123/min-dl-dynamic-loader/master/loader/readelf__min.c -o readelf__min.c
+    gcc -g3 -O0 readelf__min.c -o files/readelf_min.so --shared -fPIC -D__SHARED__ -liberty &&
+    gcc -g3 -O0 readelf__min.c -c -fPIC -D__SHARED__ -o files/readelf_min.o &&
+    ar cur files/readelf_min.a files/readelf_min.o &&
+    gcc -fPIC -g3 -O0 test_loader.c -o files/loader_min files/readelf_min.so
+    ./files/loader_min
+
+output:
+
+    #define mapb mappingb // needed to make sence, exacty 2998 chars total
+    Test libc functions >
+    map succeded with address: 0x7fe17a693000
+    [ ... ] omitted, mostly verbose addresses, PT_* segments, mapping info
+    called get_dynamic_entry
+    [ ... ] omitted
+    testing if DT_RELASZ == DT_RELASZ
+    returning 0x0000000077d0
+    called get_dynamic_entry
+    [ ... ] omitted
+    testing if DT_RELA == DT_RELA
+    returning 0x0000000181e0
+    i = 0,          ELF64_R_TYPE(reloc->r_info)     = 
+    R_X86_64_RELATIVE            calculation: B + A (base address + r_addend)
+    mapb    = 0x7fe170000000
+    reloc->r_offset = mapb+0x39a788=0x7fe17039a788
+    reloc->r_addend = mapb+0x39f3e0=0x7fe17039f3e0
+    0x7fe17039a788 = 0x7fe17039f3e0
+    ((char*)mappingb + reloc->r_offset)            = 0x7fe17039a788
+    i = 1,          ELF64_R_TYPE(reloc->r_info)     = 
+
+    [ ... ] rest is omitted (except for last relocation) due to libc having 1k to 2k relocations
+    i = 1277,               ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_64                  calculation: S + A (symbol value + r_addend)
+    reloc->r_offset = 0x00000039f6d0
+    attempting to look up symbol, index = 354
+
+
+    looking up index 354 of table 4
+    requested symbol name for index 354 is _IO_2_1_stdin_
+    symbol = 3795104 (0x00000039e8a0)
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039f6d0
+
+
+    called get_dynamic_entry // now for the JUMP_SLOT relocations, 7 total
+    [ ... ]
+    testing if DT_JMPREL == DT_JMPREL
+    returning 0x00000001f9b0
+    i = 0,          ELF64_R_TYPE(reloc->r_info)     = 
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mapb    = 0x7f8260000000
+    reloc->r_offset = mapb+0x39e050=0x7f826039e050
+    reloc->r_addend = mapb+0x85dd0=0x7f8260085dd0
+    0x7f826039e050 = 0x7f8260085dd0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e050
+    [ ... ] omitted
+
+init stuff above: continuation but seperated if u dont want to scroll down just to get to this part, includes last few lines incase ur unsure if this has been omitted or not, also includes the definition
+
+    #define mapb mappingb
+
+    i = 7,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mapb    = 0x7f8260000000
+    reloc->r_offset = mappingb+0x39e018=0x7f826039e018
+    reloc->r_addend = mappingb+0x85450=0x7f8260085450
+    0x7f826039e018 = 0x7f8260085450
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e018
+
+    requested symbol name "write" found in table 4 at address 0x7f82600de3b0 is "write"
+    write
+    requested symbol name "strlen" found in table 4 at address 0x7f8260081d10 is "strlen"
+    func_int_strlen("test string\n") = 12
+    requested symbol name "printf" found in table 4 at address 0x7f8260050e00 is "printf"
+    Segmentation fault (core dumped)
+    [exec@exec-pc loader]$

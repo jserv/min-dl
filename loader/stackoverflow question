@@ -1,0 +1,315 @@
+
+
+due to the fact that my minimal example library is over 30k characters, i will post a direct link to it
+
+https://raw.githubusercontent.com/mgood7123/min-dl-dynamic-loader/master/loader/readelf__min.c
+
+loader.c
+
+    #include <stdio.h>
+
+    // unfortunately this is nessicary
+    void * lookup_symbol_by_name_(const char * lib, const char * name);
+
+    int main() {
+        const char * (*func_char)();
+        const int (*func_int)();
+
+        printf("Test libc functions >\n");
+
+        int (*func_int_write)();
+        func_int_write = lookup_symbol_by_name_("/lib/libc.so.6", "write");
+        func_int_write(1, "write\n", 7);
+
+        int (*func_int_strlen)();
+        func_int_strlen = lookup_symbol_by_name_("/lib/libc.so.6", "strlen");
+        printf("func_int_strlen(\"test string\\n\") = %d\n", func_int_strlen("test string\n"));
+
+        int (*func_int_printf)();
+        func_int_printf = lookup_symbol_by_name_("/lib/libc.so.6", "printf");
+        func_int_printf("func_int_strlen(\"test string\n\")\n");
+
+        printf("OK!\n");
+
+        return 0;
+    }
+
+compilation:
+
+    mkdir files
+    curl -L https://raw.githubusercontent.com/mgood7123/min-dl-dynamic-loader/master/loader/readelf__min.c -o readelf__min.c
+    gcc -g3 -O0 readelf__min.c -o files/readelf_min.so --shared -fPIC -D__SHARED__ -liberty &&
+    gcc -g3 -O0 readelf__min.c -c -fPIC -D__SHARED__ -o files/readelf_min.o &&
+    ar cur files/readelf_min.a files/readelf_min.o &&
+    gcc -fPIC -g3 -O0 test_loader.c -o files/loader_min files/readelf_min.so
+    ./files/loader_min
+
+output:
+
+    Test libc functions >
+    map succeded with address: 0x7fe17a693000
+    memmove PT_LOAD 1 = 
+    p_flags:                /* Segment flags */             = 0x000000000005
+    p_offset:               /* Segment file offset */       =          (nil)
+    p_vaddr:                /* Segment virtual address */   =          (nil)
+    p_paddr:                /* Segment physical address */  =          (nil)
+    p_filesz:               /* Segment size in file */      = 0x00000019a544
+    p_memsz:                /* Segment size in memory */    = 0x00000019a544
+    p_align:                /* Segment alignment */         = 0x000000200000
+
+
+    span =          (nil)-0x00000019a544
+    memmove PT_LOAD 2 = 
+    p_flags:                /* Segment flags */             = 0x000000000006
+    p_offset:               /* Segment file offset */       = 0x00000019a788
+    p_vaddr:                /* Segment virtual address */   = 0x00000039a788
+    p_paddr:                /* Segment physical address */  = 0x00000039a788
+    p_filesz:               /* Segment size in file */      = 0x000000004f58
+    p_memsz:                /* Segment size in memory */    = 0x0000000091a8
+    p_align:                /* Segment alignment */         = 0x000000200000
+
+
+    span = 0x00000039a788-0x0000003a3930
+    called round_up
+    returning 0x7fe170000000
+    memmove: round_up(0x7fe16a0ef010, 0x000010000000)+0x000000200000 = 0x7fe170200000 // 0x000010000000 probably overkill but for now it makes it easier to see the addresses as if they where 0x0 based)
+    called round_up
+    returning 0x7fe170000000
+    dest = 0x7fe170200000
+    dest = 0x7fe170000000
+    called round_down
+    returning 0x00000039a000
+
+
+
+    find 0x7fe170000000, 0x7fe1703a3930, (int) 1239 // probably should remove this
+
+
+
+    mprotect(0x7fe170000000+round_down(         (nil), 0x000000200000), 0x00000019a544, PROT_READ|PROT_EXEC|);
+    called round_up
+    returning 0x000000200000
+    called round_down
+    returning          (nil)
+    called round_up
+    returning 0x000000200000
+    called round_down
+    returning          (nil)
+    mprotect on 0x7fe170000000 succeded with size: 0x000000200000
+    00400000-00401000 r-xp 00000000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    00600000-00601000 r--p 00000000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    00601000-00602000 rw-p 00001000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    021cd000-021ee000 rw-p 00000000 00:00 0                                  [heap]
+    7fe16a0ef000-7fe170000000 rw-p 00000000 00:00 0 
+    7fe170000000-7fe170200000 r-xp 00000000 00:00 0 
+    7fe170200000-7fe17a693000 rw-p 00000000 00:00 0 
+    7fe17a693000-7fe17a876000 r--p 00000000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17a876000-7fe17aa11000 r-xp 00000000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17aa11000-7fe17ac10000 ---p 0019b000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac10000-7fe17ac14000 r--p 0019a000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac14000-7fe17ac16000 rw-p 0019e000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac16000-7fe17ac1a000 rw-p 00000000 00:00 0 
+    7fe17ac1a000-7fe17ac1d000 r-xp 00000000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ac1d000-7fe17ae1c000 ---p 00003000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1c000-7fe17ae1d000 r--p 00002000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1d000-7fe17ae1e000 rw-p 00003000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1e000-7fe17ae45000 r-xp 00000000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17ae45000-7fe17b045000 ---p 00027000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b045000-7fe17b047000 r--p 00027000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b047000-7fe17b048000 rw-p 00029000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b048000-7fe17b053000 r-xp 00000000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b053000-7fe17b253000 ---p 0000b000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b253000-7fe17b254000 r--p 0000b000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b254000-7fe17b255000 rw-p 0000c000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b255000-7fe17b258000 rw-p 00000000 00:00 0 
+    7fe17b258000-7fe17b27b000 r-xp 00000000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b444000-7fe17b447000 rw-p 00000000 00:00 0 
+    7fe17b478000-7fe17b47a000 rw-p 00000000 00:00 0 
+    7fe17b47a000-7fe17b47b000 r--p 00022000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b47b000-7fe17b47c000 rw-p 00023000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b47c000-7fe17b47d000 rw-p 00000000 00:00 0 
+    7ffe3ea27000-7ffe3ea48000 rw-p 00000000 00:00 0                          [stack]
+    7ffe3eb91000-7ffe3eb94000 r--p 00000000 00:00 0                          [vvar]
+    7ffe3eb94000-7ffe3eb96000 r-xp 00000000 00:00 0                          [vdso]
+    ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+    mprotect(0x7fe170000000+round_down(0x00000039a788, 0x000000200000), 0x0000000091a8, PROT_READ|PROT_WRITE|);
+    called round_up
+    returning 0x000000200000
+    called round_down
+    returning 0x000000200000
+    called round_up
+    returning 0x000000200000
+    called round_down
+    returning 0x000000200000
+    mprotect on 0x7fe170200000 succeded with size: 0x000000200000
+    00400000-00401000 r-xp 00000000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    00600000-00601000 r--p 00000000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    00601000-00602000 rw-p 00001000 fe:00 3040864                            /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/loader
+    021cd000-021ee000 rw-p 00000000 00:00 0                                  [heap]
+    7fe16a0ef000-7fe170000000 rw-p 00000000 00:00 0 
+    7fe170000000-7fe170200000 r-xp 00000000 00:00 0 
+    7fe170200000-7fe170400000 -wxp 00000000 00:00 0 
+    7fe170400000-7fe17a693000 rw-p 00000000 00:00 0 
+    7fe17a693000-7fe17a876000 r--p 00000000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17a876000-7fe17aa11000 r-xp 00000000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17aa11000-7fe17ac10000 ---p 0019b000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac10000-7fe17ac14000 r--p 0019a000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac14000-7fe17ac16000 rw-p 0019e000 08:03 1594694                    /usr/lib/libc-2.25.so
+    7fe17ac16000-7fe17ac1a000 rw-p 00000000 00:00 0 
+    7fe17ac1a000-7fe17ac1d000 r-xp 00000000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ac1d000-7fe17ae1c000 ---p 00003000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1c000-7fe17ae1d000 r--p 00002000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1d000-7fe17ae1e000 rw-p 00003000 08:03 1594695                    /usr/lib/libdl-2.25.so
+    7fe17ae1e000-7fe17ae45000 r-xp 00000000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17ae45000-7fe17b045000 ---p 00027000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b045000-7fe17b047000 r--p 00027000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b047000-7fe17b048000 rw-p 00029000 fe:00 3040857                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/readelf_.so
+    7fe17b048000-7fe17b053000 r-xp 00000000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b053000-7fe17b253000 ---p 0000b000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b253000-7fe17b254000 r--p 0000b000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b254000-7fe17b255000 rw-p 0000c000 fe:00 3040854                    /chakra/home/universalpackagemanager/chroot/arch-chroot/arch-pkg-build/packages/glibc/repos/core-x86_64/min-dl/loader/files/libstring.so
+    7fe17b255000-7fe17b258000 rw-p 00000000 00:00 0 
+    7fe17b258000-7fe17b27b000 r-xp 00000000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b444000-7fe17b447000 rw-p 00000000 00:00 0 
+    7fe17b478000-7fe17b47a000 rw-p 00000000 00:00 0 
+    7fe17b47a000-7fe17b47b000 r--p 00022000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b47b000-7fe17b47c000 rw-p 00023000 08:03 1594691                    /usr/lib/ld-2.25.so
+    7fe17b47c000-7fe17b47d000 rw-p 00000000 00:00 0 
+    7ffe3ea27000-7ffe3ea48000 rw-p 00000000 00:00 0                          [stack]
+    7ffe3eb91000-7ffe3eb94000 r--p 00000000 00:00 0                          [vvar]
+    7ffe3eb94000-7ffe3eb96000 r-xp 00000000 00:00 0                          [vdso]
+    ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+    called round_up
+    returning 0x7fe17b2a6000
+    called get_dynamic_entry
+    [ ... ] omitted
+    testing if DT_RELASZ == DT_RELASZ
+    returning 0x0000000077d0
+    called get_dynamic_entry
+    [ ... ] omitted
+    testing if DT_RELA == DT_RELA
+    returning 0x0000000181e0
+    i = 0,          ELF64_R_TYPE(reloc->r_info)     = 
+    R_X86_64_RELATIVE            calculation: B + A (base address + r_addend)
+    mappingb    = 0x7fe170000000
+    reloc->r_offset = 0x7fe170000000+0x00000039a788=0x7fe17039a788
+    reloc->r_addend = 0x7fe170000000+0x00000039f3e0=0x7fe17039f3e0
+    0x7fe17039a788 = 0x7fe17039f3e0
+    ((char*)mappingb + reloc->r_offset)            = 0x7fe17039a788
+    i = 1,          ELF64_R_TYPE(reloc->r_info)     = 
+
+    [ ... ] rest is omitted (except for last relocation) due to libc (glibc 2.25 (ld-2.25.so if it makes it easier) ) having 2250+ relocations
+    i = 1277,               ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_64                  calculation: S + A (symbol value + r_addend)
+    reloc->r_offset = 0x00000039f6d0
+    attempting to look up symbol, index = 354
+
+
+    looking up index 354 of table 4
+    requested symbol name for index 354 is _IO_2_1_stdin_
+    symbol = 3795104 (0x00000039e8a0)
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039f6d0
+
+
+
+    called get_dynamic_entry // now for the JUMP_SLOT relocations, luckily there is only a few so i dont think i need to omit these
+    [ ... ]
+    testing if DT_JMPREL == DT_JMPREL
+    returning 0x00000001f9b0
+    i = 0,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e050=0x7f826039e050
+    reloc->r_addend = 0x7f8260000000+0x000000085dd0=0x7f8260085dd0
+    0x7f826039e050 = 0x7f8260085dd0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e050
+    i = 1,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e048=0x7f826039e048
+    reloc->r_addend = 0x7f8260000000+0x0000000aa4c0=0x7f82600aa4c0
+    0x7f826039e048 = 0x7f82600aa4c0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e048
+    i = 2,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e040=0x7f826039e040
+    reloc->r_addend = 0x7f8260000000+0x000000081860=0x7f8260081860
+    0x7f826039e040 = 0x7f8260081860
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e040
+    i = 3,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e038=0x7f826039e038
+    reloc->r_addend = 0x7f8260000000+0x0000000880c0=0x7f82600880c0
+    0x7f826039e038 = 0x7f82600880c0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e038
+    i = 4,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e030=0x7f826039e030
+    reloc->r_addend = 0x7f8260000000+0x000000083ce0=0x7f8260083ce0
+    0x7f826039e030 = 0x7f8260083ce0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e030
+    i = 5,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e028=0x7f826039e028
+    reloc->r_addend = 0x7f8260000000+0x000000084070=0x7f8260084070
+    0x7f826039e028 = 0x7f8260084070
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e028
+    i = 6,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e020=0x7f826039e020
+    reloc->r_addend = 0x7f8260000000+0x0000000aa5a0=0x7f82600aa5a0
+    0x7f826039e020 = 0x7f82600aa5a0
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e020
+    i = 7,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e018=0x7f826039e018
+    reloc->r_addend = 0x7f8260000000+0x000000085450=0x7f8260085450
+    0x7f826039e018 = 0x7f8260085450
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e018
+
+
+init stuff above: continuation but seperated if u dont want to scroll down just to get to this part, includes last few lines incase ur unsure if this has been omitted or not
+
+    i = 7,          ELF64_R_TYPE(reloc->r_info)     = 
+
+
+    R_X86_64_IRELATIVE                 calculation: (indirect) B + A (base address + r_addend)
+    mappingb    = 0x7f8260000000
+    reloc->r_offset = 0x7f8260000000+0x00000039e018=0x7f826039e018
+    reloc->r_addend = 0x7f8260000000+0x000000085450=0x7f8260085450
+    0x7f826039e018 = 0x7f8260085450
+    ((char*)mappingb + reloc->r_offset)            = 0x7f826039e018
+
+
+
+    requested symbol name "write" found in table 4 at address 0x7f82600de3b0 is "write"
+    write
+    requested symbol name "strlen" found in table 4 at address 0x7f8260081d10 is "strlen"
+    func_int_strlen("test string\n") = 12
+    requested symbol name "printf" found in table 4 at address 0x7f8260050e00 is "printf"
+    Segmentation fault (core dumped)
+    [exec@exec-pc loader]$
