@@ -55,6 +55,16 @@ struct __DLoader_Internal {
     const ElfW(Phdr) * phdr;
     size_t phnum;
     size_t pagesize;
+
+    /* Constructor/destructor support */
+    void (*dt_init)(void);
+    void (*dt_fini)(void);
+    void (**dt_init_array)(void);
+    size_t dt_init_arraysz;
+    void (**dt_fini_array)(void);
+    size_t dt_fini_arraysz;
+    int init_ran;
+    int fini_ran;
 };
 
 /*
@@ -146,7 +156,7 @@ __attribute__((noreturn)) static void fail(const char *filename,
         STRING_IOV(": ", 1),
         {(void *) message, my_strlen(message)},
         {(void *) item, !item ? 0 : my_strlen(item)},
-        STRING_IOV("=", !item),
+        STRING_IOV("=", item != NULL),
         {NULL, 0},
         {"\n", 1},
     };
@@ -307,7 +317,7 @@ void *system_plt_resolver(dloader_p o, int import_id)
     return o->user_plt_resolver(o->user_plt_resolver_handle, import_id);
 }
 
-dloader_p api_load(const char *filename)
+static dloader_p load_elf(const char *filename)
 {
     int fd = open(filename, O_RDONLY);
     if (fd < 0)
@@ -488,7 +498,7 @@ dloader_p api_load(const char *filename)
         case R_X86_64_JUMP_SLOT:
         case R_ARM_JUMP_SLOT:
         case R_AARCH64_JUMP_SLOT:
-            /* Deferred: resolved by api_resolve_symbols */
+            /* Deferred: resolved by resolve_symbols */
             break;
         default:
             fail(filename, "Unsupported relocation type!", "r_info",
@@ -564,6 +574,27 @@ dloader_p api_load(const char *filename)
     o->phdr = (const ElfW(Phdr) *) (load_bias + ehdr.e_phoff);
     o->phnum = ehdr.e_phnum;
     o->pagesize = pagesize;
+
+    /* Parse constructor/destructor entries */
+    uintptr_t dt_init = get_dynamic_entry(dynamic, DT_INIT);
+    uintptr_t dt_fini = get_dynamic_entry(dynamic, DT_FINI);
+    uintptr_t dt_init_array = get_dynamic_entry(dynamic, DT_INIT_ARRAY);
+    uintptr_t dt_init_arraysz = get_dynamic_entry(dynamic, DT_INIT_ARRAYSZ);
+    uintptr_t dt_fini_array = get_dynamic_entry(dynamic, DT_FINI_ARRAY);
+    uintptr_t dt_fini_arraysz = get_dynamic_entry(dynamic, DT_FINI_ARRAYSZ);
+
+    if (dt_init)
+        o->dt_init = (void (*)(void))(dt_init + load_bias);
+    if (dt_fini)
+        o->dt_fini = (void (*)(void))(dt_fini + load_bias);
+    if (dt_init_array && dt_init_arraysz) {
+        o->dt_init_array = (void (**)(void))(dt_init_array + load_bias);
+        o->dt_init_arraysz = dt_init_arraysz / sizeof(void (*)(void));
+    }
+    if (dt_fini_array && dt_fini_arraysz) {
+        o->dt_fini_array = (void (**)(void))(dt_fini_array + load_bias);
+        o->dt_fini_arraysz = dt_fini_arraysz / sizeof(void (*)(void));
+    }
 
     close(fd);
     return o;
@@ -751,7 +782,9 @@ static int resolve_table(dloader_p o,
     return 0;
 }
 
-int api_resolve_symbols(dloader_p o, symbol_resolver_t resolver, void *handle)
+static int resolve_symbols(dloader_p o,
+                               symbol_resolver_t resolver,
+                               void *handle)
 {
     if (!o->dt_symtab || !o->dt_strtab)
         return -1;
@@ -761,11 +794,41 @@ int api_resolve_symbols(dloader_p o, symbol_resolver_t resolver, void *handle)
     return resolve_table(o, o->dt_jmprel, o->plt_entries, resolver, handle);
 }
 
+static void run_init(dloader_p o)
+{
+    if (o->init_ran)
+        return;
+    o->init_ran = 1;
+
+    if (o->dt_init)
+        o->dt_init();
+    for (size_t i = 0; i < o->dt_init_arraysz; i++) {
+        if (o->dt_init_array[i])
+            o->dt_init_array[i]();
+    }
+}
+
+static void run_fini(dloader_p o)
+{
+    if (o->fini_ran)
+        return;
+    o->fini_ran = 1;
+
+    for (size_t i = o->dt_fini_arraysz; i > 0; i--) {
+        if (o->dt_fini_array[i - 1])
+            o->dt_fini_array[i - 1]();
+    }
+    if (o->dt_fini)
+        o->dt_fini();
+}
+
 struct __DLoader_API__ DLoader = {
-    .load = api_load,
+    .load = load_elf,
     .get_info = api_get_user_info,
     .set_plt_resolver = api_set_plt_resolver,
     .set_plt_entry = api_set_plt_entry,
     .lookup_symbol = api_lookup_symbol,
-    .resolve_symbols = api_resolve_symbols,
+    .resolve_symbols = resolve_symbols,
+    .run_init = run_init,
+    .run_fini = run_fini,
 };

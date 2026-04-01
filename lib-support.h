@@ -102,6 +102,8 @@ extern struct __DLoader_API__ {
     void (*set_plt_entry)(dloader_p, int import_id, void *func);
     void *(*lookup_symbol)(dloader_p, const char *name);
     int (*resolve_symbols)(dloader_p, symbol_resolver_t resolver, void *handle);
+    void (*run_init)(dloader_p);
+    void (*run_fini)(dloader_p);
 } DLoader;
 
 #endif

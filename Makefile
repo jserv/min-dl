@@ -6,7 +6,7 @@ CFLAGS = -std=gnu99 -Wall -Werror -g -D_GNU_SOURCE -DPROG_HEADER=prog_header
 OUT = out
 ARCH = arm aarch64 x86_64
 
-all: $(OUT)/testlib.so $(OUT)/loader $(OUT)/symlib.so $(OUT)/symtest
+all: $(OUT)/testlib.so $(OUT)/loader $(OUT)/symlib.so $(OUT)/symtest $(OUT)/initlib.so $(OUT)/inittest
 
 $(OUT):
 	@mkdir -p $@
@@ -30,6 +30,14 @@ $(OUT)/symlib.so: $(OUT)/symlib.o
 $(OUT)/symtest: $(OUT)/loader.o $(OUT)/symtest.o
 	$(CC) -o $@ $^
 
+$(OUT)/initlib.o: CFLAGS += -fPIC
+
+$(OUT)/initlib.so: $(OUT)/initlib.o
+	$(CC) -shared -nostdlib $< -o $@
+
+$(OUT)/inittest: $(OUT)/loader.o $(OUT)/inittest.o
+	$(CC) -o $@ $^
+
 # Cross-compilation: 'make arm' or 'make aarch64'
 $(ARCH): %: check_cc_%
 	@$(MAKE) CROSS_COMPILE=$@$(CROSS_COMPILE_SUFFIX)- all
@@ -48,15 +56,17 @@ check_cc_aarch64::
 $(addprefix check_,$(ARCH)): check_%: %
 	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./loader
 	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./symtest
+	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./inittest
 
 check: all
 	@cd $(OUT) && ./loader
 	@cd $(OUT) && ./symtest
+	@cd $(OUT) && ./inittest
 
 clean:
 	rm -rf $(OUT)
 
-SRCS = loader.c testloader.c testlib.c symtest.c symlib.c
+SRCS = loader.c testloader.c testlib.c symtest.c symlib.c inittest.c initlib.c
 -include $(SRCS:%.c=$(OUT)/%.o.d)
 
 .PHONY: all clean check $(ARCH) $(addprefix check_,$(ARCH)) $(addprefix check_cc_,$(ARCH))
