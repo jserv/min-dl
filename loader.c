@@ -232,10 +232,22 @@ asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
     JMP_REG(REG_RET)                          "\n"
     ".popsection"                             "\n");
 
+static size_t get_plt_count(struct program_header *ph)
+{
+    if (ph->pltgot_end < ph->pltgot)
+        fail("<runtime>", "Corrupt PLT header: end < start!", NULL, 0);
+    return (size_t) (ph->pltgot_end - ph->pltgot);
+}
+
 void *system_plt_resolver(dloader_p o, int import_id)
 {
     if (o->user_plt_resolver == NULL)
         fail("<runtime>", "PLT resolver used before initialization!", NULL, 0);
+    struct program_header *ph = (struct program_header *) o->entry;
+    size_t plt_count = get_plt_count(ph);
+    if (import_id < 0 || (size_t) import_id >= plt_count)
+        fail("<runtime>", "PLT import_id out of bounds!", "import_id",
+             import_id);
     return o->user_plt_resolver(o->user_plt_resolver_handle, import_id);
 }
 
@@ -462,7 +474,12 @@ void api_set_plt_resolver(dloader_p o, plt_resolver_t resolver, void *handle)
 
 void api_set_plt_entry(dloader_p o, int import_id, void *func)
 {
-    ((struct program_header *) (o->entry))->pltgot[import_id] = func;
+    struct program_header *ph = (struct program_header *) o->entry;
+    size_t plt_count = get_plt_count(ph);
+    if (import_id < 0 || (size_t) import_id >= plt_count)
+        fail("<runtime>", "PLT import_id out of bounds!", "import_id",
+             import_id);
+    ph->pltgot[import_id] = func;
 }
 
 struct __DLoader_API__ DLoader = {

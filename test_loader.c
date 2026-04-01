@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "lib-support.h"
 
@@ -30,6 +32,22 @@ static void *plt_resolver(void *handle, int import_id)
     void *func = funcs[import_id];
     DLoader.set_plt_entry(o, import_id, func);
     return func;
+}
+
+static void expect_bad_plt_index_exit(dloader_p o, int import_id)
+{
+    fflush(NULL);
+    pid_t pid = fork();
+    assert(pid >= 0);
+    if (pid == 0) {
+        DLoader.set_plt_entry(o, import_id, (void *) test_import0);
+        _exit(1);
+    }
+
+    int status = 0;
+    assert(waitpid(pid, &status, 0) == pid);
+    assert(WIFEXITED(status));
+    assert(WEXITSTATUS(status) == 2);
 }
 
 int main()
@@ -78,6 +96,11 @@ int main()
     assert(!strcmp(result, "test_import1"));
     assert(resolver_call_count == 0);
 
+    printf("OK!\n");
+
+    printf("Test invalid PLT indexes >\n");
+    expect_bad_plt_index_exit(o, -1);
+    expect_bad_plt_index_exit(o, 2);
     printf("OK!\n");
 
     return 0;

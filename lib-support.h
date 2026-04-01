@@ -47,6 +47,7 @@ struct program_header {
     void **plt_handle;
     void **pltgot;
     void *user_info;
+    void **pltgot_end;
 };
 
 extern void *pltgot_imports[];
@@ -74,14 +75,19 @@ extern void *pltgot_imports[];
         "." SYS_ADDR_ATTR " slowpath_" #name            "\n" \
         ".popsection"                                   "\n");
 
-#define MDL_DEFINE_HEADER(user_info_value) \
-    void *plt_trampoline;                  \
-    void *plt_handle;                      \
-    struct program_header PROG_HEADER = {  \
-        .plt_trampoline = &plt_trampoline, \
-        .plt_handle = &plt_handle,         \
-        .pltgot = pltgot_imports,          \
-        .user_info = user_info_value,      \
+#define MDL_DEFINE_HEADER(user_info_value)                         \
+    asm(".pushsection .my_pltgot,\"aw\",\"progbits\"" "\n"        \
+        "pltgot_imports_end:"                         "\n"        \
+        ".popsection"                                 "\n");      \
+    extern void *pltgot_imports_end[];                            \
+    void *plt_trampoline;                                         \
+    void *plt_handle;                                             \
+    struct program_header PROG_HEADER = {                         \
+        .plt_trampoline = &plt_trampoline,                        \
+        .plt_handle = &plt_handle,                                \
+        .pltgot = pltgot_imports,                                 \
+        .user_info = user_info_value,                             \
+        .pltgot_end = pltgot_imports_end,                         \
     };
 
 typedef struct __DLoader_Internal *dloader_p;
