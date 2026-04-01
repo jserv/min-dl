@@ -54,7 +54,7 @@ int main()
 {
     typedef const char *(*func_t)(void);
 
-    dloader_p o = DLoader.load("test_lib.so");
+    dloader_p o = DLoader.load("testlib.so");
     void **func_table = DLoader.get_info(o);
 
     const char *(*func)(void);
