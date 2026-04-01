@@ -1,0 +1,368 @@
+loader.c
+  890e9917df0a2387 16,134-135,151,156-159,161-162,164-167,169-171,174-175,181,190-216,237-238,245-252,254,258,262-275,278-280,289-290,310-312,339,341-344,351-354,368,380-381,386-387,397-403,405,412-413,418-419,432-438,441-442
+  f1ea4188b3a3684d 105-119,185,225,323-324,358,360-361,363,365-366,396,404,406-409,411,414
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "f9fe923eaeb1d75e20e9a116c5014404a3ee0b42",
+  "prompts": {
+    "890e9917df0a2387": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d49de-11d2-71c3-a1fd-45c88a4ea063",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Jim Huang",
+      "messages": [],
+      "total_additions": 160,
+      "total_deletions": 46,
+      "accepted_lines": 116,
+      "overriden_lines": 0
+    },
+    "d74d78f1929e28e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "72f8a929-0a8b-41e8-b480-80d0d0d1e999",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Jim Huang",
+      "messages": [
+        {
+          "type": "user",
+          "text": "Learn from @externals/lecopzer/ AND @externals/mgood7123/ . Then, create TODO.md to address inspired improvements/fixes.\nCreate CLAUDE.md for testing host:\n* node1: x86-64 arch via 'ssh node1'",
+          "timestamp": "2026-04-01T15:14:46.507Z"
+        },
+        {
+          "type": "user",
+          "text": "[Request interrupted by user]",
+          "timestamp": "2026-04-01T15:14:47.197Z"
+        },
+        {
+          "type": "user",
+          "text": "Learn from @externals/lecopzer/ AND @externals/mgood7123/ . Then, create TODO.md to address inspired improvements/fixes.\nCreate CLAUDE.md for testing host:\n* Hostname: node1 :-> x86-64 arch via 'ssh node1'\n* Hostname: arm :-> arm64 arch via 'ssh arm'",
+          "timestamp": "2026-04-01T15:15:13.759Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Agent",
+          "input": {
+            "description": "Analyze lecopzer fork",
+            "prompt": "Thoroughly analyze the codebase at /Users/jserv/playground/min-dl/externals/lecopzer/ compared to the main project at /Users/jserv/playground/min-dl/. I need to understand:\n\n1. What changes/improvements does lecopzer's fork introduce?\n2. Read all source files in both locations: loader.c, lib-support.h, test_lib.c, test_loader.c, Makefile\n3. Read the arch/ directory contents in lecopzer's fork\n4. Compare key differences between the main project and lecopzer's fork\n\nRead ALL files completely. Be very thorough.",
+            "subagent_type": "Explore"
+          },
+          "timestamp": "2026-04-01T15:15:22.438Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Agent",
+          "input": {
+            "description": "Analyze mgood7123 fork",
+            "prompt": "Thoroughly analyze the codebase at /Users/jserv/playground/min-dl/externals/mgood7123/ compared to the main project at /Users/jserv/playground/min-dl/. I need to understand:\n\n1. What changes/improvements does mgood7123's fork introduce?\n2. Read all source files: loader.c, lib-support.h, test_lib.c, test_loader.c, Makefile\n3. Read the arch/ directory contents\n4. Check the gitcommit file\n5. Look for any additional files or changes not in the main project\n6. Compare key differences between the main project and mgood7123's fork\n\nRead ALL files completely. Be very thorough.",
+            "subagent_type": "Explore"
+          },
+          "timestamp": "2026-04-01T15:15:24.746Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/loader.c"
+          },
+          "timestamp": "2026-04-01T15:15:25.090Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/lib-support.h"
+          },
+          "timestamp": "2026-04-01T15:15:25.541Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/Makefile"
+          },
+          "timestamp": "2026-04-01T15:15:26.114Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/test_loader.c"
+          },
+          "timestamp": "2026-04-01T15:15:26.479Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/test_lib.c"
+          },
+          "timestamp": "2026-04-01T15:15:26.576Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me read the arch headers and check mgood7123's extra content.",
+          "timestamp": "2026-04-01T15:16:36.699Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/arch/x86_64.h"
+          },
+          "timestamp": "2026-04-01T15:16:37.180Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/arch/arm.h"
+          },
+          "timestamp": "2026-04-01T15:16:37.618Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/arch/aarch64.h"
+          },
+          "timestamp": "2026-04-01T15:16:38.051Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Bash",
+          "input": {
+            "command": "ls /Users/jserv/playground/min-dl/externals/mgood7123/loader/",
+            "description": "List mgood7123 loader dir"
+          },
+          "timestamp": "2026-04-01T15:16:38.918Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me check mgood7123's extended loader and test files for the interesting bits.",
+          "timestamp": "2026-04-01T15:16:43.661Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/externals/mgood7123/loader.c"
+          },
+          "timestamp": "2026-04-01T15:16:44.110Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/externals/mgood7123/loader/test_loader.c"
+          },
+          "timestamp": "2026-04-01T15:16:44.785Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/externals/mgood7123/loader/test_lib.c"
+          },
+          "timestamp": "2026-04-01T15:16:45.165Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/externals/mgood7123/loader/lib.h"
+          },
+          "timestamp": "2026-04-01T15:16:45.311Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now I have a clear picture. Let me create both files.",
+          "timestamp": "2026-04-01T15:17:00.319Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Write",
+          "input": {
+            "content": "# TODO - min-dl improvements\n\nInspired by analysis of externals/lecopzer and externals/mgood7123 forks.\n\n## Bug fixes\n\n- [ ] loader.c:298 uses `ro_load->p_offset + load_bias` for ro_start, but p_offset\n      is the file offset, not virtual address. Should use `ro_load->p_vaddr + load_bias`\n      for correct read-only section bounds checking during relocation. The current code\n      works by accident when file offset == vaddr (common but not guaranteed by ELF spec).\n- [ ] loader.c:182 hardcodes pagesize to 0x1000. Should use sysconf(_SC_PAGESIZE) or\n      getauxval(AT_PAGESZ) to support 16K/64K page systems (e.g., Apple Silicon, some\n      aarch64 Linux kernels).\n- [ ] loader.c:183 no error check on open() return value. A failed open returns -1,\n      then pread() on fd=-1 silently produces garbage instead of a clear error.\n- [ ] loader.c:313 typo in comment: \"loactes\" should be \"locates\".\n- [ ] loader.c:318-319 mprotect grants PROT_WRITE alone (no PROT_READ), which may fault\n      on architectures where read permission is required to write. Should be\n      PROT_READ | PROT_WRITE.\n- [ ] Makefile:50 uses recursive make (`@make CROSS_COMPILE=...`) instead of\n      $(MAKE), which breaks with -j parallel builds and ignores parent make flags.\n\n## Symbol resolution (inspired by mgood7123)\n\nmgood7123 built a full dlopen/dlsym-style loader with symbol table parsing.\nThe current min-dl only resolves PLT imports via a user-supplied callback (import_id).\nExtending to name-based resolution would make this a more complete dynamic linker.\n\n- [ ] Parse .dynsym and .dynstr from PT_DYNAMIC to support symbol lookup by name.\n      get_dynamic_entry() already walks DT entries -- add DT_SYMTAB, DT_STRTAB,\n      DT_HASH/DT_GNU_HASH extraction.\n- [ ] Implement api_lookup_symbol(dloader_p, const char *name) -> void* to provide\n      dlsym-equivalent functionality. Add to DLoader API struct.\n- [ ] Handle additional relocation types beyond R_*_RELATIVE: at minimum\n      R_X86_64_GLOB_DAT, R_X86_64_JUMP_SLOT, R_ARM_GLOB_DAT, R_ARM_JUMP_SLOT,\n      R_AARCH64_GLOB_DAT, R_AARCH64_JUMP_SLOT for loading real shared libraries.\n- [ ] Support DT_INIT/DT_FINI and DT_INIT_ARRAY/DT_FINI_ARRAY for constructor and\n      destructor execution. mgood7123's DT_INIT.c demonstrates the need.\n\n## Robustness\n\n- [ ] Add api_unload(dloader_p) to munmap loaded segments and free the handle.\n      Currently there is no way to unload a library (resource leak).\n- [ ] Validate that ro_load is not NULL before dereferencing at line 298. An ELF\n      with all writable PT_LOAD segments would crash here.\n- [ ] Handle the case where DT_PLTGOT exists but DT_JMPREL does not (or vice versa).\n      The current code assumes they come as a pair.\n\n## Testing\n\n- [ ] Add cross-compilation and qemu-based test targets for ARM and AARCH64 to CI\n      (currently only documented in Makefile, no automated test pipeline).\n- [ ] Add a test for loading a library with no PLT imports (pure export-only .so)\n      to exercise the relocation path without PLT resolver setup.\n- [ ] Add a test that verifies the read-only section protection is actually restored\n      after relocation (mprotect back to original permissions).\n- [ ] Test with position-dependent relocations and verify proper error handling for\n      unsupported relocation types (currently assert(0) -- should fail gracefully).\n\n## Build system\n\n- [ ] Support RISC-V (riscv64) architecture: add arch/riscv64.h with assembly macros,\n      relocation case R_RISCV_RELATIVE in loader.c, and EM_RISCV in machine check.\n- [ ] Add `make check_all` target that runs native + all cross-architecture tests in\n      one command.\n- [ ] Add CFLAGS knob for building with sanitizers (-fsanitize=address,undefined) to\n      catch memory bugs in the loader itself.\n",
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md"
+          },
+          "timestamp": "2026-04-01T15:17:27.825Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Write",
+          "input": {
+            "content": "# min-dl project instructions\n\nMinimal dynamic linker for ELF shared libraries. Implements loading, relocation,\nand PLT resolution without depending on glibc's ld-linux.\n\n## Build and test\n\n```bash\n# Native (x86-64 on host)\nmake clean && make\nmake check\n\n# Cross-compile for ARM (32-bit)\nmake arm\nmake check_arm\n\n# Cross-compile for AARCH64 (64-bit ARM)\nmake aarch64\nmake check_aarch64\n```\n\n## Remote testing hosts\n\nTwo Linux machines are available for native testing on real hardware:\n\n| Hostname | Arch    | Access         | Use for                          |\n|----------|---------|----------------|----------------------------------|\n| node1    | x86-64  | `ssh node1`    | Native x86-64 build and test     |\n| arm      | aarch64 | `ssh arm`      | Native aarch64 build and test    |\n\n### Workflow for remote testing\n\n```bash\n# Push changes, then on remote:\nssh node1 \"cd /path/to/min-dl && make clean && make && make check\"\nssh arm   \"cd /path/to/min-dl && make clean && make && make check\"\n```\n\nFor ARM 32-bit testing, cross-compile on either host and run under qemu-arm:\n```bash\nssh node1 \"cd /path/to/min-dl && make arm && make check_arm\"\nssh arm   \"cd /path/to/min-dl && make clean && make && make check\"\n```\n\nNote: `ssh arm` is native aarch64, so `make && make check` builds and tests\naarch64 directly without cross-compilation or qemu.\n\n## Code style\n\n- C99 with GNU extensions (`-std=gnu99`)\n- `-Wall -Werror` -- all warnings are errors\n- Kernel style: tabs for indentation, opening brace on same line\n- Avoid libc dependencies in loader.c (the loader itself must not pull in\n  glibc runtime startup). Use my_bzero/my_strlen instead of memset/strlen.\n- Architecture-specific assembly goes in `arch/<name>.h`, not inline in loader.c\n\n## Architecture\n\n- `loader.c` -- core ELF loader (mmap, relocation, PLT trampoline)\n- `lib-support.h` -- shared header, arch dispatch, PLT macros\n- `arch/*.h` -- per-architecture assembly macro definitions\n- `test_lib.c` -- shared library loaded by the test (compiled to test_lib.so)\n- `test_loader.c` -- test harness that validates loader functionality\n- Adding a new architecture requires only: `arch/newarch.h` + relocation case\n  in loader.c + machine check in loader.c. Makefile auto-discovers via wildcard.\n",
+            "file_path": "/Users/jserv/playground/min-dl/CLAUDE.md"
+          },
+          "timestamp": "2026-04-01T15:17:43.013Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Done. Here's what I found and created:\n\n## Analysis summary\n\n**lecopzer's fork** -- already fully merged into upstream. Contributed ARM support, the read-only section mprotect security fix, and the architecture abstraction layer (`arch/*.h`). Main project improved on it with AARCH64 support and dynamic Makefile discovery.\n\n**mgood7123's fork** -- a much more ambitious attempt at a full dynamic linker. Built dlopen/dlsym-style symbol-by-name resolution, attempted loading real libc (musl, glibc), DT_INIT support, C++ library loading, and handling many more relocation types. The code is rough (huge commented-out blocks, debug artifacts, hardcoded x86-64 only) but the *ideas* are sound and point to real gaps in min-dl.\n\n## TODO.md highlights\n\n- 6 bug fixes: the ro_start calculation using p_offset instead of p_vaddr, hardcoded pagesize, missing open() error check, mprotect missing PROT_READ, comment typo, recursive make\n- 4 feature items inspired by mgood7123: symbol table parsing, dlsym-style lookup, more relocation types, DT_INIT/DT_FINI\n- 3 robustness items: api_unload, NULL ro_load guard, DT_PLTGOT/DT_JMPREL mismatch\n- 4 testing items and 3 build system items\n\n## CLAUDE.md\n\nConfigured with both test hosts (`ssh node1` for x86-64, `ssh arm` for aarch64), build/test workflows, code style notes, and architecture overview.",
+          "timestamp": "2026-04-01T15:17:54.345Z"
+        },
+        {
+          "type": "user",
+          "text": "ask gemini and codex to review @TODO.md",
+          "timestamp": "2026-04-01T15:38:15.222Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "ToolSearch",
+          "input": {
+            "max_results": 2,
+            "query": "select:mcp__gemini-rs__gemini,mcp__codex-rs__codex"
+          },
+          "timestamp": "2026-04-01T15:38:20.152Z"
+        },
+        {
+          "type": "assistant",
+          "text": "\n\nSending to both reviewers in parallel.",
+          "timestamp": "2026-04-01T15:38:23.978Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "mcp__gemini-rs__gemini",
+          "input": {
+            "PROMPT": "Review the TODO.md file at /Users/jserv/playground/min-dl/TODO.md for a minimal ELF dynamic linker project.\n\nContext: This is a minimal dynamic linker (min-dl) that loads ELF shared libraries, performs relocations, and resolves PLT imports via user callbacks. It supports x86-64, ARM, and AARCH64. The TODO was created after analyzing two forks (lecopzer and mgood7123) that extended the project.\n\nKey source files for reference:\n- loader.c: core ELF loader (~378 lines)\n- lib-support.h: shared header with PLT macros\n- arch/*.h: per-architecture assembly macros\n- test_loader.c: test harness\n- test_lib.c: test shared library\n\nReview criteria:\n1. Are the bug reports accurate? Verify each claim against ELF spec and Linux behavior.\n2. Are there severity misassessments (something marked as a bug that isn't, or vice versa)?\n3. Are there missing items that should be obvious from the codebase?\n4. Are the feature priorities reasonable for a \"minimal\" dynamic linker?\n5. Any items that are wrong or misleading?\n\nFormat: For each item, give severity (critical/important/minor/nit), your assessment (correct/wrong/partially-correct), and a brief explanation. Flag any items you'd add or remove."
+          },
+          "timestamp": "2026-04-01T15:38:31.318Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "mcp__codex-rs__codex",
+          "input": {
+            "PROMPT": "Review the TODO.md file for the min-dl project (a minimal ELF dynamic linker).\n\nKey source files to cross-reference:\n- loader.c: core ELF loader with mmap, relocation, PLT trampoline\n- lib-support.h: shared header, arch dispatch, PLT macros\n- arch/x86_64.h, arch/arm.h, arch/aarch64.h: per-arch assembly\n- test_loader.c, test_lib.c: test harness and test library\n- Makefile: build system\n\nReview criteria:\n1. Verify each bug claim against the actual source code. Are the line numbers and descriptions accurate?\n2. Check for integer overflow, bounds checking, or memory safety issues NOT mentioned in the TODO.\n3. Evaluate whether the ro_start p_offset vs p_vaddr claim is correct by analyzing ELF loading semantics.\n4. Check if the mprotect PROT_WRITE-only claim at line 318-319 is a real bug.\n5. Are there API contract violations or undefined behavior not captured?\n\nFormat: severity/file:line/description/fix for each finding. State whether each existing TODO item is confirmed or disputed.",
+            "cd": "/Users/jserv/playground/min-dl",
+            "image": [],
+            "sandbox": "read-only"
+          },
+          "timestamp": "2026-04-01T15:38:37.525Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Both reviewers confirm the TODO items are accurate. Here's the consolidated verdict:\n\n## Consensus: all 6 bug reports confirmed\n\n| TODO item | Gemini | Codex | Notes |\n|---|---|---|---|\n| ro_start p_offset vs p_vaddr | Correct (important) | Confirmed | Works by accident when vaddr == offset |\n| Hardcoded pagesize | Correct (important) | Confirmed | Breaks on 16K/64K page kernels |\n| Unchecked open() | Correct (important) | Confirmed + extended | pread() also unchecked |\n| Typo \"loactes\" | Correct (nit) | Confirmed | |\n| mprotect PROT_WRITE only | Correct (important) | Confirmed | Read-modify-write needs PROT_READ too |\n| Recursive make | Correct (minor) | Confirmed | |\n\n## Items both reviewers want added\n\n1. **get_dynamic_entry() truncation** (Codex, medium) -- returns `ElfW(Word)` which is 32-bit, truncating 64-bit addresses on x86-64/aarch64. Should return `ElfW(Xword)` or equivalent.\n\n2. **RELA addend handling** (Gemini, critical) -- `*addr += load_bias` works for REL (ARM) but RELA (x86-64, aarch64) should use `*addr = load_bias + reloc->r_addend`. Currently works because static linkers write the addend into memory too, but that's not spec-guaranteed.\n\n3. **Unchecked mmap/mprotect returns** (Codex, high) -- MAP_FAILED produces bogus load_bias, wild pointers.\n\n4. **Unchecked pread() returns** (Codex, high) -- partial reads leave ehdr/phdr partially initialized.\n\n5. **Architecture validation too loose** (Codex, medium) -- accepts all three EM_* values regardless of build target. Should check EI_CLASS + endianness + e_machine match the compiled trampoline.\n\n6. **api_set_plt_entry bounds check** (Codex, medium) -- `pltgot[import_id]` with no validation is an out-of-bounds write.\n\n7. **Integer overflow in span/round_up** (Codex, medium) -- crafted headers can produce undersized mappings.\n\n8. **MAX_PHNUM too small** (Gemini, minor) -- modern toolchains can exceed 12 phdrs.\n\n9. **fail() calls exit()** (Gemini, important) -- a library should not terminate the host process.\n\n## Disputed item\n\n- **DT_PLTGOT without DT_JMPREL**: Codex notes this is latent, not active -- those fields aren't consumed in a way that crashes today.\n\nWant me to update TODO.md with the new findings?",
+          "timestamp": "2026-04-01T15:43:01.032Z"
+        },
+        {
+          "type": "user",
+          "text": "yes for all",
+          "timestamp": "2026-04-01T15:43:34.629Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md"
+          },
+          "timestamp": "2026-04-01T15:43:40.327Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Write",
+          "input": {
+            "content": "# TODO - min-dl improvements\n\nInspired by analysis of externals/lecopzer and externals/mgood7123 forks,\nplus review feedback from Gemini and Codex.\n\n## Bug fixes (critical)\n\n- [ ] loader.c:321 RELA addend not used. `*addr += load_bias` is correct for REL\n      (ARM) but RELA (x86-64, aarch64) requires `*addr = load_bias + reloc->r_addend`.\n      Currently works because static linkers write the addend into memory, but the\n      ELF spec does not guarantee this. Real-world RELA relocations will break.\n- [ ] loader.c:298 uses `ro_load->p_offset + load_bias` for ro_start, but p_offset\n      is the file offset, not virtual address. Should use `ro_load->p_vaddr + load_bias`\n      for correct read-only section bounds checking during relocation. The current code\n      works by accident when file offset == vaddr (common but not guaranteed by ELF spec).\n- [ ] loader.c:298 ro_load dereferenced unconditionally. An ET_DYN with only writable\n      PT_LOAD segments (no read-only segment) leaves ro_load as NULL, crashing here.\n      Guard with NULL check and skip RO-range handling, or derive protections from the\n      segment that owns each relocation target.\n- [ ] loader.c:239 mmap() return value unchecked. MAP_FAILED (-1) produces a bogus\n      load_bias, leading to wild pointers and silent corruption in all subsequent\n      relocation and segment mapping. Same for mprotect() calls at lines 275, 319, 322.\n      Check every syscall result and abort cleanly.\n\n## Bug fixes (high)\n\n- [ ] loader.c:183 no error check on open() return value. A failed open returns -1,\n      then pread() on fd=-1 silently produces garbage instead of a clear error.\n- [ ] loader.c:185,213 pread() return values unchecked. Partial reads leave ehdr/phdr\n      partially or wholly uninitialized, then the loader branches on indeterminate data.\n      Require each pread() to return the full requested byte count.\n- [ ] loader.c:151 get_dynamic_entry() returns ElfW(Word), which is 32-bit. On x86-64\n      and aarch64, dynamic entry values (DT_SYMTAB, DT_RELA, DT_RELASZ, DT_PLTGOT,\n      DT_JMPREL) are 64-bit addresses/sizes. The 32-bit return truncates them silently.\n      Should return ElfW(Xword) or use d_un.d_ptr for address-valued tags.\n- [ ] loader.c:318-319 mprotect grants PROT_WRITE alone (no PROT_READ), which faults\n      on architectures where read permission is required to write. The relocation\n      `*addr += load_bias` is a read-modify-write. Should be PROT_READ | PROT_WRITE,\n      or better: `prot_from_phdr(ro_load) | PROT_WRITE`.\n- [ ] loader.c:182 hardcodes pagesize to 0x1000. Should use sysconf(_SC_PAGESIZE) or\n      getauxval(AT_PAGESZ) to support 16K/64K page systems (e.g., Apple Silicon, some\n      aarch64 Linux kernels). mmap/mprotect will fail with EINVAL on non-4K systems.\n\n## Bug fixes (medium)\n\n- [ ] loader.c:195 architecture validation too loose. Accepts EM_X86_64, EM_ARM, and\n      EM_AARCH64 regardless of build target. A native x86-64 build loading an ARM .so\n      will pass the check, then crash on the host-specific trampoline. Should also verify\n      EI_CLASS (32 vs 64-bit) and EI_DATA (endianness) match the compiled binary.\n- [ ] loader.c:367 api_set_plt_entry() writes pltgot[import_id] with no bounds check.\n      A bad import_id from a resolver becomes an out-of-bounds write into the loaded\n      image. Record PLT entry count from dynamic tags and validate.\n- [ ] loader.c:233 integer overflow in span calculation. Crafted p_vaddr + p_memsz\n      values can wrap, producing an undersized mmap and later out-of-bounds access.\n      Same risk in round_up() and the various last_end/file_end arithmetic. Validate\n      before mapping.\n- [ ] loader.c:175 system_plt_resolver called before api_set_plt_resolver() leaves\n      user_plt_resolver as NULL. If an import is called before resolver setup, the\n      trampoline jumps through NULL. Reject or trap explicitly.\n\n## Bug fixes (minor)\n\n- [ ] loader.c:313 typo in comment: \"loactes\" should be \"locates\".\n- [ ] Makefile:50 uses recursive make (`@make CROSS_COMPILE=...`) instead of\n      $(MAKE), which breaks with -j parallel builds and ignores parent make flags.\n- [ ] loader.c:16 MAX_PHNUM is 12. Modern GCC/Clang can generate more than 12\n      program headers (PT_GNU_STACK, PT_GNU_RELRO, PT_GNU_EH_FRAME, PT_NOTE, etc.).\n      Should be at least 32, or dynamically sized from ehdr.e_phnum.\n\n## Design issues\n\n- [ ] loader.c:82 fail() calls exit(), which terminates the host process. A loader\n      library should not kill its caller. Return NULL with an error code, or provide\n      a user-configurable error handler. The writev-to-stderr + exit(2) pattern is\n      acceptable for standalone tools but not for a reusable library API.\n\n## Symbol resolution (inspired by mgood7123)\n\nmgood7123 built a full dlopen/dlsym-style loader with symbol table parsing.\nThe current min-dl only resolves PLT imports via a user-supplied callback (import_id).\nExtending to name-based resolution would make this a more complete dynamic linker.\n\n- [ ] Parse .dynsym and .dynstr from PT_DYNAMIC to support symbol lookup by name.\n      get_dynamic_entry() already walks DT entries -- add DT_SYMTAB, DT_STRTAB,\n      DT_HASH/DT_GNU_HASH extraction.\n- [ ] Implement api_lookup_symbol(dloader_p, const char *name) -> void* to provide\n      dlsym-equivalent functionality. Add to DLoader API struct.\n- [ ] Handle additional relocation types beyond R_*_RELATIVE: at minimum\n      R_X86_64_GLOB_DAT, R_X86_64_JUMP_SLOT, R_ARM_GLOB_DAT, R_ARM_JUMP_SLOT,\n      R_AARCH64_GLOB_DAT, R_AARCH64_JUMP_SLOT for loading real shared libraries.\n- [ ] Support DT_INIT/DT_FINI and DT_INIT_ARRAY/DT_FINI_ARRAY for constructor and\n      destructor execution. mgood7123's DT_INIT.c demonstrates the need.\n\n## Robustness\n\n- [ ] Add api_unload(dloader_p) to munmap loaded segments and free the handle.\n      Currently there is no way to unload a library (resource leak).\n- [ ] Handle the case where DT_PLTGOT exists but DT_JMPREL does not (or vice versa).\n      Latent issue -- these fields are not consumed in a way that crashes today, but\n      will become active once PLT resolution is extended.\n\n## Testing\n\n- [ ] Add cross-compilation and qemu-based test targets for ARM and AARCH64 to CI\n      (currently only documented in Makefile, no automated test pipeline).\n- [ ] Add a test for loading a library with no PLT imports (pure export-only .so)\n      to exercise the relocation path without PLT resolver setup.\n- [ ] Add a test that verifies the read-only section protection is actually restored\n      after relocation (mprotect back to original permissions).\n- [ ] Test with position-dependent relocations and verify proper error handling for\n      unsupported relocation types (currently assert(0) -- should fail gracefully).\n\n## Build system\n\n- [ ] Support RISC-V (riscv64) architecture: add arch/riscv64.h with assembly macros,\n      relocation case R_RISCV_RELATIVE in loader.c, and EM_RISCV in machine check.\n- [ ] Add `make check_all` target that runs native + all cross-architecture tests in\n      one command.\n- [ ] Add CFLAGS knob for building with sanitizers (-fsanitize=address,undefined) to\n      catch memory bugs in the loader itself.\n",
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md"
+          },
+          "timestamp": "2026-04-01T15:44:12.620Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Updated. Changes:\n\n- Bug fixes now organized by severity: critical (4), high (5), medium (4), minor (3)\n- Added 9 new items from the reviews:\n  - RELA addend handling (critical -- the biggest real correctness bug)\n  - Unchecked mmap/mprotect returns (critical)\n  - Unchecked pread() returns (high)\n  - get_dynamic_entry() 32-bit truncation (high)\n  - Architecture validation too loose (medium)\n  - api_set_plt_entry bounds check (medium)\n  - Integer overflow in span arithmetic (medium)\n  - NULL user_plt_resolver crash (medium)\n  - MAX_PHNUM too small (minor)\n- New \"Design issues\" section for the fail()-calls-exit() problem\n- Reclassified ro_load NULL dereference from robustness to critical bug\n- DT_PLTGOT/DT_JMPREL downgraded to latent (Codex's assessment)",
+          "timestamp": "2026-04-01T15:44:20.201Z"
+        },
+        {
+          "type": "user",
+          "text": "validate changes carefully",
+          "timestamp": "2026-04-01T15:44:27.256Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Let me cross-check every line number and claim against the actual source.",
+          "timestamp": "2026-04-01T15:44:31.563Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/loader.c"
+          },
+          "timestamp": "2026-04-01T15:44:31.596Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Read",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md"
+          },
+          "timestamp": "2026-04-01T15:44:31.976Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Now let me cross-check every line number and claim against the actual source.\n\n## Validation results\n\nGoing line by line through loader.c against each TODO claim:\n\n### Confirmed correct (no changes needed)\n\n| TODO claim | Actual source | Verdict |\n|---|---|---|\n| loader.c:298 p_offset | Line 298: `ro_start = ro_load->p_offset + load_bias` | Correct |\n| loader.c:298 ro_load NULL | Line 256-258, 283-284: ro_load stays NULL if all PT_LOAD are writable | Correct |\n| loader.c:239 mmap unchecked | Line 239-242: no check for MAP_FAILED | Correct |\n| mprotect unchecked at 275,319,322 | Lines 275, 319, 322: all ignore return | Correct |\n| loader.c:183 open unchecked | Line 183: `int fd = open(...)` no check | Correct |\n| loader.c:185,213 pread unchecked | Lines 185, 213: return values ignored | Correct |\n| loader.c:151 ElfW(Word) truncation | Line 151: returns uint32_t, d_un.d_val is uint64_t on 64-bit | Correct |\n| loader.c:182 hardcoded pagesize | Line 182: `size_t pagesize = 0x1000` | Correct |\n| loader.c:195 loose arch validation | Lines 195-204: accepts all three EM_* regardless of build | Correct |\n| loader.c:233 overflow in span | Line 233: `p_vaddr + p_memsz` can wrap | Correct |\n| loader.c:175 NULL user_plt_resolver | Line 177: `o->user_plt_resolver(...)` with no NULL guard | Correct |\n| loader.c:313 typo \"loactes\" | Line 313: confirmed typo | Correct |\n| loader.c:16 MAX_PHNUM 12 | Line 16: `#define MAX_PHNUM 12` | Correct |\n| loader.c:82 fail() calls exit() | Line 101: `exit(2)` | Correct |\n| Makefile:50 recursive make | Line 50: `@make` not `$(MAKE)` | Correct |\n\n### Issues found -- fixing now\n\n1. **loader.c:321 RELA addend** -- TODO says line 321 only, but line 326 (`*addr += load_bias` in the else branch) has the identical bug. Both need fixing.\n\n2. **loader.c:318-319 mprotect PROT_WRITE** -- line 318 is the `if` condition, not the mprotect. The mprotect call spans lines 319-320. Should be \"loader.c:319-320\".\n\n3. **loader.c:367 api_set_plt_entry** -- function signature is at 367, but the actual unbounded write is at line 369: `pltgot[import_id] = func`. The line reference should point to 369.",
+          "timestamp": "2026-04-01T15:46:10.721Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md",
+            "new_string": "- [ ] loader.c:321,326 RELA addend not used. `*addr += load_bias` is correct for REL\n      (ARM) but RELA (x86-64, aarch64) requires `*addr = load_bias + reloc->r_addend`.\n      Both the RO-path (line 321) and the else-path (line 326) have this bug.\n      Currently works because static linkers write the addend into memory, but the\n      ELF spec does not guarantee this.",
+            "old_string": "- [ ] loader.c:321 RELA addend not used. `*addr += load_bias` is correct for REL\n      (ARM) but RELA (x86-64, aarch64) requires `*addr = load_bias + reloc->r_addend`.\n      Currently works because static linkers write the addend into memory, but the\n      ELF spec does not guarantee this. Real-world RELA relocations will break.",
+            "replace_all": false
+          },
+          "timestamp": "2026-04-01T15:46:14.309Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md",
+            "new_string": "- [ ] loader.c:319-320 mprotect grants PROT_WRITE alone (no PROT_READ), which faults\n      on architectures where read permission is required to write. The relocation\n      `*addr += load_bias` is a read-modify-write. Should be PROT_READ | PROT_WRITE,\n      or better: `prot_from_phdr(ro_load) | PROT_WRITE`.",
+            "old_string": "- [ ] loader.c:318-319 mprotect grants PROT_WRITE alone (no PROT_READ), which faults\n      on architectures where read permission is required to write. The relocation\n      `*addr += load_bias` is a read-modify-write. Should be PROT_READ | PROT_WRITE,\n      or better: `prot_from_phdr(ro_load) | PROT_WRITE`.",
+            "replace_all": false
+          },
+          "timestamp": "2026-04-01T15:46:20.984Z"
+        },
+        {
+          "type": "tool_use",
+          "name": "Edit",
+          "input": {
+            "file_path": "/Users/jserv/playground/min-dl/TODO.md",
+            "new_string": "- [ ] loader.c:369 api_set_plt_entry() writes pltgot[import_id] with no bounds check.\n      A bad import_id from a resolver becomes an out-of-bounds write into the loaded\n      image. Record PLT entry count from dynamic tags and validate.",
+            "old_string": "- [ ] loader.c:367 api_set_plt_entry() writes pltgot[import_id] with no bounds check.\n      A bad import_id from a resolver becomes an out-of-bounds write into the loaded\n      image. Record PLT entry count from dynamic tags and validate.",
+            "replace_all": false
+          },
+          "timestamp": "2026-04-01T15:46:27.725Z"
+        },
+        {
+          "type": "assistant",
+          "text": "Three line-number fixes applied:\n- 321 → 321,326 (same RELA bug in both code paths)\n- 318-319 → 319-320 (318 is the if-condition, not the mprotect)\n- 367 → 369 (367 is the function signature, 369 is the actual unbounded write)\n\nAll other line references verified correct against the source. Every claim checks out against the code.",
+          "timestamp": "2026-04-01T15:46:35.305Z"
+        }
+      ],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 186,
+      "overriden_lines": 0
+    },
+    "f1ea4188b3a3684d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bf9c0f7f-bf51-4a4b-a0a9-cc909cf685f5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Jim Huang",
+      "messages": [],
+      "total_additions": 78,
+      "total_deletions": 80,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    }
+  }
+}
