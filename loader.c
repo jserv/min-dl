@@ -346,6 +346,9 @@ static dloader_p load_elf(const char *filename)
 #elif defined(__aarch64__)
     const int expected_machine = EM_AARCH64;
     const unsigned char expected_class = ELFCLASS64;
+#elif defined(__riscv) && __riscv_xlen == 64
+    const int expected_machine = EM_RISCV;
+    const unsigned char expected_class = ELFCLASS64;
 #else
 #error "Unsupported architecture"
 #endif
@@ -469,7 +472,8 @@ static dloader_p load_elf(const char *filename)
         switch (reloc_type) {
         case R_X86_64_RELATIVE:
         case R_ARM_RELATIVE:
-        case R_AARCH64_RELATIVE: {
+        case R_AARCH64_RELATIVE:
+        case R_RISCV_RELATIVE: {
             ElfW(Addr) *addr = (ElfW(Addr) *) (load_bias + reloc->r_offset);
             uintptr_t page = round_down((uintptr_t) addr, pagesize);
             const ElfW(Phdr) *target_load =
@@ -495,9 +499,11 @@ static dloader_p load_elf(const char *filename)
         case R_X86_64_GLOB_DAT:
         case R_ARM_GLOB_DAT:
         case R_AARCH64_GLOB_DAT:
+        case R_RISCV_64:
         case R_X86_64_JUMP_SLOT:
         case R_ARM_JUMP_SLOT:
         case R_AARCH64_JUMP_SLOT:
+        case R_RISCV_JUMP_SLOT:
             /* Deferred: resolved by resolve_symbols */
             break;
         default:
@@ -757,9 +763,11 @@ static int is_glob_dat_or_jump_slot(int type)
     case R_X86_64_GLOB_DAT:
     case R_ARM_GLOB_DAT:
     case R_AARCH64_GLOB_DAT:
+    case R_RISCV_64:
     case R_X86_64_JUMP_SLOT:
     case R_ARM_JUMP_SLOT:
     case R_AARCH64_JUMP_SLOT:
+    case R_RISCV_JUMP_SLOT:
         return 1;
     default:
         return 0;
@@ -783,8 +791,8 @@ static int resolve_table(dloader_p o,
 }
 
 static int resolve_symbols(dloader_p o,
-                               symbol_resolver_t resolver,
-                               void *handle)
+                           symbol_resolver_t resolver,
+                           void *handle)
 {
     if (!o->dt_symtab || !o->dt_strtab)
         return -1;

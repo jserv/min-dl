@@ -1,10 +1,12 @@
 CROSS_COMPILE_SUFFIX ?= -linux-gnueabi
+CROSS_COMPILE_SUFFIX_riscv64 ?= -linux-gnu
 CROSS_COMPILE ?=
 CC = $(CROSS_COMPILE)gcc
 CFLAGS = -std=gnu99 -Wall -Werror -g -D_GNU_SOURCE -DPROG_HEADER=prog_header
 
 OUT = out
-ARCH = arm aarch64 x86_64
+ARCH = arm aarch64 x86_64 riscv64
+cross_suffix = $(or $(CROSS_COMPILE_SUFFIX_$(1)),$(CROSS_COMPILE_SUFFIX))
 
 all: $(OUT)/testlib.so $(OUT)/loader $(OUT)/symlib.so $(OUT)/symtest $(OUT)/initlib.so $(OUT)/inittest
 
@@ -38,25 +40,25 @@ $(OUT)/initlib.so: $(OUT)/initlib.o
 $(OUT)/inittest: $(OUT)/loader.o $(OUT)/inittest.o
 	$(CC) -o $@ $^
 
-# Cross-compilation: 'make arm' or 'make aarch64'
+# Cross-compilation: 'make arm' or 'make aarch64' or 'make riscv64'
 $(ARCH): %: check_cc_%
-	@$(MAKE) CROSS_COMPILE=$@$(CROSS_COMPILE_SUFFIX)- all
+	@$(MAKE) CROSS_COMPILE=$@$(call cross_suffix,$@)- all
 
 $(addprefix check_cc_,$(ARCH))::
-	@which $(patsubst check_cc_%,%,$@)$(CROSS_COMPILE_SUFFIX)-gcc >/dev/null
+	@which $(patsubst check_cc_%,%,$@)$(call cross_suffix,$(patsubst check_cc_%,%,$@))-gcc >/dev/null
 
 # ld >= 2.28 required: older versions corrupt global arrays in shared objects.
 check_cc_aarch64::
-	@ld_ver=$$(aarch64$(CROSS_COMPILE_SUFFIX)-ld -v | grep -oE '[0-9]+\.[0-9]+' | head -1); \
+	@ld_ver=$$(aarch64$(call cross_suffix,aarch64)-ld -v | grep -oE '[0-9]+\.[0-9]+' | head -1); \
 	major=$$(echo "$$ld_ver" | cut -d. -f1); minor=$$(echo "$$ld_ver" | cut -d. -f2); \
 	if [ "$$major$$minor" -lt 228 ] 2>/dev/null; then \
 		echo "Error: aarch64 ld must be >= 2.28 (found $$ld_ver)"; exit 1; \
 	fi
 
 $(addprefix check_,$(ARCH)): check_%: %
-	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./loader
-	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./symtest
-	@cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./inittest
+	@cd $(OUT) && qemu-$* -L /usr/$*$(call cross_suffix,$*)/ ./loader
+	@cd $(OUT) && qemu-$* -L /usr/$*$(call cross_suffix,$*)/ ./symtest
+	@cd $(OUT) && qemu-$* -L /usr/$*$(call cross_suffix,$*)/ ./inittest
 
 check: all
 	@cd $(OUT) && ./loader

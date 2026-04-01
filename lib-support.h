@@ -19,6 +19,8 @@
 #include "arch/arm.h"
 #elif defined(__aarch64__)
 #include "arch/aarch64.h"
+#elif defined(__riscv) && __riscv_xlen == 64
+#include "arch/riscv64.h"
 #else
 #error "Unsupported architecture"
 #endif
