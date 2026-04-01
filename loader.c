@@ -13,7 +13,7 @@
 
 #include "lib-support.h"
 
-#define MAX_PHNUM 12
+#define MAX_PHNUM 32
 
 #define ELFW_R_TYPE(x) ELFW(R_TYPE)(x)
 #define ELFW_R_SYM(x) ELFW(R_SYM)(x)
@@ -102,6 +102,21 @@ __attribute__((noreturn)) static void fail(const char *filename,
     exit(2);
 }
 
+static int add_overflows_uintptr(uintptr_t a, uintptr_t b)
+{
+    return a > UINTPTR_MAX - b;
+}
+
+static uintptr_t add_uintptr_or_fail(uintptr_t a,
+                                     uintptr_t b,
+                                     const char *filename,
+                                     const char *message)
+{
+    if (add_overflows_uintptr(a, b))
+        fail(filename, message, NULL, 0);
+    return a + b;
+}
+
 static int prot_from_phdr(const ElfW(Phdr) * phdr)
 {
     int prot = 0;
@@ -116,6 +131,8 @@ static int prot_from_phdr(const ElfW(Phdr) * phdr)
 
 static inline uintptr_t round_up(uintptr_t value, uintptr_t size)
 {
+    if (add_overflows_uintptr(value, size - 1))
+        return UINTPTR_MAX;
     return (value + size - 1) & -size;
 }
 
@@ -131,29 +148,72 @@ static inline uintptr_t round_down(uintptr_t value, uintptr_t size)
  * For the sub-page remainder, we zero-fill bytes directly.
  */
 static void handle_bss(const ElfW(Phdr) * ph,
+                       const char *filename,
                        ElfW(Addr) load_bias,
                        size_t pagesize)
 {
     if (ph->p_memsz > ph->p_filesz) {
-        ElfW(Addr) file_end = ph->p_vaddr + load_bias + ph->p_filesz;
+        ElfW(Addr) file_end = add_uintptr_or_fail(
+            add_uintptr_or_fail(ph->p_vaddr, load_bias, filename,
+                                "BSS range overflows!"),
+            ph->p_filesz, filename, "BSS range overflows!");
         ElfW(Addr) file_page_end = round_up(file_end, pagesize);
+        if (file_page_end == UINTPTR_MAX)
+            fail(filename, "BSS range overflows!", NULL, 0);
         ElfW(Addr) page_end =
-            round_up(ph->p_vaddr + load_bias + ph->p_memsz, pagesize);
-        if (page_end > file_page_end)
+            round_up(add_uintptr_or_fail(
+                         add_uintptr_or_fail(ph->p_vaddr, load_bias, filename,
+                                             "BSS range overflows!"),
+                         ph->p_memsz, filename, "BSS range overflows!"),
+                     pagesize);
+        if (page_end == UINTPTR_MAX)
+            fail(filename, "BSS range overflows!", NULL, 0);
+        if (page_end > file_page_end &&
             mmap((void *) file_page_end, page_end - file_page_end,
-                 prot_from_phdr(ph), MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
+                 prot_from_phdr(ph), MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1,
+                 0) == MAP_FAILED)
+            fail(filename, "Failed to map BSS pages!", NULL, 0);
         if (file_page_end > file_end && (ph->p_flags & PF_W))
             my_bzero((void *) file_end, file_page_end - file_end);
     }
 }
 
-ElfW(Word) get_dynamic_entry(ElfW(Dyn) * dynamic, int field)
+static uintptr_t get_dynamic_entry(ElfW(Dyn) * dynamic, int field)
 {
     for (; dynamic->d_tag != DT_NULL; dynamic++) {
         if (dynamic->d_tag == field)
-            return dynamic->d_un.d_val;
+            return dynamic->d_un.d_ptr;
     }
     return 0;
+}
+
+static void pread_exact(int fd,
+                        void *buf,
+                        size_t count,
+                        off_t offset,
+                        const char *filename,
+                        const char *what)
+{
+    ssize_t ret = pread(fd, buf, count, offset);
+    if (ret < 0)
+        fail(filename, "pread failed!", "errno", errno);
+    if ((size_t) ret != count)
+        fail(filename, "Short read while loading ELF!", what, (int) ret);
+}
+
+static const ElfW(Phdr) *
+    find_load_segment(const ElfW(Phdr) * phdr, size_t phnum, ElfW(Addr) vaddr)
+{
+    for (size_t i = 0; i < phnum; ++i) {
+        const ElfW(Phdr) *ph = &phdr[i];
+        if (ph->p_type != PT_LOAD)
+            continue;
+        if (add_overflows_uintptr(ph->p_vaddr, ph->p_memsz))
+            continue;
+        if (vaddr >= ph->p_vaddr && vaddr < ph->p_vaddr + ph->p_memsz)
+            return ph;
+    }
+    return NULL;
 }
 
 /*
@@ -162,6 +222,7 @@ ElfW(Word) get_dynamic_entry(ElfW(Dyn) * dynamic, int field)
  */
 void plt_trampoline();
 asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
+    ".globl plt_trampoline"                   "\n"
     "plt_trampoline:"                         "\n"
     POP_S(REG_ARG_1) /* Argument 1 */         "\n"
     POP_S(REG_ARG_2) /* Argument 2 */         "\n"
@@ -173,32 +234,50 @@ asm(".pushsection .text,\"ax\",\"progbits\""  "\n"
 
 void *system_plt_resolver(dloader_p o, int import_id)
 {
+    if (o->user_plt_resolver == NULL)
+        fail("<runtime>", "PLT resolver used before initialization!", NULL, 0);
     return o->user_plt_resolver(o->user_plt_resolver_handle, import_id);
 }
 
 dloader_p api_load(const char *filename)
 {
-    size_t pagesize = 0x1000;
     int fd = open(filename, O_RDONLY);
+    if (fd < 0)
+        fail(filename, "Failed to open ELF!", "errno", errno);
+
+    long pagesize_long = sysconf(_SC_PAGESIZE);
+    if (pagesize_long <= 0)
+        fail(filename, "Failed to determine page size!", NULL, 0);
+    size_t pagesize = (size_t) pagesize_long;
+
     ElfW(Ehdr) ehdr;
-    pread(fd, &ehdr, sizeof(ehdr), 0);
+    pread_exact(fd, &ehdr, sizeof(ehdr), 0, filename, "ELF header");
 
     if (ehdr.e_ident[EI_MAG0] != ELFMAG0 || ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
         ehdr.e_ident[EI_MAG2] != ELFMAG2 || ehdr.e_ident[EI_MAG3] != ELFMAG3 ||
-        ehdr.e_version != EV_CURRENT || ehdr.e_ehsize != sizeof(ehdr) ||
-        ehdr.e_phentsize != sizeof(ElfW(Phdr)))
+        ehdr.e_ident[EI_DATA] != ELFDATA2LSB || ehdr.e_version != EV_CURRENT ||
+        ehdr.e_ehsize != sizeof(ehdr) || ehdr.e_phentsize != sizeof(ElfW(Phdr)))
         fail(filename, "File has no valid ELF header!", NULL, 0);
 
-    switch (ehdr.e_machine) {
-    case EM_X86_64:
-    case EM_ARM:
-    case EM_AARCH64:
-        break;
-    default:
+#if defined(__x86_64__)
+    const int expected_machine = EM_X86_64;
+    const unsigned char expected_class = ELFCLASS64;
+#elif defined(__arm__)
+    const int expected_machine = EM_ARM;
+    const unsigned char expected_class = ELFCLASS32;
+#elif defined(__aarch64__)
+    const int expected_machine = EM_AARCH64;
+    const unsigned char expected_class = ELFCLASS64;
+#else
+#error "Unsupported architecture"
+#endif
+
+    if (ehdr.e_machine != expected_machine)
         fail(filename, "ELF file has wrong architecture!  ", "e_machine",
              ehdr.e_machine);
-        break;
-    }
+    if (ehdr.e_ident[EI_CLASS] != expected_class)
+        fail(filename, "ELF file has wrong class!", "EI_CLASS",
+             ehdr.e_ident[EI_CLASS]);
 
     ElfW(Phdr) phdr[MAX_PHNUM];
     if (ehdr.e_phnum > sizeof(phdr) / sizeof(phdr[0]) || ehdr.e_phnum < 1)
@@ -207,7 +286,8 @@ dloader_p api_load(const char *filename)
     if (ehdr.e_type != ET_DYN)
         fail(filename, "ELF file not ET_DYN!  ", "e_type", ehdr.e_type);
 
-    pread(fd, phdr, sizeof(phdr[0]) * ehdr.e_phnum, ehdr.e_phoff);
+    pread_exact(fd, phdr, sizeof(phdr[0]) * ehdr.e_phnum, ehdr.e_phoff,
+                filename, "program headers");
 
     size_t i = 0;
     while (i < ehdr.e_phnum && phdr[i].p_type != PT_LOAD)
@@ -227,6 +307,9 @@ dloader_p api_load(const char *filename)
     /*
      * Total memory size of phdr between first and last PT_LOAD.
      */
+    if (add_overflows_uintptr(last_load->p_vaddr, last_load->p_memsz) ||
+        last_load->p_vaddr + last_load->p_memsz < first_load->p_vaddr)
+        fail(filename, "ELF PT_LOAD span overflows!", NULL, 0);
     size_t span = last_load->p_vaddr + last_load->p_memsz - first_load->p_vaddr;
 
     /*
@@ -237,6 +320,8 @@ dloader_p api_load(const char *filename)
         (uintptr_t) mmap((void *) round_down(first_load->p_vaddr, pagesize),
                          span, prot_from_phdr(first_load), MAP_PRIVATE, fd,
                          round_down(first_load->p_offset, pagesize));
+    if (mapping == (uintptr_t) MAP_FAILED)
+        fail(filename, "Failed to map ELF into memory!", NULL, 0);
 
     /*
      * Mapping will not always equal to round_down(first_load->p_vaddr,
@@ -251,34 +336,36 @@ dloader_p api_load(const char *filename)
         fail(filename, "First load segment of ELF does not contain phdrs!",
              NULL, 0);
 
-    const ElfW(Phdr) *ro_load = NULL;
-    if (!(first_load->p_flags & PF_W))
-        ro_load = first_load;
+    handle_bss(first_load, filename, load_bias, pagesize);
 
-    handle_bss(first_load, load_bias, pagesize);
-
-    ElfW(Addr) last_end = first_load->p_vaddr + load_bias + first_load->p_memsz;
+    ElfW(Addr) last_end = add_uintptr_or_fail(
+        add_uintptr_or_fail(first_load->p_vaddr, load_bias, filename,
+                            "PT_LOAD range overflows!"),
+        first_load->p_memsz, filename, "PT_LOAD range overflows!");
 
     /* Map the remaining segments, and protect any holes between them. */
     for (const ElfW(Phdr) *ph = first_load + 1; ph <= last_load; ++ph) {
         if (ph->p_type == PT_LOAD) {
             ElfW(Addr) last_page_end = round_up(last_end, pagesize);
 
-            last_end = ph->p_vaddr + load_bias + ph->p_memsz;
+            last_end = add_uintptr_or_fail(
+                add_uintptr_or_fail(ph->p_vaddr, load_bias, filename,
+                                    "PT_LOAD range overflows!"),
+                ph->p_memsz, filename, "PT_LOAD range overflows!");
             ElfW(Addr) start = round_down(ph->p_vaddr + load_bias, pagesize);
             ElfW(Addr) end = round_up(last_end, pagesize);
 
-            if (start > last_page_end)
+            if (start > last_page_end &&
                 mprotect((void *) last_page_end, start - last_page_end,
-                         PROT_NONE);
+                         PROT_NONE))
+                fail(filename, "mprotect failed on hole!", NULL, 0);
 
-            mmap((void *) start, end - start, prot_from_phdr(ph),
-                 MAP_PRIVATE | MAP_FIXED, fd,
-                 round_down(ph->p_offset, pagesize));
+            if (mmap((void *) start, end - start, prot_from_phdr(ph),
+                     MAP_PRIVATE | MAP_FIXED, fd,
+                     round_down(ph->p_offset, pagesize)) == MAP_FAILED)
+                fail(filename, "Failed to map PT_LOAD segment!", NULL, 0);
 
-            handle_bss(ph, load_bias, pagesize);
-            if (!(ph->p_flags & PF_W) && !ro_load)
-                ro_load = ph;
+            handle_bss(ph, filename, load_bias, pagesize);
         }
     }
 
@@ -290,13 +377,14 @@ dloader_p api_load(const char *filename)
             dynamic = (ElfW(Dyn) *) (load_bias + phdr[i].p_vaddr);
         }
     }
-    assert(dynamic != NULL);
+    if (dynamic == NULL)
+        fail(filename, "ELF file has no PT_DYNAMIC header!", NULL, 0);
 
-    ElfW(Addr) ro_start = ro_load->p_offset + load_bias;
-    ElfW(Addr) ro_end = ro_start + ro_load->p_memsz;
     ElfW_Reloc *relocs =
         (ElfW_Reloc *) (load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
+    if (relocs_size % sizeof(ElfW_Reloc) != 0)
+        fail(filename, "Malformed relocation table size!", NULL, 0);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
         int reloc_type = ELFW_R_TYPE(reloc->r_info);
@@ -305,24 +393,30 @@ dloader_p api_load(const char *filename)
         case R_ARM_RELATIVE:
         case R_AARCH64_RELATIVE: {
             ElfW(Addr) *addr = (ElfW(Addr) *) (load_bias + reloc->r_offset);
-            /*
-             * If addr loactes in read-only PT_LOAD section, i.e., .text, then
-             * we give the memory fragment WRITE permission during relocating
-             * its address. Reset its access permission after relocation to
-             * avoid some secure issue.
-             */
-            if ((intptr_t) addr < ro_end && (intptr_t) addr >= ro_start) {
-                mprotect((void *) round_down((intptr_t) addr, pagesize),
-                         pagesize, PROT_WRITE);
-                *addr += load_bias;
-                mprotect((void *) round_down((intptr_t) addr, pagesize),
-                         pagesize, prot_from_phdr(ro_load));
-            } else
-                *addr += load_bias;
+            uintptr_t page = round_down((uintptr_t) addr, pagesize);
+            const ElfW(Phdr) *target_load =
+                find_load_segment(phdr, ehdr.e_phnum, reloc->r_offset);
+            if (target_load == NULL)
+                fail(filename, "Relocation target is outside PT_LOAD!",
+                     "r_offset", (int) reloc->r_offset);
+            int need_mprotect = !(target_load->p_flags & PF_W);
+            if (need_mprotect &&
+                mprotect((void *) page, pagesize,
+                         prot_from_phdr(target_load) | PROT_WRITE))
+                fail(filename, "mprotect failed before relocation!", NULL, 0);
+#if ELFW_DT_RELW == DT_RELA
+            *addr = load_bias + reloc->r_addend;
+#else
+            *addr += load_bias;
+#endif
+            if (need_mprotect &&
+                mprotect((void *) page, pagesize, prot_from_phdr(target_load)))
+                fail(filename, "mprotect failed after relocation!", NULL, 0);
             break;
         }
         default:
-            assert(0);
+            fail(filename, "Unsupported relocation type!", "r_info",
+                 reloc_type);
         }
     }
 
@@ -335,10 +429,17 @@ dloader_p api_load(const char *filename)
     o->dt_pltgot = NULL;
     o->plt_entries = 0;
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
+    uintptr_t pltrelsz = get_dynamic_entry(dynamic, DT_PLTRELSZ);
+    uintptr_t jmprel = get_dynamic_entry(dynamic, DT_JMPREL);
+    if ((pltgot != 0) != (jmprel != 0) ||
+        ((pltgot != 0 || jmprel != 0) && pltrelsz == 0))
+        fail(filename, "Incomplete PLT relocation metadata!", NULL, 0);
+    if (pltrelsz % sizeof(ElfW_Reloc) != 0)
+        fail(filename, "Malformed PLT relocation size!", NULL, 0);
     if (pltgot != 0) {
         o->dt_pltgot = (void **) (pltgot + load_bias);
-        o->dt_jmprel =
-            (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) + load_bias);
+        o->dt_jmprel = (ElfW_Reloc *) (jmprel + load_bias);
+        o->plt_entries = pltrelsz / sizeof(ElfW_Reloc);
     }
 
     close(fd);

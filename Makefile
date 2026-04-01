@@ -16,7 +16,7 @@ $(OUT):
 	@mkdir -p $(OUT)
 
 $(OUT)/test_lib.o: test_lib.c
-	$(CC) $(CFLAGS) -fvisibility=hidden -shared -fPIC -c $< \
+	$(CC) $(CFLAGS) -fvisibility=hidden -fPIC -c $< \
 		-o $@ -MMD -MF $@.d
 
 $(OUT)/test_lib.so: $(OUT)/test_lib.o
@@ -47,7 +47,7 @@ check_cc_aarch64::
 	fi;
 
 $(ARCH): % : check_cc_%
-	@make CROSS_COMPILE=$@$(CROSS_COMPILE_SUFFIX)- all
+	@$(MAKE) CROSS_COMPILE=$@$(CROSS_COMPILE_SUFFIX)- all
 
 $(CHECK_ARCH): check_% : %
 	@(cd $(OUT) && qemu-$* -L /usr/$*$(CROSS_COMPILE_SUFFIX)/ ./loader)
