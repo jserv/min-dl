@@ -21,7 +21,7 @@
 struct __DLoader_Internal {
     uintptr_t load_bias;
     void *entry;
-    ElfW(Dyn) *pt_dynamic;
+    ElfW(Dyn) * pt_dynamic;
 
     void **dt_pltgot;
     ElfW_Reloc *dt_jmprel;
@@ -36,16 +36,14 @@ struct __DLoader_Internal {
  * depend on complex startup code, because they are defined using
  * STT_GNU_IFUNC.
  */
-static inline
-void my_bzero(void *buf, size_t n)
+static inline void my_bzero(void *buf, size_t n)
 {
     char *p = buf;
     while (n-- > 0)
         *p++ = 0;
 }
 
-static inline
-size_t my_strlen(const char *s)
+static inline size_t my_strlen(const char *s)
 {
     size_t n = 0;
     while (*s++ != '\0')
@@ -58,10 +56,12 @@ size_t my_strlen(const char *s)
  * is rendering numbers, which is, in fact, pretty trivial.
  * bufsz of course must be enough to hold INT_MIN in decimal.
  */
-static void iov_int_string(int value, struct iovec *iov,
-                           char *buf, size_t bufsz)
+static void iov_int_string(int value,
+                           struct iovec *iov,
+                           char *buf,
+                           size_t bufsz)
 {
-    static const char * const lookup = "9876543210123456789" + 9;
+    static const char *const lookup = "9876543210123456789" + 9;
     char *p = &buf[bufsz];
     int negative = value < 0;
     do {
@@ -76,11 +76,12 @@ static void iov_int_string(int value, struct iovec *iov,
 }
 
 #define STRING_IOV(string_constant, cond) \
-    { (void *) string_constant, cond ? (sizeof(string_constant) - 1) : 0 }
+    {(void *) string_constant, cond ? (sizeof(string_constant) - 1) : 0}
 
-__attribute__((noreturn))
-static void fail(const char *filename, const char *message,
-                 const char *item, int value)
+__attribute__((noreturn)) static void fail(const char *filename,
+                                           const char *message,
+                                           const char *item,
+                                           int value)
 {
     char valbuf[32];
     struct iovec iov[] = {
@@ -101,7 +102,7 @@ static void fail(const char *filename, const char *message,
     exit(2);
 }
 
-static int prot_from_phdr(const ElfW(Phdr) *phdr)
+static int prot_from_phdr(const ElfW(Phdr) * phdr)
 {
     int prot = 0;
     if (phdr->p_flags & PF_R)
@@ -113,14 +114,12 @@ static int prot_from_phdr(const ElfW(Phdr) *phdr)
     return prot;
 }
 
-static inline
-uintptr_t round_up(uintptr_t value, uintptr_t size)
+static inline uintptr_t round_up(uintptr_t value, uintptr_t size)
 {
     return (value + size - 1) & -size;
 }
 
-static inline
-uintptr_t round_down(uintptr_t value, uintptr_t size)
+static inline uintptr_t round_down(uintptr_t value, uintptr_t size)
 {
     return value & -size;
 }
@@ -131,7 +130,8 @@ uintptr_t round_down(uintptr_t value, uintptr_t size)
  * For any whole pages in this region, we over-map anonymous pages.
  * For the sub-page remainder, we zero-fill bytes directly.
  */
-static void handle_bss(const ElfW(Phdr) *ph, ElfW(Addr) load_bias,
+static void handle_bss(const ElfW(Phdr) * ph,
+                       ElfW(Addr) load_bias,
                        size_t pagesize)
 {
     if (ph->p_memsz > ph->p_filesz) {
@@ -140,15 +140,14 @@ static void handle_bss(const ElfW(Phdr) *ph, ElfW(Addr) load_bias,
         ElfW(Addr) page_end =
             round_up(ph->p_vaddr + load_bias + ph->p_memsz, pagesize);
         if (page_end > file_page_end)
-            mmap((void *) file_page_end,
-                    page_end - file_page_end, prot_from_phdr(ph),
-                    MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
+            mmap((void *) file_page_end, page_end - file_page_end,
+                 prot_from_phdr(ph), MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, 0);
         if (file_page_end > file_end && (ph->p_flags & PF_W))
             my_bzero((void *) file_end, file_page_end - file_end);
     }
 }
 
-ElfW(Word) get_dynamic_entry(ElfW(Dyn) *dynamic, int field)
+ElfW(Word) get_dynamic_entry(ElfW(Dyn) * dynamic, int field)
 {
     for (; dynamic->d_tag != DT_NULL; dynamic++) {
         if (dynamic->d_tag == field)
@@ -184,10 +183,8 @@ dloader_p api_load(const char *filename)
     ElfW(Ehdr) ehdr;
     pread(fd, &ehdr, sizeof(ehdr), 0);
 
-    if (ehdr.e_ident[EI_MAG0] != ELFMAG0 ||
-        ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
-        ehdr.e_ident[EI_MAG2] != ELFMAG2 ||
-        ehdr.e_ident[EI_MAG3] != ELFMAG3 ||
+    if (ehdr.e_ident[EI_MAG0] != ELFMAG0 || ehdr.e_ident[EI_MAG1] != ELFMAG1 ||
+        ehdr.e_ident[EI_MAG2] != ELFMAG2 || ehdr.e_ident[EI_MAG3] != ELFMAG3 ||
         ehdr.e_version != EV_CURRENT || ehdr.e_ehsize != sizeof(ehdr) ||
         ehdr.e_phentsize != sizeof(ElfW(Phdr)))
         fail(filename, "File has no valid ELF header!", NULL, 0);
@@ -198,8 +195,8 @@ dloader_p api_load(const char *filename)
     case EM_AARCH64:
         break;
     default:
-        fail(filename, "ELF file has wrong architecture!  ",
-             "e_machine", ehdr.e_machine);
+        fail(filename, "ELF file has wrong architecture!  ", "e_machine",
+             ehdr.e_machine);
         break;
     }
 
@@ -242,7 +239,8 @@ dloader_p api_load(const char *filename)
                          round_down(first_load->p_offset, pagesize));
 
     /*
-     * Mapping will not always equal to round_down(first_load->p_vaddr, pagesize).
+     * Mapping will not always equal to round_down(first_load->p_vaddr,
+     * pagesize).
      */
     const ElfW(Addr) load_bias =
         mapping - round_down(first_load->p_vaddr, pagesize);
@@ -259,8 +257,7 @@ dloader_p api_load(const char *filename)
 
     handle_bss(first_load, load_bias, pagesize);
 
-    ElfW(Addr) last_end = first_load->p_vaddr + load_bias +
-                          first_load->p_memsz;
+    ElfW(Addr) last_end = first_load->p_vaddr + load_bias + first_load->p_memsz;
 
     /* Map the remaining segments, and protect any holes between them. */
     for (const ElfW(Phdr) *ph = first_load + 1; ph <= last_load; ++ph) {
@@ -272,11 +269,11 @@ dloader_p api_load(const char *filename)
             ElfW(Addr) end = round_up(last_end, pagesize);
 
             if (start > last_page_end)
-                mprotect((void *) last_page_end,
-                         start - last_page_end, PROT_NONE);
+                mprotect((void *) last_page_end, start - last_page_end,
+                         PROT_NONE);
 
-            mmap((void *) start, end - start,
-                 prot_from_phdr(ph), MAP_PRIVATE | MAP_FIXED, fd,
+            mmap((void *) start, end - start, prot_from_phdr(ph),
+                 MAP_PRIVATE | MAP_FIXED, fd,
                  round_down(ph->p_offset, pagesize));
 
             handle_bss(ph, load_bias, pagesize);
@@ -298,7 +295,7 @@ dloader_p api_load(const char *filename)
     ElfW(Addr) ro_start = ro_load->p_offset + load_bias;
     ElfW(Addr) ro_end = ro_start + ro_load->p_memsz;
     ElfW_Reloc *relocs =
-        (ElfW_Reloc *)(load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
+        (ElfW_Reloc *) (load_bias + get_dynamic_entry(dynamic, ELFW_DT_RELW));
     size_t relocs_size = get_dynamic_entry(dynamic, ELFW_DT_RELWSZ);
     for (i = 0; i < relocs_size / sizeof(ElfW_Reloc); i++) {
         ElfW_Reloc *reloc = &relocs[i];
@@ -306,9 +303,8 @@ dloader_p api_load(const char *filename)
         switch (reloc_type) {
         case R_X86_64_RELATIVE:
         case R_ARM_RELATIVE:
-        case R_AARCH64_RELATIVE:
-        {
-            ElfW(Addr) *addr = (ElfW(Addr) *)(load_bias + reloc->r_offset);
+        case R_AARCH64_RELATIVE: {
+            ElfW(Addr) *addr = (ElfW(Addr) *) (load_bias + reloc->r_offset);
             /*
              * If addr loactes in read-only PT_LOAD section, i.e., .text, then
              * we give the memory fragment WRITE permission during relocating
@@ -316,13 +312,12 @@ dloader_p api_load(const char *filename)
              * avoid some secure issue.
              */
             if ((intptr_t) addr < ro_end && (intptr_t) addr >= ro_start) {
-                mprotect((void*) round_down((intptr_t) addr, pagesize),
+                mprotect((void *) round_down((intptr_t) addr, pagesize),
                          pagesize, PROT_WRITE);
                 *addr += load_bias;
-                mprotect((void*) round_down((intptr_t) addr, pagesize),
+                mprotect((void *) round_down((intptr_t) addr, pagesize),
                          pagesize, prot_from_phdr(ro_load));
-            }
-            else
+            } else
                 *addr += load_bias;
             break;
         }
@@ -335,15 +330,15 @@ dloader_p api_load(const char *filename)
     assert(o != NULL);
 
     o->load_bias = load_bias;
-    o->entry = (void *)(ehdr.e_entry + load_bias);
+    o->entry = (void *) (ehdr.e_entry + load_bias);
     o->pt_dynamic = dynamic;
     o->dt_pltgot = NULL;
     o->plt_entries = 0;
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
     if (pltgot != 0) {
         o->dt_pltgot = (void **) (pltgot + load_bias);
-        o->dt_jmprel = (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) +
-                                       load_bias);
+        o->dt_jmprel =
+            (ElfW_Reloc *) (get_dynamic_entry(dynamic, DT_JMPREL) + load_bias);
     }
 
     close(fd);

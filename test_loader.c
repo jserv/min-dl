@@ -4,8 +4,14 @@
 
 #include "lib-support.h"
 
-const char *test_import0() { return __func__; }
-const char *test_import1() { return __func__; }
+const char *test_import0()
+{
+    return __func__;
+}
+const char *test_import1()
+{
+    return __func__;
+}
 
 static int resolver_call_count = 0;
 static int resolver_last_id = -1;
@@ -18,7 +24,8 @@ static void *plt_resolver(void *handle, int import_id)
     resolver_last_id = import_id;
 
     void *funcs[] = {
-        (void *) test_import0, (void *) test_import1,
+        (void *) test_import0,
+        (void *) test_import1,
     };
     void *func = funcs[import_id];
     DLoader.set_plt_entry(o, import_id, func);
