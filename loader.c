@@ -17,6 +17,7 @@
 
 #define ELFW_R_TYPE(x) ELFW(R_TYPE)(x)
 #define ELFW_R_SYM(x) ELFW(R_SYM)(x)
+#define ELFW_ST_BIND(x) ((unsigned char) (x) >> 4)
 
 struct __DLoader_Internal {
     uintptr_t load_bias;
@@ -29,6 +30,31 @@ struct __DLoader_Internal {
 
     plt_resolver_t user_plt_resolver;
     void *user_plt_resolver_handle;
+
+    /* Symbol resolution */
+    ElfW(Sym) * dt_symtab;
+    const char *dt_strtab;
+    size_t dt_strsz;
+    size_t sym_count;
+
+    /* ELF (SYSV) hash table */
+    const uint32_t *hash_buckets;
+    const uint32_t *hash_chains;
+    uint32_t hash_nbuckets;
+    uint32_t hash_nchains;
+
+    /* GNU hash table */
+    const uint32_t *gnu_buckets;
+    const uint32_t *gnu_chains;
+    uint32_t gnu_nbuckets;
+    uint32_t gnu_symndx;
+
+    /* For deferred relocation */
+    ElfW_Reloc *dt_relocs;
+    size_t dt_relocs_count;
+    const ElfW(Phdr) * phdr;
+    size_t phnum;
+    size_t pagesize;
 };
 
 /*
@@ -49,6 +75,36 @@ static inline size_t my_strlen(const char *s)
     while (*s++ != '\0')
         ++n;
     return n;
+}
+
+static inline int my_strcmp(const char *a, const char *b)
+{
+    while (*a && *a == *b) {
+        ++a;
+        ++b;
+    }
+    return (unsigned char) *a - (unsigned char) *b;
+}
+
+static unsigned long elf_hash(const char *name)
+{
+    unsigned long h = 0, g;
+    while (*name) {
+        h = (h << 4) + (unsigned char) *name++;
+        g = h & 0xf0000000;
+        if (g)
+            h ^= g >> 24;
+        h &= ~g;
+    }
+    return h;
+}
+
+static uint32_t gnu_hash_func(const char *name)
+{
+    uint32_t h = 5381;
+    while (*name)
+        h = (h << 5) + h + (unsigned char) *name++;
+    return h;
 }
 
 /*
@@ -426,6 +482,14 @@ dloader_p api_load(const char *filename)
                 fail(filename, "mprotect failed after relocation!", NULL, 0);
             break;
         }
+        case R_X86_64_GLOB_DAT:
+        case R_ARM_GLOB_DAT:
+        case R_AARCH64_GLOB_DAT:
+        case R_X86_64_JUMP_SLOT:
+        case R_ARM_JUMP_SLOT:
+        case R_AARCH64_JUMP_SLOT:
+            /* Deferred: resolved by api_resolve_symbols */
+            break;
         default:
             fail(filename, "Unsupported relocation type!", "r_info",
                  reloc_type);
@@ -434,25 +498,72 @@ dloader_p api_load(const char *filename)
 
     dloader_p o = malloc(sizeof(struct __DLoader_Internal));
     assert(o != NULL);
+    my_bzero(o, sizeof(*o));
 
     o->load_bias = load_bias;
     o->entry = (void *) (ehdr.e_entry + load_bias);
     o->pt_dynamic = dynamic;
-    o->dt_pltgot = NULL;
-    o->plt_entries = 0;
+
     uintptr_t pltgot = get_dynamic_entry(dynamic, DT_PLTGOT);
     uintptr_t pltrelsz = get_dynamic_entry(dynamic, DT_PLTRELSZ);
     uintptr_t jmprel = get_dynamic_entry(dynamic, DT_JMPREL);
-    if ((pltgot != 0) != (jmprel != 0) ||
-        ((pltgot != 0 || jmprel != 0) && pltrelsz == 0))
-        fail(filename, "Incomplete PLT relocation metadata!", NULL, 0);
     if (pltrelsz % sizeof(ElfW_Reloc) != 0)
         fail(filename, "Malformed PLT relocation size!", NULL, 0);
-    if (pltgot != 0) {
+    if (pltgot != 0)
         o->dt_pltgot = (void **) (pltgot + load_bias);
+    if (jmprel != 0 && pltrelsz != 0) {
         o->dt_jmprel = (ElfW_Reloc *) (jmprel + load_bias);
         o->plt_entries = pltrelsz / sizeof(ElfW_Reloc);
     }
+
+    /* Parse symbol table and string table */
+    uintptr_t symtab = get_dynamic_entry(dynamic, DT_SYMTAB);
+    uintptr_t strtab = get_dynamic_entry(dynamic, DT_STRTAB);
+    if (symtab)
+        o->dt_symtab = (ElfW(Sym) *) (symtab + load_bias);
+    if (strtab)
+        o->dt_strtab = (const char *) (strtab + load_bias);
+    o->dt_strsz = get_dynamic_entry(dynamic, DT_STRSZ);
+
+    /* Parse ELF (SYSV) hash table */
+    uintptr_t elf_ht = get_dynamic_entry(dynamic, DT_HASH);
+    if (elf_ht) {
+        const uint32_t *ht = (const uint32_t *) (elf_ht + load_bias);
+        o->hash_nbuckets = ht[0];
+        o->hash_nchains = ht[1];
+        if (o->hash_nbuckets > 0) {
+            o->hash_buckets = &ht[2];
+            o->hash_chains = &ht[2 + o->hash_nbuckets];
+        }
+        o->sym_count = o->hash_nchains;
+    } else if (symtab && strtab && strtab > symtab) {
+        /* Fallback: derive from .dynsym/.dynstr adjacency */
+        o->sym_count = (strtab - symtab) / sizeof(ElfW(Sym));
+    }
+
+    /* Parse GNU hash table */
+    uintptr_t gnu_ht = get_dynamic_entry(dynamic, DT_GNU_HASH);
+    if (gnu_ht) {
+        const uint32_t *ght = (const uint32_t *) (gnu_ht + load_bias);
+        o->gnu_nbuckets = ght[0];
+        o->gnu_symndx = ght[1];
+        uint32_t maskwords = ght[2];
+        if (o->gnu_nbuckets > 0 && maskwords > 0) {
+            /* Skip header (4 words) + bloom filter */
+            const uint32_t *after_bloom =
+                (const uint32_t *) ((const char *) &ght[4] +
+                                    maskwords * sizeof(ElfW(Addr)));
+            o->gnu_buckets = after_bloom;
+            o->gnu_chains = after_bloom + o->gnu_nbuckets;
+        }
+    }
+
+    /* Store relocation metadata for deferred resolution */
+    o->dt_relocs = relocs_size ? relocs : NULL;
+    o->dt_relocs_count = relocs_size / sizeof(ElfW_Reloc);
+    o->phdr = (const ElfW(Phdr) *) (load_bias + ehdr.e_phoff);
+    o->phnum = ehdr.e_phnum;
+    o->pagesize = pagesize;
 
     close(fd);
     return o;
@@ -482,9 +593,179 @@ void api_set_plt_entry(dloader_p o, int import_id, void *func)
     ph->pltgot[import_id] = func;
 }
 
+/*
+ * Look up a symbol by name using the ELF hash table.
+ * Returns NULL if no matching defined symbol is found.
+ */
+static void *lookup_by_sysv_hash(dloader_p o, const char *name)
+{
+    unsigned long h = elf_hash(name);
+    uint32_t idx = o->hash_buckets[h % o->hash_nbuckets];
+    while (idx != STN_UNDEF) {
+        if (idx >= o->hash_nchains)
+            return NULL;
+        ElfW(Sym) *sym = &o->dt_symtab[idx];
+        if (sym->st_name < o->dt_strsz &&
+            my_strcmp(o->dt_strtab + sym->st_name, name) == 0) {
+            if (sym->st_shndx != SHN_UNDEF)
+                return (void *) (o->load_bias + sym->st_value);
+        }
+        idx = o->hash_chains[idx];
+    }
+    return NULL;
+}
+
+/*
+ * Look up a symbol by name using the GNU hash table.
+ * Returns NULL if no matching defined symbol is found.
+ */
+static void *lookup_by_gnu_hash(dloader_p o, const char *name)
+{
+    uint32_t h = gnu_hash_func(name);
+    uint32_t idx = o->gnu_buckets[h % o->gnu_nbuckets];
+    if (idx == 0 || idx < o->gnu_symndx)
+        return NULL;
+    const uint32_t *chain = &o->gnu_chains[idx - o->gnu_symndx];
+    for (size_t safety = 0; safety < 65536; ++safety) {
+        uint32_t chain_val = *chain;
+        if ((chain_val | 1) == (h | 1)) {
+            ElfW(Sym) *sym = &o->dt_symtab[idx];
+            if (sym->st_name < o->dt_strsz &&
+                my_strcmp(o->dt_strtab + sym->st_name, name) == 0) {
+                if (sym->st_shndx != SHN_UNDEF)
+                    return (void *) (o->load_bias + sym->st_value);
+            }
+        }
+        if (chain_val & 1)
+            break;
+        ++idx;
+        ++chain;
+    }
+    return NULL;
+}
+
+void *api_lookup_symbol(dloader_p o, const char *name)
+{
+    void *sym = NULL;
+
+    if (!o->dt_symtab || !o->dt_strtab || !name)
+        return NULL;
+    if (o->hash_buckets)
+        sym = lookup_by_sysv_hash(o, name);
+    if (!sym && o->gnu_buckets)
+        sym = lookup_by_gnu_hash(o, name);
+    return sym;
+}
+
+/*
+ * Resolve a single relocation that references a symbol (GLOB_DAT or
+ * JUMP_SLOT).  Looks up the symbol locally first; falls back to the
+ * user-supplied resolver for undefined symbols.
+ */
+static int resolve_one(dloader_p o,
+                       ElfW_Reloc *reloc,
+                       symbol_resolver_t resolver,
+                       void *handle)
+{
+    unsigned sym_idx = ELFW_R_SYM(reloc->r_info);
+    unsigned bind;
+    if (!sym_idx)
+        return 0;
+
+    if (o->sym_count && sym_idx >= o->sym_count)
+        return -1;
+
+    ElfW(Sym) *sym = &o->dt_symtab[sym_idx];
+    if (sym->st_name >= o->dt_strsz)
+        return -1;
+    bind = ELFW_ST_BIND(sym->st_info);
+
+    const char *name = o->dt_strtab + sym->st_name;
+    void *addr = NULL;
+
+    /* Try local definition first */
+    if (sym->st_shndx != SHN_UNDEF)
+        addr = (void *) (o->load_bias + sym->st_value);
+    else if (resolver)
+        addr = resolver(handle, name);
+
+    if (!addr && bind != STB_WEAK)
+        return -1;
+
+#if ELFW_DT_RELW == DT_RELA
+    uintptr_t value = (uintptr_t) addr + reloc->r_addend;
+#else
+    uintptr_t value = (uintptr_t) addr;
+#endif
+
+    ElfW(Addr) *target = (ElfW(Addr) *) (o->load_bias + reloc->r_offset);
+    const ElfW(Phdr) *seg =
+        find_load_segment(o->phdr, o->phnum, reloc->r_offset);
+    if (!seg)
+        return -1;
+
+    uintptr_t page = round_down((uintptr_t) target, o->pagesize);
+    int need_mprotect = !(seg->p_flags & PF_W);
+
+    if (need_mprotect &&
+        mprotect((void *) page, o->pagesize, prot_from_phdr(seg) | PROT_WRITE))
+        return -1;
+
+    *target = value;
+
+    if (need_mprotect &&
+        mprotect((void *) page, o->pagesize, prot_from_phdr(seg)))
+        return -1;
+
+    return 0;
+}
+
+static int is_glob_dat_or_jump_slot(int type)
+{
+    switch (type) {
+    case R_X86_64_GLOB_DAT:
+    case R_ARM_GLOB_DAT:
+    case R_AARCH64_GLOB_DAT:
+    case R_X86_64_JUMP_SLOT:
+    case R_ARM_JUMP_SLOT:
+    case R_AARCH64_JUMP_SLOT:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static int resolve_table(dloader_p o,
+                         ElfW_Reloc *table,
+                         size_t count,
+                         symbol_resolver_t resolver,
+                         void *handle)
+{
+    for (size_t i = 0; i < count; i++) {
+        ElfW_Reloc *reloc = &table[i];
+        if (!is_glob_dat_or_jump_slot(ELFW_R_TYPE(reloc->r_info)))
+            continue;
+        if (resolve_one(o, reloc, resolver, handle))
+            return -1;
+    }
+    return 0;
+}
+
+int api_resolve_symbols(dloader_p o, symbol_resolver_t resolver, void *handle)
+{
+    if (!o->dt_symtab || !o->dt_strtab)
+        return -1;
+
+    if (resolve_table(o, o->dt_relocs, o->dt_relocs_count, resolver, handle))
+        return -1;
+    return resolve_table(o, o->dt_jmprel, o->plt_entries, resolver, handle);
+}
+
 struct __DLoader_API__ DLoader = {
     .load = api_load,
     .get_info = api_get_user_info,
     .set_plt_resolver = api_set_plt_resolver,
     .set_plt_entry = api_set_plt_entry,
+    .lookup_symbol = api_lookup_symbol,
+    .resolve_symbols = api_resolve_symbols,
 };

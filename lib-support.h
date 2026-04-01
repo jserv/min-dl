@@ -41,6 +41,7 @@
 #define CALL(x) XSTR(_CALL(x))
 
 typedef void *(*plt_resolver_t)(void *handle, int import_id);
+typedef void *(*symbol_resolver_t)(void *handle, const char *name);
 
 struct program_header {
     void **plt_trampoline;
@@ -99,6 +100,8 @@ extern struct __DLoader_API__ {
     void *(*get_info)(dloader_p);
     void (*set_plt_resolver)(dloader_p, plt_resolver_t, void *handle);
     void (*set_plt_entry)(dloader_p, int import_id, void *func);
+    void *(*lookup_symbol)(dloader_p, const char *name);
+    int (*resolve_symbols)(dloader_p, symbol_resolver_t resolver, void *handle);
 } DLoader;
 
 #endif
